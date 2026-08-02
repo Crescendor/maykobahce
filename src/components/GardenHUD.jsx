@@ -15,25 +15,28 @@ export default function GardenHUD({
 }) {
   return (
     <>
-      {/* Top Header Bar (3-Part Horizontal Row: Logo | Slogan | Counter) */}
+      {/* Top Header Bar – Logo | Slogan | Counter (wraps on mobile) */}
       <div style={styles.topHeader} className="glass-panel">
-        {/* Section 1: Logo */}
-        <div style={styles.headerSectionLeft}>
-          <img src="/mayko_logo.png" alt="mayko" style={styles.logoImg} />
-        </div>
+        {/* Row 1: Logo + Slogan */}
+        <div style={styles.headerRow}>
+          {/* Section 1: Logo */}
+          <div style={styles.headerSectionLeft}>
+            <img src="/mayko_logo.png" alt="mayko" style={styles.logoImg} />
+          </div>
 
-        {/* Section 2: Slogan (Center) */}
-        <div style={styles.headerSectionCenter}>
-          <p style={styles.brandSub}>"Ben sana bir bahçe verdim."</p>
-        </div>
+          {/* Section 2: Slogan */}
+          <div style={styles.headerSectionCenter}>
+            <p style={styles.brandSub}>"Ben sana bir bahçe verdim."</p>
+          </div>
 
-        {/* Section 3: Counter Badge (Right) */}
-        <div style={styles.headerSectionRight}>
-          <div style={styles.counterBadge}>
-            <Flower size={14} color="#34d399" />
-            <span style={{ fontStyle: 'italic', fontSize: '0.86rem' }}>
-              {flowerCount} çiçek var.
-            </span>
+          {/* Section 3: Counter Badge */}
+          <div style={styles.headerSectionRight}>
+            <div style={styles.counterBadge}>
+              <Flower size={14} color="#34d399" />
+              <span style={{ fontStyle: 'italic', fontSize: '0.86rem' }}>
+                {flowerCount} çiçek var.
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -114,13 +117,20 @@ const styles = {
     maxWidth: 720,
     margin: '0 auto',
     borderRadius: 24,
-    padding: '10px 22px',
+    padding: '10px 18px',
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
+    gap: 8,
+    zIndex: 900
+  },
+  /* Inner flex row: Logo | Slogan | Counter — wraps on narrow screens */
+  headerRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
-    zIndex: 900
+    gap: '6px 12px',
+    width: '100%'
   },
   headerSectionLeft: {
     display: 'flex',
@@ -131,8 +141,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    textAlign: 'center',
-    flex: 1
+    flex: 1,
+    minWidth: 0,
+    overflow: 'hidden'
   },
   headerSectionRight: {
     display: 'flex',
@@ -152,18 +163,20 @@ const styles = {
     fontStyle: 'italic',
     color: 'rgba(255, 255, 255, 0.95)',
     letterSpacing: 0.2,
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
   },
   counterBadge: {
     background: 'rgba(255, 255, 255, 0.12)',
     border: '1px solid rgba(255, 255, 255, 0.25)',
     borderRadius: 99,
-    padding: '7px 15px',
-    fontSize: '0.86rem',
+    padding: '6px 14px',
+    fontSize: '0.84rem',
     color: '#ffffff',
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
     whiteSpace: 'nowrap'
   },
   plantingBanner: {
