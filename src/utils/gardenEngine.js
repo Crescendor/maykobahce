@@ -7,6 +7,25 @@ export const MIN_FLOWER_DISTANCE = 60; // minimum distance between flowers in pi
 export const MAX_FLOWERS = 3000;
 
 const LOCAL_STORAGE_KEY = 'mayko_garden_flowers_v1';
+const DELETED_IDS_KEY = 'mayko_deleted_flower_ids_v1';
+
+// Load tombstone set of deleted flower IDs
+export function loadDeletedIds() {
+  try {
+    const stored = localStorage.getItem(DELETED_IDS_KEY);
+    if (stored) return new Set(JSON.parse(stored));
+  } catch (e) {}
+  return new Set();
+}
+
+// Mark a flower ID as deleted so it never resurfaces on sync
+export function addDeletedId(id) {
+  try {
+    const set = loadDeletedIds();
+    set.add(id);
+    localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(set)));
+  } catch (e) {}
+}
 
 // 5 Distinct Stem Presets with custom leaf shapes & structures
 export const STEM_TYPES = [
@@ -596,15 +615,17 @@ export function saveGardenFlowers(flowers) {
 
 export async function fetchFlowersFromApi() {
   const local = loadGardenFlowers();
+  const deleted = loadDeletedIds();
   try {
     const res = await fetch('/api/flowers');
     if (res.ok) {
       const remote = await res.json();
       if (Array.isArray(remote)) {
-        // Merge remote and local flowers without deleting un-synced local flowers
+        // Remote is source of truth; keep local-only flowers that haven't synced yet
+        // but NEVER re-add tombstoned (locally deleted) flowers
         const map = new Map();
-        local.forEach((f) => map.set(f.id, f));
-        remote.forEach((f) => map.set(f.id, f));
+        local.forEach((f) => { if (!deleted.has(f.id)) map.set(f.id, f); });
+        remote.forEach((f) => { if (!deleted.has(f.id)) map.set(f.id, f); });
 
         const merged = Array.from(map.values());
         saveGardenFlowers(merged);
@@ -614,7 +635,8 @@ export async function fetchFlowersFromApi() {
   } catch (e) {
     console.warn('Cloudflare API fetch offline, using localStorage fallback');
   }
-  return local;
+  // Offline: return local minus tombstoned
+  return local.filter((f) => !deleted.has(f.id));
 }
 
 export async function postFlowerToApi(newFlower) {

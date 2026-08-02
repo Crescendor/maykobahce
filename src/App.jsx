@@ -14,7 +14,9 @@ import {
   isPositionValid,
   fetchFlowersFromApi,
   postFlowerToApi,
-  deleteFlowerFromApi
+  deleteFlowerFromApi,
+  addDeletedId,
+  loadDeletedIds
 } from './utils/gardenEngine';
 
 export default function App() {
@@ -35,13 +37,15 @@ export default function App() {
 
   // Initialize Flowers & Sync with Cloudflare Edge API
   const syncFlowers = useCallback(async () => {
-    const data = await fetchFlowersFromApi();
+    const data = await fetchFlowersFromApi(); // already tombstone-filtered
     if (data && Array.isArray(data) && data.length > 0) {
+      const deleted = loadDeletedIds();
       setFlowers((prevFlowers) => {
-        // Remote is source of truth; also keep any locally added flowers not yet in DB
+        // Remote is source of truth; also keep local flowers not yet in DB
+        // Never re-add tombstoned (locally deleted) flowers
         const remoteMap = new Map(data.map((f) => [f.id, f]));
         prevFlowers.forEach((f) => {
-          if (!remoteMap.has(f.id)) remoteMap.set(f.id, f);
+          if (!remoteMap.has(f.id) && !deleted.has(f.id)) remoteMap.set(f.id, f);
         });
         return Array.from(remoteMap.values());
       });
@@ -189,6 +193,9 @@ export default function App() {
 
   // Delete Flower using 8-character code or Admin
   const handleDeleteFlower = async (flowerId, deleteCode = '') => {
+    // Tombstone: mark as deleted so it never comes back on sync
+    addDeletedId(flowerId);
+
     const updated = flowers.filter((f) => f.id !== flowerId);
     setFlowers(updated);
     saveGardenFlowers(updated);
