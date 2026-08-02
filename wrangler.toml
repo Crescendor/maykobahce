@@ -5,3 +5,14 @@ compatibility_date = "2024-09-25"
 # Environment Variables & Secrets
 [vars]
 ADMIN_PASSWORD = "Doxish44_"
+
+# D1 SQLite Database Binding (create in Cloudflare dashboard → D1 → New Database → "mayko-db")
+[[d1_databases]]
+binding = "DB"
+database_name = "mayko-db"
+database_id = "placeholder-replace-with-real-id"
+
+# KV Namespace Binding (create in Cloudflare dashboard → KV → New Namespace → "MAYKO_KV")
+[[kv_namespaces]]
+binding = "MAYKO_KV"
+id = "placeholder-replace-with-real-id"

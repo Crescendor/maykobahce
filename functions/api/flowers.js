@@ -3,23 +3,7 @@
 export async function onRequestGet(context) {
   const { env } = context;
 
-  // 1. Try serving from Cloudflare KV Edge Cache first (0 D1 read cost!)
-  if (env.MAYKO_KV) {
-    try {
-      const cached = await env.MAYKO_KV.get('flowers_cache', 'json');
-      if (cached) {
-        return new Response(JSON.stringify(cached), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=10, s-maxage=30',
-            'X-Cache': 'HIT-KV'
-          }
-        });
-      }
-    } catch (err) {}
-  }
-
-  // 2. If not in KV, query D1 Database
+  // 1. Query D1 Database if bound
   if (env.DB) {
     try {
       const { results } = await env.DB.prepare(
@@ -45,28 +29,41 @@ export async function onRequestGet(context) {
         stemAngle: row.stem_angle || 0
       }));
 
-      // Cache in KV for fast edge reads
+      // Cache in KV for ultra-fast edge reads
       if (env.MAYKO_KV) {
         context.waitUntil(
-          env.MAYKO_KV.put('flowers_cache', JSON.stringify(formattedFlowers), { expirationTtl: 300 })
+          env.MAYKO_KV.put('flowers_cache', JSON.stringify(formattedFlowers), { expirationTtl: 86400 })
         );
       }
 
       return new Response(JSON.stringify(formattedFlowers), {
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=10, s-maxage=30',
-          'X-Cache': 'MISS-D1'
+          'Cache-Control': 'public, max-age=3, s-maxage=5',
+          'Access-Control-Allow-Origin': '*'
         }
       });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    }
+    } catch (err) {}
   }
 
-  // Fallback empty array if DB not bound yet
+  // 2. If D1 is not bound or failed, serve from KV Edge Cache
+  if (env.MAYKO_KV) {
+    try {
+      const cached = await env.MAYKO_KV.get('flowers_cache', 'json');
+      if (cached && Array.isArray(cached)) {
+        return new Response(JSON.stringify(cached), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=3, s-maxage=5',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
+    } catch (err) {}
+  }
+
   return new Response(JSON.stringify([]), {
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
   });
 }
 
@@ -80,39 +77,48 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'Geçersiz çiçek verisi' }), { status: 400 });
     }
 
+    // 1. Insert into D1 Database if bound
     if (env.DB) {
-      await env.DB.prepare(
-        `INSERT INTO flowers (id, x, y, name, instagram, note, is_anonymous, is_private, password, delete_code, created_at, strokes_json, stem_type, stem_color, scale, stem_angle)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-        .bind(
-          flower.id,
-          flower.x,
-          flower.y,
-          flower.name || 'Anonim',
-          flower.instagram || '',
-          flower.note || '',
-          flower.isAnonymous ? 1 : 0,
-          flower.isPrivate ? 1 : 0,
-          flower.password || null,
-          flower.deleteCode || '',
-          flower.createdAt || new Date().toISOString(),
-          JSON.stringify(flower.strokes || []),
-          flower.stemType || 'classic',
-          flower.stemColor || '#52b788',
-          flower.scale || 1,
-          flower.stemAngle || 0
+      try {
+        await env.DB.prepare(
+          `INSERT INTO flowers (id, x, y, name, instagram, note, is_anonymous, is_private, password, delete_code, created_at, strokes_json, stem_type, stem_color, scale, stem_angle)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
-        .run();
-
-      // Invalidate KV cache so next GET fetches fresh data
-      if (env.MAYKO_KV) {
-        context.waitUntil(env.MAYKO_KV.delete('flowers_cache'));
+          .bind(
+            flower.id,
+            flower.x,
+            flower.y,
+            flower.name || 'Anonim',
+            flower.instagram || '',
+            flower.note || '',
+            flower.isAnonymous ? 1 : 0,
+            flower.isPrivate ? 1 : 0,
+            flower.password || null,
+            flower.deleteCode || '',
+            flower.createdAt || new Date().toISOString(),
+            JSON.stringify(flower.strokes || []),
+            flower.stemType || 'classic',
+            flower.stemColor || '#52b788',
+            flower.scale || 1,
+            flower.stemAngle || 0
+          )
+          .run();
+      } catch (err) {
+        console.error('D1 Insert Error:', err);
       }
     }
 
+    // 2. Also save to KV Cache immediately so GET /api/flowers receives it instantly for all visitors!
+    if (env.MAYKO_KV) {
+      try {
+        const existing = (await env.MAYKO_KV.get('flowers_cache', 'json')) || [];
+        const updated = [flower, ...existing.filter((f) => f.id !== flower.id)];
+        await env.MAYKO_KV.put('flowers_cache', JSON.stringify(updated), { expirationTtl: 86400 });
+      } catch (err) {}
+    }
+
     return new Response(JSON.stringify({ success: true, flower }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       status: 201
     });
   } catch (err) {

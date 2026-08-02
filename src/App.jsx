@@ -36,22 +36,40 @@ export default function App() {
   // Initialize Flowers & Sync with Cloudflare Edge API
   const syncFlowers = useCallback(async () => {
     const data = await fetchFlowersFromApi();
-    if (data && Array.isArray(data)) {
+    if (data && Array.isArray(data) && data.length > 0) {
       setFlowers((prevFlowers) => {
-        // Merge current in-memory flowers with fetched flowers to guarantee zero flower loss!
-        const map = new Map();
-        prevFlowers.forEach((f) => map.set(f.id, f));
-        data.forEach((f) => map.set(f.id, f));
-        return Array.from(map.values());
+        // Remote is source of truth; also keep any locally added flowers not yet in DB
+        const remoteMap = new Map(data.map((f) => [f.id, f]));
+        prevFlowers.forEach((f) => {
+          if (!remoteMap.has(f.id)) remoteMap.set(f.id, f);
+        });
+        return Array.from(remoteMap.values());
       });
     }
   }, []);
 
   useEffect(() => {
     syncFlowers();
-    // Background polling every 25 seconds for real-time global flower sync
-    const interval = setInterval(syncFlowers, 25000);
-    return () => clearInterval(interval);
+
+    // Poll every 30 seconds — respects Cloudflare KV free-tier limits
+    // (30s × 60min × 24h = 2,880 reads/day per user; stays well within 100k limit)
+    let interval = setInterval(syncFlowers, 30000);
+
+    // Pause polling when tab is hidden, resume immediately on focus (saves API calls)
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(interval);
+      } else {
+        syncFlowers(); // immediate refresh on tab re-focus
+        interval = setInterval(syncFlowers, 30000);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [syncFlowers]);
 
   // Handle URL Hash & Slug Routing (#flower-xyz, /#burak, /burak)
