@@ -1,0 +1,18 @@
+name = "mayko"
+pages_build_output_dir = "./dist"
+compatibility_date = "2024-09-25"
+
+# Environment Variables & Secrets
+[vars]
+ADMIN_PASSWORD = "Doxish44_"
+
+# Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "mayko-db"
+database_id = "mayko-db-id"
+
+# Cloudflare KV Namespace Binding for Edge Cache
+[[kv_namespaces]]
+binding = "MAYKO_KV"
+id = "mayko-kv-id"

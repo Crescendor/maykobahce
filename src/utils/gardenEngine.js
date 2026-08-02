@@ -589,3 +589,56 @@ export function saveGardenFlowers(flowers) {
     console.error('Error saving flowers to localStorage:', e);
   }
 }
+
+/**
+ * Cloudflare Pages Functions API Sync Methods
+ */
+
+export async function fetchFlowersFromApi() {
+  try {
+    const res = await fetch('/api/flowers');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        saveGardenFlowers(data);
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn('Cloudflare API fetch offline, using localStorage fallback');
+  }
+  return loadGardenFlowers();
+}
+
+export async function postFlowerToApi(newFlower) {
+  try {
+    const res = await fetch('/api/flowers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newFlower)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Cloudflare API post offline, saved locally');
+  }
+  return null;
+}
+
+export async function deleteFlowerFromApi(flowerId, deleteCode = '', adminPassword = '') {
+  try {
+    const res = await fetch(`/api/flower/${flowerId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deleteCode, adminPassword })
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Cloudflare API delete offline, deleted locally');
+  }
+  return null;
+}
+

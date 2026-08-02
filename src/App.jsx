@@ -11,7 +11,10 @@ import {
   GARDEN_SIZE,
   loadGardenFlowers,
   saveGardenFlowers,
-  isPositionValid
+  isPositionValid,
+  fetchFlowersFromApi,
+  postFlowerToApi,
+  deleteFlowerFromApi
 } from './utils/gardenEngine';
 
 export default function App() {
@@ -30,11 +33,20 @@ export default function App() {
   const [viewportTarget, setViewportTarget] = useState(null);
   const [currentScale, setCurrentScale] = useState(0.85);
 
-  // Initialize Flowers
-  useEffect(() => {
-    const loaded = loadGardenFlowers();
-    setFlowers(loaded);
+  // Initialize Flowers & Sync with Cloudflare Edge API
+  const syncFlowers = useCallback(async () => {
+    const data = await fetchFlowersFromApi();
+    if (data && Array.isArray(data)) {
+      setFlowers(data);
+    }
   }, []);
+
+  useEffect(() => {
+    syncFlowers();
+    // Background polling every 25 seconds for real-time global flower sync
+    const interval = setInterval(syncFlowers, 25000);
+    return () => clearInterval(interval);
+  }, [syncFlowers]);
 
   // Handle URL Hash & Slug Routing (#flower-xyz, /#burak, /burak)
   const handleUrlRoute = useCallback(() => {
@@ -134,10 +146,13 @@ export default function App() {
   };
 
   // Save Newly Drawn Flower
-  const handleSaveFlower = (newFlower) => {
+  const handleSaveFlower = async (newFlower) => {
     const updatedFlowers = [newFlower, ...flowers];
     setFlowers(updatedFlowers);
     saveGardenFlowers(updatedFlowers);
+
+    // Sync with Cloudflare D1 & KV Edge Storage
+    postFlowerToApi(newFlower);
 
     setIsDrawerOpen(false);
 
@@ -148,11 +163,15 @@ export default function App() {
     setViewportTarget({ x: newFlower.x, y: newFlower.y, scale: 1.5 });
   };
 
-  // Delete Flower using 8-character code
-  const handleDeleteFlower = (flowerId) => {
+  // Delete Flower using 8-character code or Admin
+  const handleDeleteFlower = async (flowerId, deleteCode = '') => {
     const updated = flowers.filter((f) => f.id !== flowerId);
     setFlowers(updated);
     saveGardenFlowers(updated);
+
+    // Sync deletion with Cloudflare D1 & KV
+    deleteFlowerFromApi(flowerId, deleteCode, 'Doxish44_');
+
     setSelectedFlower(null);
     window.history.replaceState(null, '', window.location.pathname);
     showToast('Çiçeğiniz bahçeden başarıyla silindi! 🌿');

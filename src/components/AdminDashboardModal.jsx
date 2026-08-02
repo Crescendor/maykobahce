@@ -22,10 +22,25 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
 
   if (!isOpen) return null;
 
-  // Handle Admin Login
-  const handleLogin = (e) => {
+  // Handle Admin Login (Server API verification with local fallback)
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError(false);
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInput })
+      });
+      if (res.ok) {
+        setIsAuthenticated(true);
+        return;
+      }
+    } catch (err) {
+      console.warn('API offline, using local password check');
+    }
+
     if (passwordInput === 'Doxish44_') {
       setIsAuthenticated(true);
     } else {
