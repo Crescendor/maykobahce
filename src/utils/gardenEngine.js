@@ -595,19 +595,26 @@ export function saveGardenFlowers(flowers) {
  */
 
 export async function fetchFlowersFromApi() {
+  const local = loadGardenFlowers();
   try {
     const res = await fetch('/api/flowers');
     if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        saveGardenFlowers(data);
-        return data;
+      const remote = await res.json();
+      if (Array.isArray(remote)) {
+        // Merge remote and local flowers without deleting un-synced local flowers
+        const map = new Map();
+        local.forEach((f) => map.set(f.id, f));
+        remote.forEach((f) => map.set(f.id, f));
+
+        const merged = Array.from(map.values());
+        saveGardenFlowers(merged);
+        return merged;
       }
     }
   } catch (e) {
     console.warn('Cloudflare API fetch offline, using localStorage fallback');
   }
-  return loadGardenFlowers();
+  return local;
 }
 
 export async function postFlowerToApi(newFlower) {

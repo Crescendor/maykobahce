@@ -37,7 +37,13 @@ export default function App() {
   const syncFlowers = useCallback(async () => {
     const data = await fetchFlowersFromApi();
     if (data && Array.isArray(data)) {
-      setFlowers(data);
+      setFlowers((prevFlowers) => {
+        // Merge current in-memory flowers with fetched flowers to guarantee zero flower loss!
+        const map = new Map();
+        prevFlowers.forEach((f) => map.set(f.id, f));
+        data.forEach((f) => map.set(f.id, f));
+        return Array.from(map.values());
+      });
     }
   }, []);
 
