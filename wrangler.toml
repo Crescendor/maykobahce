@@ -6,13 +6,13 @@ compatibility_date = "2024-09-25"
 [vars]
 ADMIN_PASSWORD = "Doxish44_"
 
-# D1 SQLite Database Binding (create in Cloudflare dashboard → D1 → New Database → "mayko-db")
+# D1 SQLite Database Binding
 [[d1_databases]]
 binding = "DB"
 database_name = "mayko-db"
-database_id = "placeholder-replace-with-real-id"
+database_id = "4541a2c0-53bb-4ad9-b0c8-8379e0c7fbc9"
 
-# KV Namespace Binding (create in Cloudflare dashboard → KV → New Namespace → "MAYKO_KV")
+# KV Namespace Binding
 [[kv_namespaces]]
 binding = "MAYKO_KV"
-id = "placeholder-replace-with-real-id"
+id = "c656498daed746b5bd33a6e8a1ee11e2"
