@@ -327,3 +327,46 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.35);
   border-radius: 4px;
 }
+
+/* ─── Responsive Header ────────────────────────────────────────── */
+
+/* Desktop (≥ 560px): Logo | Slogan | Counter in a single row */
+@media (min-width: 560px) {
+  .header-top {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 16px !important;
+    padding: 10px 22px !important;
+  }
+  .header-row {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-counter-row {
+    display: flex !important;
+    flex-shrink: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* Mobile (< 560px): Logo + Slogan row 1, Counter row 2 centered */
+@media (max-width: 559px) {
+  .header-top {
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding: 10px 16px !important;
+  }
+  .header-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-counter-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}

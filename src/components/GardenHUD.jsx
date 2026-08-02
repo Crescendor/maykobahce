@@ -16,9 +16,9 @@ export default function GardenHUD({
   return (
     <>
       {/* Top Header Bar – Logo | Slogan (row 1), Counter (row 2) */}
-      <div style={styles.topHeader} className="glass-panel">
+      <div style={styles.topHeader} className="glass-panel header-top">
         {/* Row 1: Logo + Slogan */}
-        <div style={styles.headerRow}>
+        <div style={styles.headerRow} className="header-row">
           <div style={styles.headerSectionLeft}>
             <img src="/mayko_logo.png" alt="mayko" style={styles.logoImg} />
           </div>
@@ -27,8 +27,8 @@ export default function GardenHUD({
           </div>
         </div>
 
-        {/* Row 2: Counter Badge (always below) */}
-        <div style={styles.counterRow}>
+        {/* Row 2 (mobile) / inline right (desktop): Counter Badge */}
+        <div style={styles.counterRow} className="header-counter-row">
           <div style={styles.counterBadge}>
             <Flower size={14} color="#34d399" />
             <span style={{ fontStyle: 'italic', fontSize: '0.84rem' }}>
