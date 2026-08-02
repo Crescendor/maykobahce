@@ -15,28 +15,25 @@ export default function GardenHUD({
 }) {
   return (
     <>
-      {/* Top Header Bar – Logo | Slogan | Counter (wraps on mobile) */}
+      {/* Top Header Bar – Logo | Slogan (row 1), Counter (row 2) */}
       <div style={styles.topHeader} className="glass-panel">
         {/* Row 1: Logo + Slogan */}
         <div style={styles.headerRow}>
-          {/* Section 1: Logo */}
           <div style={styles.headerSectionLeft}>
             <img src="/mayko_logo.png" alt="mayko" style={styles.logoImg} />
           </div>
-
-          {/* Section 2: Slogan */}
           <div style={styles.headerSectionCenter}>
             <p style={styles.brandSub}>"Ben sana bir bahçe verdim."</p>
           </div>
+        </div>
 
-          {/* Section 3: Counter Badge */}
-          <div style={styles.headerSectionRight}>
-            <div style={styles.counterBadge}>
-              <Flower size={14} color="#34d399" />
-              <span style={{ fontStyle: 'italic', fontSize: '0.86rem' }}>
-                {flowerCount} çiçek var.
-              </span>
-            </div>
+        {/* Row 2: Counter Badge (always below) */}
+        <div style={styles.counterRow}>
+          <div style={styles.counterBadge}>
+            <Flower size={14} color="#34d399" />
+            <span style={{ fontStyle: 'italic', fontSize: '0.84rem' }}>
+              {flowerCount} çiçek var.
+            </span>
           </div>
         </div>
       </div>
@@ -123,13 +120,11 @@ const styles = {
     gap: 8,
     zIndex: 900
   },
-  /* Inner flex row: Logo | Slogan | Counter — wraps on narrow screens */
+  /* Row 1: Logo | Slogan */
   headerRow: {
     display: 'flex',
-    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '6px 12px',
+    gap: 12,
     width: '100%'
   },
   headerSectionLeft: {
@@ -140,16 +135,12 @@ const styles = {
   headerSectionCenter: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    minWidth: 0,
-    overflow: 'hidden'
+    flex: 1
   },
-  headerSectionRight: {
+  /* Row 2: Counter badge always below */
+  counterRow: {
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flexShrink: 0
+    justifyContent: 'center'
   },
   logoImg: {
     height: 40,
@@ -163,16 +154,14 @@ const styles = {
     fontStyle: 'italic',
     color: 'rgba(255, 255, 255, 0.95)',
     letterSpacing: 0.2,
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
+    whiteSpace: 'nowrap'
   },
   counterBadge: {
     background: 'rgba(255, 255, 255, 0.12)',
     border: '1px solid rgba(255, 255, 255, 0.25)',
     borderRadius: 99,
-    padding: '6px 14px',
-    fontSize: '0.84rem',
+    padding: '5px 14px',
+    fontSize: '0.82rem',
     color: '#ffffff',
     display: 'flex',
     alignItems: 'center',
