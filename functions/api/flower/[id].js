@@ -85,6 +85,8 @@ export async function onRequestPatch(context) {
       if (body.name !== undefined) { updates.push('name = ?'); values.push(body.name || 'Anonim'); }
       if (body.note !== undefined) { updates.push('note = ?'); values.push(body.note || ''); }
       if (body.instagram !== undefined) { updates.push('instagram = ?'); values.push(body.instagram || ''); }
+      if (body.x !== undefined) { updates.push('x = ?'); values.push(body.x); }
+      if (body.y !== undefined) { updates.push('y = ?'); values.push(body.y); }
 
       if (updates.length > 0) {
         values.push(flowerId);

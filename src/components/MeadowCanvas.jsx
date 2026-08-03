@@ -9,7 +9,18 @@ export default function MeadowCanvas({
   pendingPlantPosition,
   onPlantAtPosition,
   viewportTarget, // { x, y, scale } target coordinate to animate camera to
-  onViewportChange
+  onViewportChange,
+  // Admin Mode Props
+  isAdminAuthenticated,
+  adminTool,
+  adminColor,
+  adminBrushSize,
+  onUpdateFlowerLocalPos,
+  onUpdateFlowerPosition,
+  meadowObjects,
+  onAddMeadowObject,
+  onDeleteMeadowObject,
+  onDeleteFlower
 }) {
   const canvasRef = useRef(null);
 
@@ -28,6 +39,14 @@ export default function MeadowCanvas({
   const dragStartRef = useRef({ x: 0, y: 0 });
   const touchPinchDistRef = useRef(null);
   const clickStartPosRef = useRef({ x: 0, y: 0 });
+
+  // Admin Drag & Drop / Drawing refs
+  const isDraggingFlowerRef = useRef(false);
+  const draggedFlowerIdRef = useRef(null);
+  const draggedFlowerOffsetRef = useRef({ x: 0, y: 0 });
+
+  const isDrawingMeadowRef = useRef(false);
+  const currentMeadowStrokeRef = useRef(null);
 
   // Camera animation frame
   const animFrameRef = useRef(null);
@@ -123,19 +142,45 @@ export default function MeadowCanvas({
     // 2. Render Wooden Fence Perimeter
     drawGardenFences(ctx);
 
-    // 3. Render Flowers (with wind sway & active animations)
+    // 3. Render Custom Admin Meadow Objects (Strokes & Text Labels)
+    if (meadowObjects && meadowObjects.length > 0) {
+      meadowObjects.forEach((obj) => {
+        if (obj.type === 'stroke') {
+          drawSmoothStroke(ctx, { color: obj.color, size: obj.size, points: obj.points });
+        } else if (obj.type === 'text') {
+          ctx.save();
+          ctx.font = `bold ${obj.fontSize || 24}px sans-serif`;
+          ctx.fillStyle = obj.color || '#ffffff';
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+          ctx.shadowBlur = 8;
+          ctx.fillText(obj.text, obj.x, obj.y);
+          ctx.restore();
+        }
+      });
+    }
+
+    // Render active in-progress meadow stroke
+    if (currentMeadowStrokeRef.current) {
+      drawSmoothStroke(ctx, {
+        color: currentMeadowStrokeRef.current.color,
+        size: currentMeadowStrokeRef.current.size,
+        points: currentMeadowStrokeRef.current.points
+      });
+    }
+
+    // 4. Render Flowers (with wind sway & active animations)
     flowers.forEach((flower) => {
       const isSelected = selectedFlower && selectedFlower.id === flower.id;
       drawFlower(ctx, flower, isSelected, scale, time);
     });
 
-    // 4. Render Pending Planting Flag Pin
+    // 5. Render Pending Planting Flag Pin
     if (pendingPlantPosition) {
       drawPlantingFlag(ctx, pendingPlantPosition.x, pendingPlantPosition.y, scale);
     }
 
     ctx.restore();
-  }, [flowers, selectedFlower, pendingPlantPosition]);
+  }, [flowers, selectedFlower, pendingPlantPosition, meadowObjects]);
 
   // Continuous animation frame loop for smooth wind sway & animations
   useEffect(() => {
@@ -173,13 +218,81 @@ export default function MeadowCanvas({
 
   // Pointer Down (Mouse or Touch)
   const handlePointerDown = (e) => {
+    clickStartPosRef.current = { x: e.clientX, y: e.clientY };
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
+    const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
+
+    // Check hit on any flower
+    let hitFlower = null;
+    for (const flower of flowers) {
+      const dist = Math.hypot(flower.x - worldX, flower.y - worldY);
+      if (dist < 45) {
+        hitFlower = flower;
+        break;
+      }
+    }
+
+    // 1. Admin Flower Drag & Drop Mode
+    if (isAdminAuthenticated && adminTool === 'move_flower' && hitFlower) {
+      isDraggingFlowerRef.current = true;
+      draggedFlowerIdRef.current = hitFlower.id;
+      draggedFlowerOffsetRef.current = {
+        x: hitFlower.x - worldX,
+        y: hitFlower.y - worldY
+      };
+      isDraggingRef.current = false;
+      return;
+    }
+
+    // 2. Admin Freehand Meadow Drawing Mode
+    if (isAdminAuthenticated && adminTool === 'draw') {
+      isDrawingMeadowRef.current = true;
+      const newStroke = {
+        id: `obj-${Date.now()}`,
+        type: 'stroke',
+        color: adminColor || '#ffffff',
+        size: adminBrushSize || 10,
+        points: [{ x: worldX, y: worldY }]
+      };
+      currentMeadowStrokeRef.current = newStroke;
+      isDraggingRef.current = false;
+      return;
+    }
+
+    // Default Camera Panning Drag
     isDraggingRef.current = true;
     dragStartRef.current = { x: e.clientX, y: e.clientY };
-    clickStartPosRef.current = { x: e.clientX, y: e.clientY };
   };
 
   // Pointer Move (Mouse or Touch Drag)
   const handlePointerMove = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
+    const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
+
+    // 1. Dragging Flower Position
+    if (isDraggingFlowerRef.current && draggedFlowerIdRef.current) {
+      const newX = Math.round(worldX + draggedFlowerOffsetRef.current.x);
+      const newY = Math.round(worldY + draggedFlowerOffsetRef.current.y);
+      if (onUpdateFlowerLocalPos) {
+        onUpdateFlowerLocalPos(draggedFlowerIdRef.current, newX, newY);
+      }
+      return;
+    }
+
+    // 2. Drawing on Meadow Canvas
+    if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
+      currentMeadowStrokeRef.current.points.push({ x: worldX, y: worldY });
+      return;
+    }
+
+    // 3. Camera Panning
     if (!isDraggingRef.current) return;
 
     const dx = e.clientX - dragStartRef.current.x;
@@ -197,6 +310,34 @@ export default function MeadowCanvas({
 
   // Pointer Up / Tap Detection
   const handlePointerUp = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
+    const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
+
+    // 1. Finish Dragging Flower
+    if (isDraggingFlowerRef.current && draggedFlowerIdRef.current) {
+      isDraggingFlowerRef.current = false;
+      const finalX = Math.round(worldX + draggedFlowerOffsetRef.current.x);
+      const finalY = Math.round(worldY + draggedFlowerOffsetRef.current.y);
+      if (onUpdateFlowerPosition) {
+        onUpdateFlowerPosition(draggedFlowerIdRef.current, finalX, finalY);
+      }
+      draggedFlowerIdRef.current = null;
+      return;
+    }
+
+    // 2. Finish Meadow Freehand Drawing
+    if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
+      isDrawingMeadowRef.current = false;
+      if (onAddMeadowObject) {
+        onAddMeadowObject(currentMeadowStrokeRef.current);
+      }
+      currentMeadowStrokeRef.current = null;
+      return;
+    }
+
     isDraggingRef.current = false;
     touchPinchDistRef.current = null;
 
@@ -207,15 +348,54 @@ export default function MeadowCanvas({
     );
 
     if (moveDist < 8) {
-      // Screen to World Coordinates conversion
-      const rect = canvasRef.current.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
+      // 3. Admin Text Placement Tool
+      if (isAdminAuthenticated && adminTool === 'text') {
+        const textInput = prompt('Harita Üzerine Eklemek İstediğiniz Yazı:');
+        if (textInput && textInput.trim()) {
+          const newTextObj = {
+            id: `obj-${Date.now()}`,
+            type: 'text',
+            text: textInput.trim(),
+            x: Math.round(worldX),
+            y: Math.round(worldY),
+            color: adminColor || '#ffffff',
+            fontSize: 24
+          };
+          if (onAddMeadowObject) onAddMeadowObject(newTextObj);
+        }
+        return;
+      }
 
-      const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
-      const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
+      // 4. Admin Delete Tool (click flower or meadow object)
+      if (isAdminAuthenticated && adminTool === 'delete') {
+        // Check hit on meadow objects first
+        if (meadowObjects && meadowObjects.length > 0) {
+          const hitObj = meadowObjects.find((o) => {
+            if (o.type === 'text') {
+              return Math.hypot(o.x - worldX, o.y - worldY) < 40;
+            }
+            if (o.type === 'stroke' && o.points) {
+              return o.points.some((p) => Math.hypot(p.x - worldX, p.y - worldY) < 30);
+            }
+            return false;
+          });
+          if (hitObj) {
+            if (onDeleteMeadowObject) onDeleteMeadowObject(hitObj.id);
+            return;
+          }
+        }
 
-      // Check if tap hit any flower (within 35px radius)
+        // Check hit on flower
+        const hitFlower = flowers.find((f) => Math.hypot(f.x - worldX, f.y - worldY) < 40);
+        if (hitFlower) {
+          if (window.confirm(`"${hitFlower.name || 'Anonim'}" çiçeğini haritadan silmek istediğinize emin misiniz?`)) {
+            if (onDeleteFlower) onDeleteFlower(hitFlower.id, hitFlower.deleteCode);
+          }
+          return;
+        }
+      }
+
+      // 5. Default flower selection or planting
       let hitFlower = null;
       for (const flower of flowers) {
         const dist = Math.hypot(flower.x - worldX, flower.y - worldY);
@@ -260,6 +440,16 @@ export default function MeadowCanvas({
     }
   };
 
+  const getCanvasCursor = () => {
+    if (isPlantingMode) return 'crosshair';
+    if (isAdminAuthenticated) {
+      if (adminTool === 'move_flower') return 'move';
+      if (adminTool === 'draw' || adminTool === 'text') return 'crosshair';
+      if (adminTool === 'delete') return 'pointer';
+    }
+    return 'grab';
+  };
+
   return (
     <canvas
       ref={canvasRef}
@@ -272,7 +462,7 @@ export default function MeadowCanvas({
         width: '100vw',
         height: '100vh',
         display: 'block',
-        cursor: isPlantingMode ? 'crosshair' : 'grab',
+        cursor: getCanvasCursor(),
         touchAction: 'none'
       }}
     />

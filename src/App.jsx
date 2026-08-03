@@ -6,6 +6,7 @@ import FlowerPopup from './components/FlowerPopup';
 import SearchModal from './components/SearchModal';
 import DeleteCodeModal from './components/DeleteCodeModal';
 import AdminDashboardModal from './components/AdminDashboardModal';
+import AdminFloatingToolbar from './components/AdminFloatingToolbar';
 import { Check, X, Sparkles } from 'lucide-react';
 import {
   GARDEN_SIZE,
@@ -39,6 +40,49 @@ export default function App() {
   const handleAdminAuth = () => {
     localStorage.setItem('mayko_admin_auth', 'true');
     setIsAdminAuthenticated(true);
+  };
+
+  // Admin Interactive Mode Tools & State
+  const [adminTool, setAdminTool] = useState('move_flower'); // 'move_flower' | 'draw' | 'text' | 'delete'
+  const [adminColor, setAdminColor] = useState('#ffffff');
+  const [meadowObjects, setMeadowObjects] = useState(() => {
+    try {
+      const s = localStorage.getItem('mayko_meadow_objects_v1');
+      if (s) return JSON.parse(s);
+    } catch (e) {}
+    return [];
+  });
+
+  const saveMeadowObjects = (objs) => {
+    setMeadowObjects(objs);
+    try {
+      localStorage.setItem('mayko_meadow_objects_v1', JSON.stringify(objs));
+    } catch (e) {}
+  };
+
+  const handleAddMeadowObject = (newObj) => {
+    saveMeadowObjects([...meadowObjects, newObj]);
+  };
+
+  const handleDeleteMeadowObject = (objId) => {
+    saveMeadowObjects(meadowObjects.filter((o) => o.id !== objId));
+  };
+
+  const handleClearAllMeadowDrawings = () => {
+    if (window.confirm('Harita üzerindeki tüm özel admin çizimlerini silmek istediğinize emin misiniz?')) {
+      saveMeadowObjects([]);
+    }
+  };
+
+  // Instant local flower position update on drag
+  const handleUpdateFlowerLocalPos = (flowerId, x, y) => {
+    setFlowers((prev) => prev.map((f) => (f.id === flowerId ? { ...f, x, y } : f)));
+  };
+
+  // Persist flower position update on drop
+  const handleUpdateFlowerPosition = (flowerId, x, y) => {
+    handlePatchFlower(flowerId, { x, y });
+    showToast('Çiçeğin konumu yeni yerine taşındı! 📍');
   };
 
   const handlePatchFlower = (flowerId, patch) => {
@@ -225,6 +269,18 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* Interactive Admin Mode Floating HUD Toolbar */}
+      <AdminFloatingToolbar
+        isAdminAuthenticated={isAdminAuthenticated}
+        adminTool={adminTool}
+        setAdminTool={setAdminTool}
+        adminColor={adminColor}
+        setAdminColor={setAdminColor}
+        onOpenDashboard={() => setIsAdminOpen(true)}
+        meadowObjectsCount={meadowObjects.length}
+        onClearAllMeadowDrawings={handleClearAllMeadowDrawings}
+      />
+
       {/* Interactive Meadow Canvas */}
       <MeadowCanvas
         flowers={flowers}
@@ -235,6 +291,16 @@ export default function App() {
         onPlantAtPosition={handlePlantAtPosition}
         viewportTarget={viewportTarget}
         onViewportChange={(tf) => setCurrentScale(tf.scale)}
+        isAdminAuthenticated={isAdminAuthenticated}
+        adminTool={adminTool}
+        adminColor={adminColor}
+        adminBrushSize={10}
+        onUpdateFlowerLocalPos={handleUpdateFlowerLocalPos}
+        onUpdateFlowerPosition={handleUpdateFlowerPosition}
+        meadowObjects={meadowObjects}
+        onAddMeadowObject={handleAddMeadowObject}
+        onDeleteMeadowObject={handleDeleteMeadowObject}
+        onDeleteFlower={handleDeleteFlower}
       />
 
       {/* Floating HUD Controls */}
