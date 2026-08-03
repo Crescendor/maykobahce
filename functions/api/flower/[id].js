@@ -82,6 +82,9 @@ export async function onRequestPatch(context) {
       if (body.approved !== undefined) { updates.push('approved = ?'); values.push(body.approved ? 1 : 0); }
       if (body.animation !== undefined) { updates.push('animation = ?'); values.push(body.animation || null); }
       if (body.animationColor !== undefined) { updates.push('animation_color = ?'); values.push(body.animationColor || null); }
+      if (body.name !== undefined) { updates.push('name = ?'); values.push(body.name || 'Anonim'); }
+      if (body.note !== undefined) { updates.push('note = ?'); values.push(body.note || ''); }
+      if (body.instagram !== undefined) { updates.push('instagram = ?'); values.push(body.instagram || ''); }
 
       if (updates.length > 0) {
         values.push(flowerId);

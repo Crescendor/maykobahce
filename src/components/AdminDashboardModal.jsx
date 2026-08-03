@@ -114,22 +114,11 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
   };
 
   const handleSaveEdit = (flowerId) => {
-    if (onPatchFlower) {
-      onPatchFlower(flowerId, {
-        name: editName,
-        note: editNote,
-        instagram: editInstagram
-      });
-    }
-    setLocalPatches((prev) => ({
-      ...prev,
-      [flowerId]: {
-        ...prev[flowerId],
-        name: editName,
-        note: editNote,
-        instagram: editInstagram
-      }
-    }));
+    patchFlower(flowerId, {
+      name: editName,
+      note: editNote,
+      instagram: editInstagram
+    });
     setEditingFlowerId(null);
   };
 
