@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Lock,
   Unlock,
@@ -17,6 +17,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
+import { drawSmoothStroke, drawStem } from '../utils/gardenEngine';
 
 function b64(str) {
   try {
@@ -29,6 +30,58 @@ function b64(str) {
   } catch (e) {
     return str;
   }
+}
+
+function FlowerThumbnail({ flower }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Stem
+    ctx.save();
+    ctx.translate(35, 60);
+    drawStem(ctx, flower.stemType || 'classic', flower.stemColor || '#52b788', 0.65);
+    ctx.restore();
+
+    // Petals / Strokes
+    ctx.save();
+    ctx.translate(35, 26);
+    ctx.scale(0.13, 0.13);
+    ctx.translate(-150, -240);
+
+    if (flower.strokes && flower.strokes.length > 0) {
+      flower.strokes.forEach((stroke) => {
+        drawSmoothStroke(ctx, stroke);
+      });
+    } else {
+      ctx.beginPath();
+      ctx.arc(150, 150, 45, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff4d6d';
+      ctx.fill();
+    }
+    ctx.restore();
+  }, [flower]);
+
+  return (
+    <div style={{
+      width: 66,
+      height: 66,
+      borderRadius: 14,
+      background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+      border: '1px solid rgba(255,255,255,0.15)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+    }}>
+      <canvas ref={canvasRef} width={70} height={70} style={{ width: 62, height: 62 }} />
+    </div>
+  );
 }
 
 export default function AdminDashboardModal({ isOpen, onClose, flowers, onDeleteFlower, onFocusFlower, onAdminAuth, onPatchFlower }) {
@@ -226,49 +279,56 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
 
                       return (
                         <tr key={flower.id} style={{ ...styles.tr, opacity: flower.approved === 0 ? 0.75 : 1 }}>
-                          {/* Creator Info */}
+                          {/* Creator Info & Flower Image Preview */}
                           <td style={styles.td}>
-                            <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
-                              {flower.name || 'Anonim'}
-                            </div>
-                            {/* real_sender badge */}
-                            {flower.realSender && (
-                              <div style={{ fontSize: '0.76rem', color: '#f9a8d4', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                🌸 {flower.realSender} {b64('Z8O2bmRlcmRp')} {flower.isAnonymous ? b64('KEFub25pbSk=') : ''}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <FlowerThumbnail flower={flower} />
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
+                                  {flower.name || 'Anonim'}
+                                </div>
+                                {/* real_sender badge */}
+                                {flower.realSender && (
+                                  <div style={{ fontSize: '0.76rem', color: '#f9a8d4', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    🌸 {flower.realSender} {b64('Z8O2bmRlcmRp')} {flower.isAnonymous ? b64('KEFub25pbSk=') : ''}
+                                  </div>
+                                )}
+                                {flower.instagram && (
+                                  <div style={{ fontSize: '0.78rem', color: '#ec4899', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                                    <InstagramIcon size={12} /> {flower.instagram}
+                                  </div>
+                                )}
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <Calendar size={12} /> {formattedDate}
+                                </div>
+                                {/* Approval badge */}
+                                <div style={{ marginTop: 5 }}>
+                                  {flower.approved === 0 ? (
+                                    <span style={{ fontSize: '0.72rem', background: 'rgba(251,146,60,0.2)', color: '#fb923c', padding: '2px 8px', borderRadius: 99, border: '1px solid #fb923c' }}>
+                                      ⏳ Onay Bekliyor
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '0.72rem', background: 'rgba(52,211,153,0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 99, border: '1px solid #34d399' }}>
+                                      ✅ Onaylandı
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                            {flower.instagram && (
-                              <div style={{ fontSize: '0.78rem', color: '#ec4899', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                                <InstagramIcon size={12} /> {flower.instagram}
-                              </div>
-                            )}
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <Calendar size={12} /> {formattedDate}
-                            </div>
-                            {/* Approval badge */}
-                            <div style={{ marginTop: 5 }}>
-                              {flower.approved === 0 ? (
-                                <span style={{ fontSize: '0.72rem', background: 'rgba(251,146,60,0.2)', color: '#fb923c', padding: '2px 8px', borderRadius: 99, border: '1px solid #fb923c' }}>
-                                  ⏳ Onay Bekliyor
-                                </span>
-                              ) : (
-                                <span style={{ fontSize: '0.72rem', background: 'rgba(52,211,153,0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 99, border: '1px solid #34d399' }}>
-                                  ✅ Onaylandı
-                                </span>
-                              )}
                             </div>
                           </td>
 
-                          {/* Note Content */}
+                          {/* Note Content (Always Visible to Admin) */}
                           <td style={styles.td}>
                             {flower.note ? (
-                              <div style={styles.noteContentBox}>"{flower.note}"</div>
+                              <div style={{ ...styles.noteContentBox, borderLeft: flower.isPrivate ? '3px solid #fbbf24' : '3px solid #10b981' }}>
+                                "{flower.note}"
+                              </div>
                             ) : (
                               <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.82rem' }}>Not yazılmamış</span>
                             )}
                             {flower.isPrivate && (
-                              <div style={styles.privateBadgeAdmin}>
-                                <Lock size={12} color="#f59e0b" /> Gizli Not
+                              <div style={{ ...styles.privateBadgeAdmin, marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                <Lock size={12} color="#f59e0b" /> Gizli Not (Şifre: <code style={styles.codeTag}>{flower.password || 'Yok'}</code>)
                               </div>
                             )}
                           </td>

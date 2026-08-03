@@ -524,7 +524,7 @@ function b64(str) {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Örn: Elif"
+                  placeholder=""
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={35}
