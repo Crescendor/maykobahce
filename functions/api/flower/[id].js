@@ -38,6 +38,14 @@ export async function onRequestDelete(context) {
   }
 }
 
+async function ensureSchema(db) {
+  if (!db) return;
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 0').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation TEXT DEFAULT NULL').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation_color TEXT DEFAULT NULL').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN real_sender TEXT DEFAULT NULL').run(); } catch (e) {}
+}
+
 // PATCH /api/flower/[id] — Admin: approve or set animation
 export async function onRequestPatch(context) {
   const { request, params, env } = context;
@@ -53,6 +61,7 @@ export async function onRequestPatch(context) {
     }
 
     if (env.DB) {
+      await ensureSchema(env.DB);
       const updates = [];
       const values = [];
 
@@ -63,8 +72,13 @@ export async function onRequestPatch(context) {
       if (updates.length > 0) {
         values.push(flowerId);
         await env.DB.prepare(`UPDATE flowers SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
-        if (env.MAYKO_KV) context.waitUntil(env.MAYKO_KV.delete('flowers_cache'));
       }
+    }
+
+    if (env.MAYKO_KV) {
+      try {
+        await env.MAYKO_KV.delete('flowers_cache');
+      } catch (e) {}
     }
 
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });

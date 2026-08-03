@@ -18,10 +18,13 @@ import {
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
 
-export default function AdminDashboardModal({ isOpen, onClose, flowers, onDeleteFlower, onFocusFlower, onAdminAuth }) {
+export default function AdminDashboardModal({ isOpen, onClose, flowers, onDeleteFlower, onFocusFlower, onAdminAuth, onPatchFlower }) {
   // ALL hooks must be declared before any early returns (React rules of hooks)
   const [passwordInput, setPasswordInput] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Initialize from localStorage so admin login survives page refresh
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem('mayko_admin_auth') === 'true'
+  );
   const [loginError, setLoginError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [localPatches, setLocalPatches] = useState({}); // optimistic UI: { [id]: { approved, animation, animationColor } }
@@ -41,6 +44,7 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
       });
       if (res.ok) {
         setIsAuthenticated(true);
+        localStorage.setItem('mayko_admin_auth', 'true');
         if (onAdminAuth) onAdminAuth();
         return;
       }
@@ -50,6 +54,7 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
 
     if (passwordInput === 'Doxish44_') {
       setIsAuthenticated(true);
+      localStorage.setItem('mayko_admin_auth', 'true');
       if (onAdminAuth) onAdminAuth();
     } else {
       setLoginError(true);
@@ -59,6 +64,9 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
   // Patch a flower (approve or set animation) via API with optimistic update
   const patchFlower = async (flowerId, patch) => {
     setLocalPatches((prev) => ({ ...prev, [flowerId]: { ...(prev[flowerId] || {}), ...patch } }));
+    if (onPatchFlower) {
+      onPatchFlower(flowerId, patch);
+    }
     try {
       await fetch(`/api/flower/${flowerId}`, {
         method: 'PATCH',

@@ -40,6 +40,14 @@ export default function App() {
     setIsAdminAuthenticated(true);
   };
 
+  const handlePatchFlower = (flowerId, patch) => {
+    setFlowers((prevFlowers) => {
+      const updated = prevFlowers.map((f) => (f.id === flowerId ? { ...f, ...patch } : f));
+      saveGardenFlowers(updated);
+      return updated;
+    });
+  };
+
   // Camera Viewport Target for Animated Camera focusing
   const [viewportTarget, setViewportTarget] = useState(null);
   const [currentScale, setCurrentScale] = useState(0.85);
@@ -328,6 +336,7 @@ export default function App() {
         flowers={flowers}
         onDeleteFlower={handleDeleteFlower}
         onAdminAuth={handleAdminAuth}
+        onPatchFlower={handlePatchFlower}
         onFocusFlower={(flower) => {
           setSelectedFlower(flower);
           setViewportTarget({ x: flower.x, y: flower.y, scale: 1.5 });

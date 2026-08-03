@@ -1,10 +1,19 @@
 // Cloudflare Pages Function: /api/flowers (GET all, POST new flower)
 
+async function ensureSchema(db) {
+  if (!db) return;
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 0').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation TEXT DEFAULT NULL').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation_color TEXT DEFAULT NULL').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN real_sender TEXT DEFAULT NULL').run(); } catch (e) {}
+}
+
 export async function onRequestGet(context) {
   const { env } = context;
 
   if (env.DB) {
     try {
+      await ensureSchema(env.DB);
       const { results } = await env.DB.prepare(
         'SELECT * FROM flowers ORDER BY created_at DESC LIMIT 3000'
       ).all();
@@ -26,7 +35,7 @@ export async function onRequestGet(context) {
         stemColor: row.stem_color || '#52b788',
         scale: row.scale || 1,
         stemAngle: row.stem_angle || 0,
-        approved: row.approved === undefined ? 1 : Number(row.approved),
+        approved: (row.approved === undefined || row.approved === null) ? 1 : Number(row.approved),
         animation: row.animation || null,
         animationColor: row.animation_color || null,
         realSender: row.real_sender || null
@@ -45,7 +54,9 @@ export async function onRequestGet(context) {
           'Access-Control-Allow-Origin': '*'
         }
       });
-    } catch (err) {}
+    } catch (err) {
+      console.error('D1 Get Error:', err);
+    }
   }
 
   if (env.MAYKO_KV) {
@@ -83,6 +94,7 @@ export async function onRequestPost(context) {
 
     if (env.DB) {
       try {
+        await ensureSchema(env.DB);
         await env.DB.prepare(
           `INSERT INTO flowers (id, x, y, name, instagram, note, is_anonymous, is_private, password, delete_code, created_at, strokes_json, stem_type, stem_color, scale, stem_angle, approved, animation, animation_color, real_sender)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
