@@ -45,18 +45,13 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
       if (res.ok) {
         setIsAuthenticated(true);
         localStorage.setItem('mayko_admin_auth', 'true');
+        localStorage.setItem('mayko_admin_token', passwordInput);
         if (onAdminAuth) onAdminAuth();
         return;
+      } else {
+        setLoginError(true);
       }
     } catch (err) {
-      console.warn('API offline, using local password check');
-    }
-
-    if (passwordInput === 'Doxish44_') {
-      setIsAuthenticated(true);
-      localStorage.setItem('mayko_admin_auth', 'true');
-      if (onAdminAuth) onAdminAuth();
-    } else {
       setLoginError(true);
     }
   };
@@ -68,10 +63,11 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
       onPatchFlower(flowerId, patch);
     }
     try {
+      const adminToken = localStorage.getItem('mayko_admin_token') || '';
       await fetch(`/api/flower/${flowerId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminPassword: 'Doxish44_', ...patch })
+        body: JSON.stringify({ adminPassword: adminToken, ...patch })
       });
     } catch (e) {
       console.error('Patch failed', e);

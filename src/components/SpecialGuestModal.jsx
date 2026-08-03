@@ -1,13 +1,31 @@
 import React, { useState } from 'react';
 import { Heart, Lock, X } from 'lucide-react';
 
-// Names/handles that trigger the special guest flow
-const SPECIAL_NAMES = ['aysenur', 'ayşenur', 'ayshenur', 'sarah', 'lukac', 'lukaç', 'lukach'];
-const SPECIAL_INSTAGRAM = ['lukac']; // substring match
+// Cryptographic SHA-256 hashes of trigger keywords — ZERO plain-text words exposed in JS bundle
+const TARGET_HASHES = new Set([
+  'd35e6c32b90ac44a02fdfe33fa48710d1ed640b555c518a0fae1f7bebfa5b166',
+  'd233633d9524e84c71d6fe45eb3836f8919148e4a5fc2234cc9e6494ec0f11c2',
+  '5219e2a890917e60ec6323bc7e7a111faa7049928b84082f5170298cb713847b',
+  'f26bc499e0adcfe69c5aa49b23cf43bb5962fe2e5945760bca9337e5444f8460'
+]);
+
+const SECRET_PASS_HASH = '0ac41a0ec75bfa52ddda062704a2ee093a113c2e3b304a0bf4d4cd0501a098e3';
+
+async function sha256Hex(str) {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await (window.crypto || crypto).subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    return '';
+  }
+}
 
 // Normalize Turkish i/ı differences and lowercase
 function normalize(str) {
-  return str
+  return (str || '')
     .toLowerCase()
     .replace(/ı/g, 'i')
     .replace(/İ/g, 'i')
@@ -18,18 +36,31 @@ function normalize(str) {
     .replace(/ç/g, 'c');
 }
 
-export function isSpecialGuest(name, instagram) {
-  const n = normalize(name || '');
-  const ig = normalize(instagram || '');
+export async function isSpecialGuest(name, instagram) {
+  const normName = normalize(name);
+  const normIg = normalize(instagram);
+  const textToScan = `${normName} ${normIg}`;
 
-  // Check name match
-  if (SPECIAL_NAMES.some((kw) => n.includes(normalize(kw)))) return true;
-  // Check instagram substring
-  if (SPECIAL_INSTAGRAM.some((kw) => ig.includes(normalize(kw)))) return true;
+  const tokens = textToScan.split(/[^a-z0-9]+/);
+  for (const t of tokens) {
+    if (t.length >= 4) {
+      const h = await sha256Hex(t);
+      if (TARGET_HASHES.has(h)) return true;
+    }
+  }
+
+  for (let i = 0; i < textToScan.length; i++) {
+    for (let len = 4; len <= 8; len++) {
+      if (i + len <= textToScan.length) {
+        const sub = textToScan.substring(i, i + len);
+        const h = await sha256Hex(sub);
+        if (TARGET_HASHES.has(h)) return true;
+      }
+    }
+  }
+
   return false;
 }
-
-const SECRET_PASSWORD = 'nail';
 
 export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSendAsAnonymous, onSendAsAysenur }) {
   const [phase, setPhase] = useState('question'); // 'question' | 'welcome'
@@ -38,10 +69,11 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
 
   if (!isOpen) return null;
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     const norm = normalize(passwordInput.trim());
-    if (norm === normalize(SECRET_PASSWORD)) {
+    const passHash = await sha256Hex(norm);
+    if (passHash === SECRET_PASS_HASH) {
       setPhase('welcome');
       setPasswordError(false);
     } else {

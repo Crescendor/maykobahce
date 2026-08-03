@@ -211,7 +211,8 @@ export default function App() {
     saveGardenFlowers(updated);
 
     // Sync deletion with Cloudflare D1 & KV
-    deleteFlowerFromApi(flowerId, deleteCode, 'Doxish44_');
+    const adminToken = localStorage.getItem('mayko_admin_token') || '';
+    deleteFlowerFromApi(flowerId, deleteCode, adminToken);
 
     setSelectedFlower(null);
     window.history.replaceState(null, '', window.location.pathname);

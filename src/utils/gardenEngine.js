@@ -650,7 +650,10 @@ export async function fetchFlowersFromApi(isAdmin = false) {
   const local = loadGardenFlowers();
   const deleted = loadDeletedIds();
   try {
-    const apiUrl = isAdmin ? '/api/flowers?adminPassword=Doxish44_' : '/api/flowers';
+    const adminToken = localStorage.getItem('mayko_admin_token') || '';
+    const apiUrl = (isAdmin && adminToken)
+      ? `/api/flowers?adminPassword=${encodeURIComponent(adminToken)}`
+      : '/api/flowers';
     const res = await fetch(apiUrl);
     if (res.ok) {
       const remote = await res.json();

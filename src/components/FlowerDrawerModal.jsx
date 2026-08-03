@@ -257,7 +257,7 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
   };
 
   // Step 2 -> Step 3 Validation (special guest check already handled by useEffect)
-  const handleProceedToStep3 = (e) => {
+  const handleProceedToStep3 = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -267,7 +267,7 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     }
 
     // Fallback check in case useEffect hasn't fired yet
-    if (!hasShownSpecial && isSpecialGuest(name, instagram)) {
+    if (!hasShownSpecial && (await isSpecialGuest(name, instagram))) {
       setShowSpecialModal(true);
       setHasShownSpecial(true);
       return;
