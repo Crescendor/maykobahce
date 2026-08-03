@@ -15,6 +15,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
+import SpecialGuestModal, { isSpecialGuest } from './SpecialGuestModal';
 import confetti from 'canvas-confetti';
 import {
   generate6CharPassword,
@@ -60,6 +61,10 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
   const [copiedPassword, setCopiedPassword] = useState(false);
   const [isModerationAgreed, setIsModerationAgreed] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  // Special guest flow
+  const [showSpecialModal, setShowSpecialModal] = useState(false);
+  const [realSender, setRealSender] = useState(null); // 'Ayşenur' | null
+  const [pendingStep3, setPendingStep3] = useState(false);
 
   // Reset modal when opened
   useEffect(() => {
@@ -78,6 +83,9 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
       setErrorMsg('');
       setSelectedStemType('classic');
       setSelectedStemColor('#52b788');
+      setShowSpecialModal(false);
+      setRealSender(null);
+      setPendingStep3(false);
       setTimeout(() => redrawCanvas([]), 50);
     }
   }, [isOpen]);
@@ -236,7 +244,7 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     setStep(2);
   };
 
-  // Step 2 -> Step 3 Validation
+  // Step 2 -> Step 3 Validation (with special guest detection)
   const handleProceedToStep3 = (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -246,6 +254,36 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
       return;
     }
 
+    // Check for special guest before proceeding
+    if (isSpecialGuest(name, instagram)) {
+      setPendingStep3(true);
+      setShowSpecialModal(true);
+      return;
+    }
+
+    setStep(3);
+  };
+
+  // Special guest chose anonymous
+  const handleSpecialSendAnonymous = () => {
+    const adjectives = ['Gizemli', 'Işıltılı', 'Neşeli', 'Sevimli', 'Sıcak'];
+    const nouns = ['Yıldız', 'Çiçek', 'Peri', 'Rüzgar', 'Işık'];
+    const randomName = `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${nouns[Math.floor(Math.random() * nouns.length)]}`;
+    setName(randomName);
+    setIsAnonymous(true);
+    setRealSender('Ayşenur');
+    setShowSpecialModal(false);
+    setPendingStep3(false);
+    setStep(3);
+  };
+
+  // Special guest chose to reveal as Ayşenur
+  const handleSpecialSendAsAysenur = () => {
+    setName('Ayşenur');
+    setIsAnonymous(false);
+    setRealSender('Ayşenur');
+    setShowSpecialModal(false);
+    setPendingStep3(false);
     setStep(3);
   };
 
@@ -277,15 +315,14 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
       scale: 1,
       stemAngle: 0,
       stemType: selectedStemType,
-      stemColor: selectedStemColor
+      stemColor: selectedStemColor,
+      // approved: realSender (Ayşenur) → auto-approve (1), others → pending (0)
+      approved: realSender ? 1 : 0,
+      realSender: realSender || null
     };
 
     try {
-      confetti({
-        particleCount: 90,
-        spread: 75,
-        origin: { y: 0.6 }
-      });
+      confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
     } catch (err) {}
 
     onSaveFlower(newFlower);
@@ -294,7 +331,17 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
   if (!isOpen) return null;
 
   return (
-    <div style={styles.overlay} className="animate-fade-in">
+    <>
+      {/* Special Guest Modal (Ayşenur/Lukac detection) */}
+      <SpecialGuestModal
+        isOpen={showSpecialModal}
+        onClose={() => { setShowSpecialModal(false); setPendingStep3(false); }}
+        detectedName={name}
+        onSendAsAnonymous={handleSpecialSendAnonymous}
+        onSendAsAysenur={handleSpecialSendAsAysenur}
+      />
+
+      <div style={styles.overlay} className="animate-fade-in">
       <div style={styles.modalCard} className="glass-card-light animate-slide-up">
         {/* Header with Stepper Progress */}
         <div style={styles.header}>
@@ -602,6 +649,7 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
         )}
       </div>
     </div>
+    </>
   );
 }
 

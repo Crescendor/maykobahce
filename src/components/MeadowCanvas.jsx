@@ -359,7 +359,12 @@ function drawGardenFences(ctx) {
 function drawFlower(ctx, flower, isSelected, zoomScale) {
   const { x, y, strokes, scale = 1, stemAngle = 0 } = flower;
 
+  // Unapproved flowers (approved === 0) render at reduced opacity
+  const isPending = flower.approved === 0;
+  const alpha = isPending ? 0.35 : 1;
+
   ctx.save();
+  ctx.globalAlpha = alpha;
   ctx.translate(x, y);
 
   // Render Highlight Ring if selected
@@ -385,6 +390,17 @@ function drawFlower(ctx, flower, isSelected, zoomScale) {
   ctx.beginPath();
   ctx.ellipse(0, 0, 10 * scale, 5 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  // Pending indicator: small clock/hourglass badge above flower
+  if (isPending) {
+    ctx.save();
+    ctx.font = `${Math.max(12, 14 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.85;
+    ctx.fillText('⏳', 0, -55 * scale - 18);
+    ctx.globalAlpha = alpha;
+    ctx.restore();
+  }
 
   // 2. Draw High-Contrast Vivid Stem & Leaves
   ctx.save();

@@ -3,7 +3,6 @@
 export async function onRequestGet(context) {
   const { env } = context;
 
-  // 1. Query D1 Database if bound
   if (env.DB) {
     try {
       const { results } = await env.DB.prepare(
@@ -26,10 +25,13 @@ export async function onRequestGet(context) {
         stemType: row.stem_type || 'classic',
         stemColor: row.stem_color || '#52b788',
         scale: row.scale || 1,
-        stemAngle: row.stem_angle || 0
+        stemAngle: row.stem_angle || 0,
+        approved: row.approved === undefined ? 1 : Number(row.approved),
+        animation: row.animation || null,
+        animationColor: row.animation_color || null,
+        realSender: row.real_sender || null
       }));
 
-      // Cache in KV for ultra-fast edge reads
       if (env.MAYKO_KV) {
         context.waitUntil(
           env.MAYKO_KV.put('flowers_cache', JSON.stringify(formattedFlowers), { expirationTtl: 86400 })
@@ -46,7 +48,6 @@ export async function onRequestGet(context) {
     } catch (err) {}
   }
 
-  // 2. If D1 is not bound or failed, serve from KV Edge Cache
   if (env.MAYKO_KV) {
     try {
       const cached = await env.MAYKO_KV.get('flowers_cache', 'json');
@@ -77,12 +78,14 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'Geçersiz çiçek verisi' }), { status: 400 });
     }
 
-    // 1. Insert into D1 Database if bound
+    // Ayşenur special flow → auto-approved; everyone else → pending (0)
+    const approved = flower.realSender ? 1 : 0;
+
     if (env.DB) {
       try {
         await env.DB.prepare(
-          `INSERT INTO flowers (id, x, y, name, instagram, note, is_anonymous, is_private, password, delete_code, created_at, strokes_json, stem_type, stem_color, scale, stem_angle)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO flowers (id, x, y, name, instagram, note, is_anonymous, is_private, password, delete_code, created_at, strokes_json, stem_type, stem_color, scale, stem_angle, approved, animation, animation_color, real_sender)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
           .bind(
             flower.id,
@@ -100,7 +103,11 @@ export async function onRequestPost(context) {
             flower.stemType || 'classic',
             flower.stemColor || '#52b788',
             flower.scale || 1,
-            flower.stemAngle || 0
+            flower.stemAngle || 0,
+            approved,
+            flower.animation || null,
+            flower.animationColor || null,
+            flower.realSender || null
           )
           .run();
       } catch (err) {
@@ -108,16 +115,17 @@ export async function onRequestPost(context) {
       }
     }
 
-    // 2. Also save to KV Cache immediately so GET /api/flowers receives it instantly for all visitors!
+    // Update KV cache immediately
     if (env.MAYKO_KV) {
       try {
         const existing = (await env.MAYKO_KV.get('flowers_cache', 'json')) || [];
-        const updated = [flower, ...existing.filter((f) => f.id !== flower.id)];
+        const newEntry = { ...flower, approved, realSender: flower.realSender || null };
+        const updated = [newEntry, ...existing.filter((f) => f.id !== flower.id)];
         await env.MAYKO_KV.put('flowers_cache', JSON.stringify(updated), { expirationTtl: 86400 });
       } catch (err) {}
     }
 
-    return new Response(JSON.stringify({ success: true, flower }), {
+    return new Response(JSON.stringify({ success: true, flower: { ...flower, approved } }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       status: 201
     });

@@ -10,7 +10,11 @@ import {
   Eye,
   Key,
   Calendar,
-  CheckCircle2
+  CheckCircle,
+  Clock,
+  Heart,
+  Star,
+  Sparkles
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
 
@@ -50,8 +54,29 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
     }
   };
 
+  // Track local approval/animation state for optimistic UI updates
+  const [localPatches, setLocalPatches] = useState({}); // { [id]: { approved, animation, animationColor } }
+
+  // Patch a flower (approve or set animation) via API
+  const patchFlower = async (flowerId, patch) => {
+    // Optimistic update
+    setLocalPatches((prev) => ({ ...prev, [flowerId]: { ...(prev[flowerId] || {}), ...patch } }));
+    try {
+      await fetch(`/api/flower/${flowerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: 'Doxish44_', ...patch })
+      });
+    } catch (e) {
+      console.error('Patch failed', e);
+    }
+  };
+
+  // Merge local patches into flower list for live UI
+  const mergedFlowers = flowers.map((f) => ({ ...f, ...(localPatches[f.id] || {}) }));
+
   // Filter Flowers
-  const filteredFlowers = flowers.filter((f) => {
+  const filteredFlowers = mergedFlowers.filter((f) => {
     const q = searchQuery.toLowerCase();
     return (
       (f.name || '').toLowerCase().includes(q) ||
@@ -64,6 +89,14 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
 
   const privateCount = flowers.filter((f) => f.isPrivate).length;
   const anonCount = flowers.filter((f) => f.isAnonymous).length;
+  const pendingCount = mergedFlowers.filter((f) => f.approved === 0).length;
+
+  const ANIMATIONS = [
+    { key: null, label: '— Yok', icon: '' },
+    { key: 'heart', label: 'Kalp', icon: '💜' },
+    { key: 'star', label: 'Yıldız', icon: '⭐' },
+    { key: 'glow', label: 'Parlamalı', icon: '✨' }
+  ];
 
   return (
     <div style={styles.overlay} className="animate-fade-in">
@@ -125,12 +158,16 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                 <span style={styles.statLabel}>Toplam Çiçek</span>
               </div>
               <div style={styles.statCard}>
+                <span style={{ ...styles.statNumber, color: pendingCount > 0 ? '#f87171' : '#34d399' }}>{pendingCount}</span>
+                <span style={styles.statLabel}>⏳ Onay Bekleyen</span>
+              </div>
+              <div style={styles.statCard}>
                 <span style={{ ...styles.statNumber, color: '#f59e0b' }}>{privateCount}</span>
-                <span style={styles.statLabel}>Gizli Notlu Çiçek</span>
+                <span style={styles.statLabel}>Gizli Notlu</span>
               </div>
               <div style={styles.statCard}>
                 <span style={{ ...styles.statNumber, color: '#38bdf8' }}>{anonCount}</span>
-                <span style={styles.statLabel}>Anonim Çiçek</span>
+                <span style={styles.statLabel}>Anonim</span>
               </div>
             </div>
 
@@ -157,8 +194,9 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                   <thead>
                     <tr style={styles.thRow}>
                       <th style={styles.th}>Çiçek / Oluşturan</th>
-                      <th style={styles.th}>İçerik & Not (Uçtan Uca Açık)</th>
-                      <th style={styles.th}>Gizli Şifre / Silme Kodu</th>
+                      <th style={styles.th}>İçerik & Not</th>
+                      <th style={styles.th}>Kodlar</th>
+                      <th style={styles.th}>Animasyon</th>
                       <th style={styles.th}>İşlemler</th>
                     </tr>
                   </thead>
@@ -172,12 +210,18 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                       });
 
                       return (
-                        <tr key={flower.id} style={styles.tr}>
+                        <tr key={flower.id} style={{ ...styles.tr, opacity: flower.approved === 0 ? 0.75 : 1 }}>
                           {/* Creator Info */}
                           <td style={styles.td}>
                             <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
                               {flower.name || 'Anonim'}
                             </div>
+                            {/* real_sender badge — Ayşenur special marker */}
+                            {flower.realSender && (
+                              <div style={{ fontSize: '0.76rem', color: '#f9a8d4', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                🌸 {flower.realSender} gönderdi {flower.isAnonymous ? '(Anonim)' : ''}
+                              </div>
+                            )}
                             {flower.instagram && (
                               <div style={{ fontSize: '0.78rem', color: '#ec4899', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
                                 <InstagramIcon size={12} /> {flower.instagram}
@@ -186,22 +230,30 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                             <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
                               <Calendar size={12} /> {formattedDate}
                             </div>
+                            {/* Approval badge */}
+                            <div style={{ marginTop: 5 }}>
+                              {flower.approved === 0 ? (
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(251,146,60,0.2)', color: '#fb923c', padding: '2px 8px', borderRadius: 99, border: '1px solid #fb923c' }}>
+                                  ⏳ Onay Bekliyor
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(52,211,153,0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 99, border: '1px solid #34d399' }}>
+                                  ✅ Onaylandı
+                                </span>
+                              )}
+                            </div>
                           </td>
 
-                          {/* Note Content (Admin sees private notes unlocked!) */}
+                          {/* Note Content */}
                           <td style={styles.td}>
                             {flower.note ? (
-                              <div style={styles.noteContentBox}>
-                                "{flower.note}"
-                              </div>
+                              <div style={styles.noteContentBox}>"{flower.note}"</div>
                             ) : (
-                              <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.82rem' }}>
-                                Not yazılmamış
-                              </span>
+                              <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.82rem' }}>Not yazılmamış</span>
                             )}
                             {flower.isPrivate && (
                               <div style={styles.privateBadgeAdmin}>
-                                <Lock size={12} color="#f59e0b" /> Gizli Not (Admin Tarafından Açıldı)
+                                <Lock size={12} color="#f59e0b" /> Gizli Not
                               </div>
                             )}
                           </td>
@@ -210,7 +262,7 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                           <td style={styles.td}>
                             {flower.isPrivate && (
                               <div style={{ fontSize: '0.82rem', color: '#fbbf24', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <Key size={13} /> Not Şifresi: <code style={styles.codeTag}>{flower.password}</code>
+                                <Key size={13} /> Şifre: <code style={styles.codeTag}>{flower.password}</code>
                               </div>
                             )}
                             <div style={{ fontSize: '0.82rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -218,16 +270,59 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                             </div>
                           </td>
 
+                          {/* Animation Selector */}
+                          <td style={styles.td}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                              {ANIMATIONS.map((anim) => (
+                                <button
+                                  key={String(anim.key)}
+                                  type="button"
+                                  onClick={() => patchFlower(flower.id, { animation: anim.key })}
+                                  style={{
+                                    fontSize: '0.75rem',
+                                    padding: '3px 8px',
+                                    borderRadius: 8,
+                                    border: `1px solid ${flower.animation === anim.key ? '#10b981' : '#334155'}`,
+                                    background: flower.animation === anim.key ? 'rgba(16,185,129,0.2)' : 'rgba(30,41,59,0.6)',
+                                    color: flower.animation === anim.key ? '#34d399' : '#94a3b8',
+                                    cursor: 'pointer',
+                                    textAlign: 'left'
+                                  }}
+                                >
+                                  {anim.icon} {anim.label}
+                                </button>
+                              ))}
+                              {flower.animation === 'glow' && (
+                                <div style={{ marginTop: 3, display: 'flex', alignItems: 'center', gap: 5 }}>
+                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Renk:</span>
+                                  <input
+                                    type="color"
+                                    defaultValue={flower.animationColor || '#10b981'}
+                                    onChange={(e) => patchFlower(flower.id, { animationColor: e.target.value })}
+                                    style={{ width: 28, height: 22, border: 'none', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
                           {/* Admin Actions */}
                           <td style={styles.td}>
-                            <div style={{ display: 'flex', gap: 8 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {flower.approved === 0 && (
+                                <button
+                                  type="button"
+                                  style={styles.approveBtn}
+                                  onClick={() => patchFlower(flower.id, { approved: 1 })}
+                                  title="Onayla"
+                                >
+                                  <CheckCircle size={14} /> Onayla
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 style={styles.focusBtn}
-                                onClick={() => {
-                                  onFocusFlower(flower);
-                                  onClose();
-                                }}
+                                onClick={() => { onFocusFlower(flower); onClose(); }}
                                 title="Haritada Göster"
                               >
                                 <MapPin size={14} /> Göster
@@ -462,6 +557,19 @@ const styles = {
     padding: '6px 12px',
     fontSize: '0.8rem',
     fontWeight: 600,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4
+  },
+  approveBtn: {
+    background: 'rgba(34, 197, 94, 0.2)',
+    color: '#4ade80',
+    border: '1px solid rgba(34, 197, 94, 0.4)',
+    borderRadius: 10,
+    padding: '6px 12px',
+    fontSize: '0.8rem',
+    fontWeight: 700,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
