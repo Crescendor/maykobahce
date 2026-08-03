@@ -41,19 +41,15 @@ export function addPendingId(id) {
     localStorage.setItem(PENDING_IDS_KEY, JSON.stringify(map));
   } catch (e) {}
 }
-// Returns Set of pending IDs that are < 3 min old AND still not confirmed by remote
+// Returns Set of pending IDs created locally that are still not confirmed by remote
 function getActivePendingIds(remoteIds) {
   const map = loadPendingMap();
-  const now = Date.now();
   const kept = {};
   const active = new Set();
   for (const [id, ts] of Object.entries(map)) {
-    if (now - ts < 3 * 60 * 1000) { // 3 minutes grace
-      if (!remoteIds.has(id)) {
-        kept[id] = ts;   // still not in D1, keep waiting
-        active.add(id);
-      }
-      // if remoteIds has it → confirmed, drop from pending
+    if (!remoteIds.has(id)) {
+      kept[id] = ts;   // keep local flower on device until remote has it or tombstone deletes it
+      active.add(id);
     }
   }
   localStorage.setItem(PENDING_IDS_KEY, JSON.stringify(kept));

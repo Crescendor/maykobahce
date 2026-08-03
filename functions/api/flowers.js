@@ -2,7 +2,7 @@
 
 async function ensureSchema(db) {
   if (!db) return;
-  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 0').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 1').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation TEXT DEFAULT NULL').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation_color TEXT DEFAULT NULL').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN real_sender TEXT DEFAULT NULL').run(); } catch (e) {}
@@ -102,8 +102,8 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'Geçersiz çiçek verisi' }), { status: 400 });
     }
 
-    // Ayşenur special flow → auto-approved; everyone else → pending (0)
-    const approved = flower.realSender ? 1 : 0;
+    // All newly planted flowers live immediately (approved = 1)
+    const approved = 1;
 
     if (env.DB) {
       try {
