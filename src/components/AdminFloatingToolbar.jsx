@@ -63,8 +63,8 @@ export default function AdminFloatingToolbar({
         <button
           type="button"
           style={{ ...styles.toolBtn, ...(adminTool === 'move_flower' ? styles.activeToolBtn : {}) }}
-          onClick={() => setAdminTool('move_flower')}
-          title="Çiçekleri ve PNG Görsellerini Taşı"
+          onClick={() => setAdminTool(adminTool === 'move_flower' ? null : 'move_flower')}
+          title="Çiçekleri ve PNG Görsellerini Taşı (Tekrar basarak kapatın)"
         >
           <Move size={15} /> Taşı
         </button>
@@ -72,8 +72,8 @@ export default function AdminFloatingToolbar({
         <button
           type="button"
           style={{ ...styles.toolBtn, ...(adminTool === 'draw' ? styles.activeToolBtn : {}) }}
-          onClick={() => setAdminTool('draw')}
-          title="Harita Üzerine Serbest Çizim Yap"
+          onClick={() => setAdminTool(adminTool === 'draw' ? null : 'draw')}
+          title="Harita Üzerine Serbest Çizim Yap (Tekrar basarak kapatın)"
         >
           <Paintbrush size={15} /> Çizim
         </button>
@@ -81,8 +81,8 @@ export default function AdminFloatingToolbar({
         <button
           type="button"
           style={{ ...styles.toolBtn, ...(adminTool === 'text' ? styles.activeToolBtn : {}) }}
-          onClick={() => setAdminTool('text')}
-          title="Haritaya Yazı Metni Ekle"
+          onClick={() => setAdminTool(adminTool === 'text' ? null : 'text')}
+          title="Haritaya Yazı Metni Ekle (Tekrar basarak kapatın)"
         >
           <Type size={15} /> Yazı Ekle
         </button>
@@ -100,8 +100,8 @@ export default function AdminFloatingToolbar({
         <button
           type="button"
           style={{ ...styles.toolBtn, ...(adminTool === 'delete' ? styles.activeToolBtn : {}) }}
-          onClick={() => setAdminTool('delete')}
-          title="Çiçek, Çizim veya PNG Görseli Sil"
+          onClick={() => setAdminTool(adminTool === 'delete' ? null : 'delete')}
+          title="Çiçek, Çizim veya PNG Görseli Sil (Tekrar basarak kapatın)"
         >
           <Trash2 size={15} /> Sil
         </button>
@@ -179,10 +179,10 @@ export default function AdminFloatingToolbar({
 const styles = {
   container: {
     position: 'fixed',
-    top: 18,
+    bottom: 95,
     left: '50%',
     transform: 'translateX(-50%)',
-    zIndex: 1800,
+    zIndex: 1750,
     display: 'flex',
     alignItems: 'center',
     gap: 10,

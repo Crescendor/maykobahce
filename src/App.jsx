@@ -45,7 +45,7 @@ export default function App() {
   };
 
   // Admin Interactive Mode Tools & State
-  const [adminTool, setAdminTool] = useState('move_flower'); // 'move_flower' | 'draw' | 'text' | 'delete'
+  const [adminTool, setAdminTool] = useState(null); // null (pan) | 'move_flower' | 'draw' | 'text' | 'delete'
   const [adminColor, setAdminColor] = useState('#ffffff');
   const [selectedMeadowObj, setSelectedMeadowObj] = useState(null);
 
