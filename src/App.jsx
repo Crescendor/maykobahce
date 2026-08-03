@@ -31,6 +31,14 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [newlyPlantedFlower, setNewlyPlantedFlower] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
+  // Persist admin auth across sessions
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(
+    () => localStorage.getItem('mayko_admin_auth') === 'true'
+  );
+  const handleAdminAuth = () => {
+    localStorage.setItem('mayko_admin_auth', 'true');
+    setIsAdminAuthenticated(true);
+  };
 
   // Camera Viewport Target for Animated Camera focusing
   const [viewportTarget, setViewportTarget] = useState(null);
@@ -229,6 +237,8 @@ export default function App() {
         }}
         isPlantingMode={isPlantingMode}
         onCancelPlanting={() => setIsPlantingMode(false)}
+        isAdminAuthenticated={isAdminAuthenticated}
+        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       {/* Flag Confirmation Overlay Bar */}
@@ -317,6 +327,7 @@ export default function App() {
         }}
         flowers={flowers}
         onDeleteFlower={handleDeleteFlower}
+        onAdminAuth={handleAdminAuth}
         onFocusFlower={(flower) => {
           setSelectedFlower(flower);
           setViewportTarget({ x: flower.x, y: flower.y, scale: 1.5 });

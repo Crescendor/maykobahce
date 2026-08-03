@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Minus, Compass, Search, Flower, Sparkles } from 'lucide-react';
+import { Plus, Minus, Compass, Search, Flower, Sparkles, ShieldAlert } from 'lucide-react';
 import { MAX_FLOWERS } from '../utils/gardenEngine';
 import MaykoLogo from './MaykoLogo';
 
@@ -11,7 +11,9 @@ export default function GardenHUD({
   onOpenSearch,
   onStartPlanting,
   isPlantingMode,
-  onCancelPlanting
+  onCancelPlanting,
+  isAdminAuthenticated,
+  onOpenAdmin
 }) {
   return (
     <>
@@ -90,6 +92,18 @@ export default function GardenHUD({
         >
           <Search size={22} />
         </button>
+
+        {/* Admin shortcut — only visible after login */}
+        {isAdminAuthenticated && (
+          <button
+            style={{ ...styles.controlBtn, borderColor: 'rgba(245, 158, 11, 0.6)', color: '#fbbf24' }}
+            className="glass-panel"
+            onClick={onOpenAdmin}
+            title="Admin Paneli"
+          >
+            <ShieldAlert size={22} />
+          </button>
+        )}
       </div>
 
       {/* Main Floating Action Button (Bottom Center) */}

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
 
-export default function AdminDashboardModal({ isOpen, onClose, flowers, onDeleteFlower, onFocusFlower }) {
+export default function AdminDashboardModal({ isOpen, onClose, flowers, onDeleteFlower, onFocusFlower, onAdminAuth }) {
   const [passwordInput, setPasswordInput] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState(false);
@@ -35,6 +35,7 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
       });
       if (res.ok) {
         setIsAuthenticated(true);
+        if (onAdminAuth) onAdminAuth(); // persist to App level
         return;
       }
     } catch (err) {
@@ -43,6 +44,7 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
 
     if (passwordInput === 'Doxish44_') {
       setIsAuthenticated(true);
+      if (onAdminAuth) onAdminAuth();
     } else {
       setLoginError(true);
     }
