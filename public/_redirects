@@ -1,3 +1,4 @@
-# Cloudflare Pages SPA & API Routing
-/api/*  /api/*  200
-/*      /index.html  200
+# Cloudflare Pages SPA & Asset Routing
+/assets/*  /assets/:splat  200
+/api/*     /api/:splat     200
+/*         /index.html     200
