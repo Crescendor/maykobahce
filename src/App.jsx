@@ -54,13 +54,13 @@ export default function App() {
 
   // Initialize Flowers & Sync with Cloudflare Edge API
   const syncFlowers = useCallback(async () => {
-    const data = await fetchFlowersFromApi();
+    const data = await fetchFlowersFromApi(isAdminAuthenticated);
     // fetchFlowersFromApi already applies tombstone + pending logic;
     // just replace state directly (remote = source of truth)
     if (data && Array.isArray(data)) {
       setFlowers(data);
     }
-  }, []);
+  }, [isAdminAuthenticated]);
 
   useEffect(() => {
     syncFlowers();

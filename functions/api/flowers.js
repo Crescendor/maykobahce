@@ -9,16 +9,22 @@ async function ensureSchema(db) {
 }
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const adminPassword = url.searchParams.get('adminPassword');
+  const expectedAdminPass = env.ADMIN_PASSWORD || 'Doxish44_';
+  const isAdmin = adminPassword === expectedAdminPass;
 
   if (env.DB) {
     try {
       await ensureSchema(env.DB);
-      const { results } = await env.DB.prepare(
-        'SELECT * FROM flowers ORDER BY created_at DESC LIMIT 3000'
-      ).all();
+      const query = isAdmin
+        ? 'SELECT * FROM flowers ORDER BY created_at DESC LIMIT 3000'
+        : 'SELECT * FROM flowers WHERE approved = 1 OR approved IS NULL ORDER BY created_at DESC LIMIT 3000';
 
-      const formattedFlowers = (results || []).map((row) => ({
+      const { results } = await env.DB.prepare(query).all();
+
+      let formattedFlowers = (results || []).map((row) => ({
         id: row.id,
         x: row.x,
         y: row.y,
@@ -41,7 +47,13 @@ export async function onRequestGet(context) {
         realSender: row.real_sender || null
       }));
 
-      if (env.MAYKO_KV) {
+      // Extra strict safety filter for non-admin public requests
+      if (!isAdmin) {
+        formattedFlowers = formattedFlowers.filter((f) => f.approved === 1);
+      }
+
+      // Only cache public approved flowers in KV
+      if (env.MAYKO_KV && !isAdmin) {
         context.waitUntil(
           env.MAYKO_KV.put('flowers_cache', JSON.stringify(formattedFlowers), { expirationTtl: 86400 })
         );
@@ -50,7 +62,7 @@ export async function onRequestGet(context) {
       return new Response(JSON.stringify(formattedFlowers), {
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=3, s-maxage=5',
+          'Cache-Control': isAdmin ? 'no-cache' : 'public, max-age=3, s-maxage=5',
           'Access-Control-Allow-Origin': '*'
         }
       });
@@ -59,11 +71,12 @@ export async function onRequestGet(context) {
     }
   }
 
-  if (env.MAYKO_KV) {
+  // KV fallback for public requests
+  if (env.MAYKO_KV && !isAdmin) {
     try {
       const cached = await env.MAYKO_KV.get('flowers_cache', 'json');
       if (cached && Array.isArray(cached)) {
-        return new Response(JSON.stringify(cached), {
+        return new Response(JSON.stringify(cached.filter((f) => f.approved === 1)), {
           headers: {
             'Content-Type': 'application/json',
             'Cache-Control': 'public, max-age=3, s-maxage=5',

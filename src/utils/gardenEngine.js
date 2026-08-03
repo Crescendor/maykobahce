@@ -646,24 +646,25 @@ export function saveGardenFlowers(flowers) {
  * Cloudflare Pages Functions API Sync Methods
  */
 
-export async function fetchFlowersFromApi() {
+export async function fetchFlowersFromApi(isAdmin = false) {
   const local = loadGardenFlowers();
   const deleted = loadDeletedIds();
   try {
-    const res = await fetch('/api/flowers');
+    const apiUrl = isAdmin ? '/api/flowers?adminPassword=Doxish44_' : '/api/flowers';
+    const res = await fetch(apiUrl);
     if (res.ok) {
       const remote = await res.json();
       if (Array.isArray(remote)) {
         const remoteIds = new Set(remote.map((f) => f.id));
 
-        // Pending = locally added flowers not yet in D1 (< 3 min old)
+        // Pending = locally added flowers not yet confirmed in D1 (< 3 min old)
         const pendingIds = getActivePendingIds(remoteIds);
 
-        // Remote is THE source of truth. Only exception: pending local flowers.
+        // Remote is THE source of truth. Only exception: pending local flowers on creator's device.
         const map = new Map(
           remote.filter((f) => !deleted.has(f.id)).map((f) => [f.id, f])
         );
-        // Re-attach pending flowers from local state (not yet in D1)
+        // Re-attach pending flowers from local state (only on flower creator's device)
         local.forEach((f) => {
           if (pendingIds.has(f.id) && !deleted.has(f.id)) map.set(f.id, f);
         });
