@@ -380,6 +380,52 @@ export function drawSmoothStroke(ctx, stroke) {
     ctx.globalCompositeOperation = 'source-over';
   }
 
+  const p1 = points[0];
+  const p2 = points[points.length - 1];
+
+  // Straight Line Tool
+  if (stroke.tool === 'line') {
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  // Circle / Ellipse Tool
+  if (stroke.tool === 'circle') {
+    const rx = Math.abs(p2.x - p1.x) / 2;
+    const ry = Math.abs(p2.y - p1.y) / 2;
+    const cx = (p1.x + p2.x) / 2;
+    const cy = (p1.y + p2.y) / 2;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, Math.max(1, rx), Math.max(1, ry), 0, 0, Math.PI * 2);
+    if (stroke.isFilled) {
+      ctx.fill();
+    }
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  // Square / Rectangle Tool
+  if (stroke.tool === 'rect') {
+    const minX = Math.min(p1.x, p2.x);
+    const minY = Math.min(p1.y, p2.y);
+    const w = Math.abs(p2.x - p1.x);
+    const h = Math.abs(p2.y - p1.y);
+    ctx.beginPath();
+    ctx.rect(minX, minY, w, h);
+    if (stroke.isFilled) {
+      ctx.fill();
+    }
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  // Freehand Brush
   ctx.beginPath();
 
   if (points.length === 1) {

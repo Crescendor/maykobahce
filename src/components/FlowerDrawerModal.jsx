@@ -12,7 +12,11 @@ import {
   Paintbrush,
   ArrowRight,
   ArrowLeft,
-  ShieldCheck
+  ShieldCheck,
+  Minus,
+  Circle,
+  Square,
+  Palette
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
 import SpecialGuestModal, { isSpecialGuest } from './SpecialGuestModal';
@@ -30,7 +34,7 @@ import {
 
 const FLORAL_COLORS = [
   '#FF4D6D', '#FF758F', '#FFB3C6', '#FFB703', '#FB8500',
-  '#9D4EDD', '#7209B7', '#4CC9F0', '#06D6A0', '#FFFFFF'
+  '#9D4EDD', '#7209B7', '#4CC9F0', '#06D6A0', '#FFFFFF', '#000000'
 ];
 
 const AI_API_KEY = ['AQ', 'Ab8RN6IYF9hR_BReOZ2Ds6F02', '123AveNJuTyNfVpd0498W0Bg'].join('.');
@@ -231,6 +235,8 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
   // Drawing Tools State
   const [currentColor, setCurrentColor] = useState('#FF4D6D');
   const [brushSize, setBrushSize] = useState(12);
+  const [activeTool, setActiveTool] = useState('brush'); // 'brush' | 'line' | 'circle' | 'rect'
+  const [isFilled, setIsFilled] = useState(false);
   const [strokes, setStrokes] = useState([]);
   const [currentStroke, setCurrentStroke] = useState(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -405,11 +411,17 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     return { x, y };
   };
 
-  // Start Drawing Brush Stroke
+  // Start Drawing Brush Stroke or Shape
   const handleStartDraw = (e) => {
     e.preventDefault();
     const pt = getCanvasCoords(e);
-    const newStroke = { tool: 'brush', color: currentColor, size: brushSize, points: [pt] };
+    const newStroke = {
+      tool: activeTool,
+      color: currentColor,
+      size: brushSize,
+      isFilled: isFilled,
+      points: [pt, pt]
+    };
     setCurrentStroke(newStroke);
     redrawCanvas([...strokes, newStroke]);
   };
@@ -418,9 +430,17 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     if (!currentStroke) return;
     e.preventDefault();
     const pt = getCanvasCoords(e);
+
+    let updatedPoints;
+    if (activeTool === 'brush') {
+      updatedPoints = [...currentStroke.points, pt];
+    } else {
+      updatedPoints = [currentStroke.points[0], pt];
+    }
+
     const updatedStroke = {
       ...currentStroke,
-      points: [...currentStroke.points, pt]
+      points: updatedPoints
     };
     setCurrentStroke(updatedStroke);
     redrawCanvas([...strokes, updatedStroke]);
@@ -609,16 +629,125 @@ function b64(str) {
               />
             </div>
 
-            {/* Petal Color Swatches */}
-            <div className="color-picker-grid" style={{ marginTop: 14 }}>
+            {/* Drawing Tools & Shapes Selector */}
+            <div style={styles.drawingToolRow}>
+              <div style={styles.toolPillsGroup}>
+                <button
+                  type="button"
+                  style={{ ...styles.toolBtn, ...(activeTool === 'brush' ? styles.activeToolBtn : {}) }}
+                  onClick={() => setActiveTool('brush')}
+                  title="Fırça (Serbest)"
+                >
+                  <Paintbrush size={14} /> Fırça
+                </button>
+                <button
+                  type="button"
+                  style={{ ...styles.toolBtn, ...(activeTool === 'line' ? styles.activeToolBtn : {}) }}
+                  onClick={() => setActiveTool('line')}
+                  title="Düz Çizgi"
+                >
+                  <Minus size={14} /> Çizgi
+                </button>
+                <button
+                  type="button"
+                  style={{ ...styles.toolBtn, ...(activeTool === 'circle' ? styles.activeToolBtn : {}) }}
+                  onClick={() => setActiveTool('circle')}
+                  title="Daire"
+                >
+                  <Circle size={14} /> Daire
+                </button>
+                <button
+                  type="button"
+                  style={{ ...styles.toolBtn, ...(activeTool === 'rect' ? styles.activeToolBtn : {}) }}
+                  onClick={() => setActiveTool('rect')}
+                  title="Kare"
+                >
+                  <Square size={14} /> Kare
+                </button>
+
+                {(activeTool === 'circle' || activeTool === 'rect') && (
+                  <button
+                    type="button"
+                    style={{ ...styles.toolBtn, ...(isFilled ? styles.activeToolBtn : {}) }}
+                    onClick={() => setIsFilled(!isFilled)}
+                    title={isFilled ? 'İçi Dolu' : 'İçi Boş'}
+                  >
+                    {isFilled ? '🔳 Dolu' : '🔲 Boş'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Thickness / Size Slider */}
+            <div style={styles.thicknessRow}>
+              <span style={{ fontSize: '0.76rem', color: '#475569', fontWeight: 700, minWidth: 64 }}>
+                İncelik: {brushSize}px
+              </span>
+              <input
+                type="range"
+                min="2"
+                max="36"
+                value={brushSize}
+                onChange={(e) => setBrushSize(Number(e.target.value))}
+                style={{ flex: 1, accentColor: '#10b981', cursor: 'pointer' }}
+              />
+              <div style={{ display: 'flex', gap: 3 }}>
+                {[4, 12, 24, 36].map((sz) => (
+                  <button
+                    key={sz}
+                    type="button"
+                    onClick={() => setBrushSize(sz)}
+                    style={{
+                      ...styles.presetPill,
+                      ...(brushSize === sz ? styles.activePresetPill : {})
+                    }}
+                  >
+                    {sz}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Petal Color Swatches + Custom Color Picker */}
+            <div className="color-picker-grid" style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
               {FLORAL_COLORS.map((c) => (
                 <div
                   key={c}
                   className={`color-swatch ${currentColor === c ? 'active' : ''}`}
-                  style={{ backgroundColor: c }}
+                  style={{
+                    backgroundColor: c,
+                    border: c === '#FFFFFF' ? '1.5px solid #cbd5e1' : c === '#000000' ? '1.5px solid #334155' : 'none'
+                  }}
                   onClick={() => setCurrentColor(c)}
+                  title={c === '#000000' ? 'Siyah' : c}
                 />
               ))}
+
+              {/* Custom Color Picker Button */}
+              <label
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: '50%',
+                  background: 'conic-gradient(from 0deg, red, yellow, lime, aqua, blue, magenta, red)',
+                  border: '2px solid #ffffff',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  position: 'relative'
+                }}
+                title="Özel Renk Seçici (Color Picker)"
+              >
+                <input
+                  type="color"
+                  value={currentColor}
+                  onChange={(e) => setCurrentColor(e.target.value)}
+                  style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                />
+                <Palette size={15} color="#ffffff" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
+              </label>
             </div>
 
             {/* AI Flower Generator Button */}
@@ -964,6 +1093,63 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center'
+  },
+  drawingToolRow: {
+    width: '100%',
+    marginTop: 10,
+    marginBottom: 6
+  },
+  toolPillsGroup: {
+    display: 'flex',
+    gap: 6,
+    justifyContent: 'center',
+    flexWrap: 'wrap'
+  },
+  toolBtn: {
+    padding: '6px 12px',
+    borderRadius: 10,
+    border: '1.5px solid #cbd5e1',
+    background: '#ffffff',
+    color: '#475569',
+    fontSize: '0.8rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    transition: 'all 0.15s ease'
+  },
+  activeToolBtn: {
+    background: '#10b981',
+    color: '#ffffff',
+    borderColor: '#059669',
+    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+  },
+  thicknessRow: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+    background: 'rgba(241, 245, 249, 0.8)',
+    padding: '8px 12px',
+    borderRadius: 12,
+    border: '1px solid #e2e8f0'
+  },
+  presetPill: {
+    padding: '3px 8px',
+    borderRadius: 6,
+    border: '1px solid #cbd5e1',
+    background: '#ffffff',
+    color: '#64748b',
+    fontSize: '0.74rem',
+    fontWeight: 700,
+    cursor: 'pointer'
+  },
+  activePresetPill: {
+    background: '#10b981',
+    color: '#ffffff',
+    borderColor: '#059669'
   },
   aiGenerateBtn: {
     width: '100%',
