@@ -20,9 +20,25 @@ export default function MeadowCanvas({
   meadowObjects,
   onAddMeadowObject,
   onDeleteMeadowObject,
-  onDeleteFlower
+  onDeleteFlower,
+  selectedMeadowObjId,
+  onSelectMeadowObj,
+  onUpdateMeadowObjPos
 }) {
   const canvasRef = useRef(null);
+  const imageCacheRef = useRef(new Map());
+
+  // Image caching helper
+  const getCachedImage = (src) => {
+    if (!src) return null;
+    if (imageCacheRef.current.has(src)) {
+      return imageCacheRef.current.get(src);
+    }
+    const img = new Image();
+    img.src = src;
+    imageCacheRef.current.set(src, img);
+    return img;
+  };
 
   // Viewport transform state
   const [transform, setTransform] = useState({
@@ -44,6 +60,10 @@ export default function MeadowCanvas({
   const isDraggingFlowerRef = useRef(false);
   const draggedFlowerIdRef = useRef(null);
   const draggedFlowerOffsetRef = useRef({ x: 0, y: 0 });
+
+  const isDraggingMeadowObjRef = useRef(false);
+  const draggedMeadowObjIdRef = useRef(null);
+  const draggedMeadowObjOffsetRef = useRef({ x: 0, y: 0 });
 
   const isDrawingMeadowRef = useRef(false);
   const currentMeadowStrokeRef = useRef(null);
@@ -142,7 +162,7 @@ export default function MeadowCanvas({
     // 2. Render Wooden Fence Perimeter
     drawGardenFences(ctx);
 
-    // 3. Render Custom Admin Meadow Objects (Strokes & Text Labels)
+    // 3. Render Custom Admin Meadow Objects (Strokes, Text Labels & PNG Stickers)
     if (meadowObjects && meadowObjects.length > 0) {
       meadowObjects.forEach((obj) => {
         if (obj.type === 'stroke') {
@@ -155,6 +175,25 @@ export default function MeadowCanvas({
           ctx.shadowBlur = 8;
           ctx.fillText(obj.text, obj.x, obj.y);
           ctx.restore();
+        } else if (obj.type === 'image') {
+          const img = getCachedImage(obj.imageUrl);
+          if (img && img.complete && img.naturalWidth > 0) {
+            ctx.save();
+            const w = (obj.width || 160) * (obj.scale || 1);
+            const h = (obj.height || (w * (img.naturalHeight / img.naturalWidth))) * (obj.scale || 1);
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 10;
+            ctx.drawImage(img, obj.x - w / 2, obj.y - h / 2, w, h);
+
+            if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+              ctx.strokeStyle = '#38bdf8';
+              ctx.lineWidth = 3;
+              ctx.setLineDash([6, 6]);
+              ctx.strokeRect(obj.x - w / 2 - 4, obj.y - h / 2 - 4, w + 8, h + 8);
+              ctx.setLineDash([]);
+            }
+            ctx.restore();
+          }
         }
       });
     }
@@ -180,7 +219,7 @@ export default function MeadowCanvas({
     }
 
     ctx.restore();
-  }, [flowers, selectedFlower, pendingPlantPosition, meadowObjects]);
+  }, [flowers, selectedFlower, pendingPlantPosition, meadowObjects, selectedMeadowObjId, isAdminAuthenticated]);
 
   // Continuous animation frame loop for smooth wind sway & animations
   useEffect(() => {
@@ -225,6 +264,34 @@ export default function MeadowCanvas({
     const clickY = e.clientY - rect.top;
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
+
+    // Check hit on PNG sticker or meadow object first
+    let hitMeadowObj = null;
+    if (isAdminAuthenticated && meadowObjects && meadowObjects.length > 0) {
+      hitMeadowObj = meadowObjects.slice().reverse().find((o) => {
+        if (o.type === 'image') {
+          const w = (o.width || 160) * (o.scale || 1);
+          const h = (o.height || 160) * (o.scale || 1);
+          return Math.abs(o.x - worldX) < w / 2 && Math.abs(o.y - worldY) < h / 2;
+        }
+        if (o.type === 'text') {
+          return Math.hypot(o.x - worldX, o.y - worldY) < 40;
+        }
+        return false;
+      });
+    }
+
+    if (isAdminAuthenticated && adminTool === 'move_flower' && hitMeadowObj) {
+      isDraggingMeadowObjRef.current = true;
+      draggedMeadowObjIdRef.current = hitMeadowObj.id;
+      draggedMeadowObjOffsetRef.current = {
+        x: hitMeadowObj.x - worldX,
+        y: hitMeadowObj.y - worldY
+      };
+      if (onSelectMeadowObj) onSelectMeadowObj(hitMeadowObj);
+      isDraggingRef.current = false;
+      return;
+    }
 
     // Check hit on any flower
     let hitFlower = null;
@@ -276,7 +343,17 @@ export default function MeadowCanvas({
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
 
-    // 1. Dragging Flower Position
+    // 1. Dragging PNG Image or Text Meadow Object Position
+    if (isDraggingMeadowObjRef.current && draggedMeadowObjIdRef.current) {
+      const newX = Math.round(worldX + draggedMeadowObjOffsetRef.current.x);
+      const newY = Math.round(worldY + draggedMeadowObjOffsetRef.current.y);
+      if (onUpdateMeadowObjPos) {
+        onUpdateMeadowObjPos(draggedMeadowObjIdRef.current, newX, newY);
+      }
+      return;
+    }
+
+    // 2. Dragging Flower Position
     if (isDraggingFlowerRef.current && draggedFlowerIdRef.current) {
       const newX = Math.round(worldX + draggedFlowerOffsetRef.current.x);
       const newY = Math.round(worldY + draggedFlowerOffsetRef.current.y);
@@ -286,13 +363,13 @@ export default function MeadowCanvas({
       return;
     }
 
-    // 2. Drawing on Meadow Canvas
+    // 3. Drawing on Meadow Canvas
     if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
       currentMeadowStrokeRef.current.points.push({ x: worldX, y: worldY });
       return;
     }
 
-    // 3. Camera Panning
+    // 4. Camera Panning
     if (!isDraggingRef.current) return;
 
     const dx = e.clientX - dragStartRef.current.x;
@@ -316,7 +393,14 @@ export default function MeadowCanvas({
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
 
-    // 1. Finish Dragging Flower
+    // 1. Finish Dragging Meadow Object (PNG / Text)
+    if (isDraggingMeadowObjRef.current && draggedMeadowObjIdRef.current) {
+      isDraggingMeadowObjRef.current = false;
+      draggedMeadowObjIdRef.current = null;
+      return;
+    }
+
+    // 2. Finish Dragging Flower
     if (isDraggingFlowerRef.current && draggedFlowerIdRef.current) {
       isDraggingFlowerRef.current = false;
       const finalX = Math.round(worldX + draggedFlowerOffsetRef.current.x);
@@ -328,7 +412,7 @@ export default function MeadowCanvas({
       return;
     }
 
-    // 2. Finish Meadow Freehand Drawing
+    // 3. Finish Meadow Freehand Drawing
     if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
       isDrawingMeadowRef.current = false;
       if (onAddMeadowObject) {

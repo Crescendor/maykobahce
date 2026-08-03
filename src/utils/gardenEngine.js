@@ -774,3 +774,34 @@ export async function patchFlowerToApi(flowerId, updates, adminPassword = '') {
   return null;
 }
 
+export async function fetchMeadowObjectsFromApi() {
+  try {
+    const res = await fetch('/api/meadow-objects');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn('API fetch meadow objects error:', e);
+  }
+  return null;
+}
+
+export async function publishMeadowObjectsToApi(objects, adminPassword = '') {
+  try {
+    const res = await fetch('/api/meadow-objects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ objects, adminPassword })
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('API publish meadow objects error:', e);
+  }
+  return null;
+}
+

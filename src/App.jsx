@@ -19,7 +19,9 @@ import {
   patchFlowerToApi,
   addDeletedId,
   loadDeletedIds,
-  addPendingId
+  addPendingId,
+  fetchMeadowObjectsFromApi,
+  publishMeadowObjectsToApi
 } from './utils/gardenEngine';
 
 export default function App() {
@@ -45,6 +47,8 @@ export default function App() {
   // Admin Interactive Mode Tools & State
   const [adminTool, setAdminTool] = useState('move_flower'); // 'move_flower' | 'draw' | 'text' | 'delete'
   const [adminColor, setAdminColor] = useState('#ffffff');
+  const [selectedMeadowObj, setSelectedMeadowObj] = useState(null);
+
   const [meadowObjects, setMeadowObjects] = useState(() => {
     try {
       const s = localStorage.getItem('mayko_meadow_objects_v1');
@@ -52,6 +56,21 @@ export default function App() {
     } catch (e) {}
     return [];
   });
+
+  // Sync Published Meadow Objects from Cloudflare Edge API for all visitors
+  const syncMeadowObjects = useCallback(async () => {
+    const data = await fetchMeadowObjectsFromApi();
+    if (data && Array.isArray(data)) {
+      setMeadowObjects(data);
+      try {
+        localStorage.setItem('mayko_meadow_objects_v1', JSON.stringify(data));
+      } catch (e) {}
+    }
+  }, []);
+
+  useEffect(() => {
+    syncMeadowObjects();
+  }, [syncMeadowObjects]);
 
   const saveMeadowObjects = (objs) => {
     setMeadowObjects(objs);
@@ -64,13 +83,66 @@ export default function App() {
     saveMeadowObjects([...meadowObjects, newObj]);
   };
 
+  const handleAddPngSticker = (imageUrl) => {
+    const newSticker = {
+      id: `obj-${Date.now()}`,
+      type: 'image',
+      imageUrl,
+      x: GARDEN_SIZE / 2,
+      y: GARDEN_SIZE / 2,
+      width: 180,
+      height: 180,
+      scale: 1
+    };
+    saveMeadowObjects([...meadowObjects, newSticker]);
+    setSelectedMeadowObj(newSticker);
+    setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 1.2 });
+    showToast('PNG görsel haritaya eklendi! Taşıyabilir ve boyutunu ayarlayabilirsiniz. 🖼️');
+  };
+
+  const handleUpdateMeadowObjPos = (objId, x, y) => {
+    setMeadowObjects((prev) => {
+      const updated = prev.map((o) => (o.id === objId ? { ...o, x, y } : o));
+      try {
+        localStorage.setItem('mayko_meadow_objects_v1', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleUpdateSelectedImageSize = (newWidth) => {
+    if (!selectedMeadowObj) return;
+    setMeadowObjects((prev) => {
+      const updated = prev.map((o) => (o.id === selectedMeadowObj.id ? { ...o, width: newWidth, height: newWidth } : o));
+      try {
+        localStorage.setItem('mayko_meadow_objects_v1', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    setSelectedMeadowObj((prev) => (prev ? { ...prev, width: newWidth, height: newWidth } : null));
+  };
+
   const handleDeleteMeadowObject = (objId) => {
     saveMeadowObjects(meadowObjects.filter((o) => o.id !== objId));
+    if (selectedMeadowObj && selectedMeadowObj.id === objId) {
+      setSelectedMeadowObj(null);
+    }
   };
 
   const handleClearAllMeadowDrawings = () => {
-    if (window.confirm('Harita üzerindeki tüm özel admin çizimlerini silmek istediğinize emin misiniz?')) {
+    if (window.confirm('Harita üzerindeki tüm özel admin çizimlerini ve görselleri silmek istediğinize emin misiniz?')) {
       saveMeadowObjects([]);
+      setSelectedMeadowObj(null);
+    }
+  };
+
+  const handlePublishMeadowObjects = async () => {
+    const adminToken = localStorage.getItem('mayko_admin_token') || '';
+    const res = await publishMeadowObjectsToApi(meadowObjects, adminToken);
+    if (res && res.success) {
+      showToast('🚀 Haritadaki tüm çizimler, yazılar ve PNG görselleri canlıya alındı! Herkes görebilir. 🌐');
+    } else {
+      showToast('⚠️ Canlıya alma başarısız oldu. Lütfen admin şifresini kontrol edin.');
     }
   };
 
@@ -279,6 +351,10 @@ export default function App() {
         onOpenDashboard={() => setIsAdminOpen(true)}
         meadowObjectsCount={meadowObjects.length}
         onClearAllMeadowDrawings={handleClearAllMeadowDrawings}
+        onAddPngSticker={handleAddPngSticker}
+        onPublishMeadowObjects={handlePublishMeadowObjects}
+        selectedImageSize={selectedMeadowObj && selectedMeadowObj.type === 'image' ? selectedMeadowObj.width || 180 : null}
+        onUpdateSelectedImageSize={handleUpdateSelectedImageSize}
       />
 
       {/* Interactive Meadow Canvas */}
@@ -301,6 +377,9 @@ export default function App() {
         onAddMeadowObject={handleAddMeadowObject}
         onDeleteMeadowObject={handleDeleteMeadowObject}
         onDeleteFlower={handleDeleteFlower}
+        selectedMeadowObjId={selectedMeadowObj ? selectedMeadowObj.id : null}
+        onSelectMeadowObj={setSelectedMeadowObj}
+        onUpdateMeadowObjPos={handleUpdateMeadowObjPos}
       />
 
       {/* Floating HUD Controls */}
