@@ -212,6 +212,7 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
   const [currentColor, setCurrentColor] = useState('#FF4D6D');
   const [brushSize, setBrushSize] = useState(12);
   const [strokes, setStrokes] = useState([]);
+  const [currentStroke, setCurrentStroke] = useState(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
 
   const handleGenerateAiFlower = () => {
