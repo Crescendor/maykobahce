@@ -716,3 +716,19 @@ export async function deleteFlowerFromApi(flowerId, deleteCode = '', adminPasswo
   return null;
 }
 
+export async function patchFlowerToApi(flowerId, updates, adminPassword = '') {
+  try {
+    const res = await fetch(`/api/flower/${flowerId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...updates, adminPassword })
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Cloudflare API patch offline, patched locally');
+  }
+  return null;
+}
+

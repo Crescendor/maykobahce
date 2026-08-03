@@ -14,7 +14,9 @@ import {
   Clock,
   Heart,
   Star,
-  Sparkles
+  Sparkles,
+  Edit3,
+  Save
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
 import { drawSmoothStroke, drawStem } from '../utils/gardenEngine';
@@ -94,6 +96,42 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
   const [loginError, setLoginError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [localPatches, setLocalPatches] = useState({}); // optimistic UI: { [id]: { approved, animation, animationColor } }
+  const [editingFlowerId, setEditingFlowerId] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editNote, setEditNote] = useState('');
+  const [editInstagram, setEditInstagram] = useState('');
+
+  const handleStartEdit = (flower) => {
+    const patch = localPatches[flower.id] || {};
+    setEditingFlowerId(flower.id);
+    setEditName(patch.name !== undefined ? patch.name : (flower.name || ''));
+    setEditNote(patch.note !== undefined ? patch.note : (flower.note || ''));
+    setEditInstagram(patch.instagram !== undefined ? patch.instagram : (flower.instagram || ''));
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFlowerId(null);
+  };
+
+  const handleSaveEdit = (flowerId) => {
+    if (onPatchFlower) {
+      onPatchFlower(flowerId, {
+        name: editName,
+        note: editNote,
+        instagram: editInstagram
+      });
+    }
+    setLocalPatches((prev) => ({
+      ...prev,
+      [flowerId]: {
+        ...prev[flowerId],
+        name: editName,
+        note: editNote,
+        instagram: editInstagram
+      }
+    }));
+    setEditingFlowerId(null);
+  };
 
   if (!isOpen) return null;
 
@@ -283,53 +321,111 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                           <td style={styles.td}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                               <FlowerThumbnail flower={flower} />
-                              <div>
-                                <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
-                                  {flower.name || 'Anonim'}
-                                </div>
-                                {/* real_sender badge */}
-                                {flower.realSender && (
-                                  <div style={{ fontSize: '0.76rem', color: '#f9a8d4', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    🌸 {flower.realSender} {b64('Z8O2bmRlcmRp')} {flower.isAnonymous ? b64('KEFub25pbSk=') : ''}
+                              <div style={{ minWidth: 160 }}>
+                                {editingFlowerId === flower.id ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                    <div>
+                                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block' }}>İsim:</span>
+                                      <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        style={styles.inlineEditInput}
+                                        placeholder="İsim girin..."
+                                      />
+                                    </div>
+                                    <div>
+                                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block' }}>Instagram:</span>
+                                      <input
+                                        type="text"
+                                        value={editInstagram}
+                                        onChange={(e) => setEditInstagram(e.target.value)}
+                                        style={styles.inlineEditInput}
+                                        placeholder="@kullanici"
+                                      />
+                                    </div>
                                   </div>
+                                ) : (
+                                  <>
+                                    <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
+                                      {(localPatches[flower.id]?.name !== undefined ? localPatches[flower.id].name : flower.name) || 'Anonim'}
+                                    </div>
+                                    {/* real_sender badge */}
+                                    {flower.realSender && (
+                                      <div style={{ fontSize: '0.76rem', color: '#f9a8d4', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        🌸 {flower.realSender} {b64('Z8O2bmRlcmRp')} {flower.isAnonymous ? b64('KEFub25pbSk=') : ''}
+                                      </div>
+                                    )}
+                                    {(localPatches[flower.id]?.instagram !== undefined ? localPatches[flower.id].instagram : flower.instagram) && (
+                                      <div style={{ fontSize: '0.78rem', color: '#ec4899', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                                        <InstagramIcon size={12} /> {localPatches[flower.id]?.instagram !== undefined ? localPatches[flower.id].instagram : flower.instagram}
+                                      </div>
+                                    )}
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <Calendar size={12} /> {formattedDate}
+                                    </div>
+                                    {/* Approval badge */}
+                                    <div style={{ marginTop: 5 }}>
+                                      {flower.approved === 0 ? (
+                                        <span style={{ fontSize: '0.72rem', background: 'rgba(251,146,60,0.2)', color: '#fb923c', padding: '2px 8px', borderRadius: 99, border: '1px solid #fb923c' }}>
+                                          ⏳ Onay Bekliyor
+                                        </span>
+                                      ) : (
+                                        <span style={{ fontSize: '0.72rem', background: 'rgba(52,211,153,0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 99, border: '1px solid #34d399' }}>
+                                          ✅ Onaylandı
+                                        </span>
+                                      )}
+                                    </div>
+                                  </>
                                 )}
-                                {flower.instagram && (
-                                  <div style={{ fontSize: '0.78rem', color: '#ec4899', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                                    <InstagramIcon size={12} /> {flower.instagram}
-                                  </div>
-                                )}
-                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                  <Calendar size={12} /> {formattedDate}
-                                </div>
-                                {/* Approval badge */}
-                                <div style={{ marginTop: 5 }}>
-                                  {flower.approved === 0 ? (
-                                    <span style={{ fontSize: '0.72rem', background: 'rgba(251,146,60,0.2)', color: '#fb923c', padding: '2px 8px', borderRadius: 99, border: '1px solid #fb923c' }}>
-                                      ⏳ Onay Bekliyor
-                                    </span>
-                                  ) : (
-                                    <span style={{ fontSize: '0.72rem', background: 'rgba(52,211,153,0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 99, border: '1px solid #34d399' }}>
-                                      ✅ Onaylandı
-                                    </span>
-                                  )}
-                                </div>
                               </div>
                             </div>
                           </td>
 
-                          {/* Note Content (Always Visible to Admin) */}
+                          {/* Note Content (Always Visible & Editable to Admin) */}
                           <td style={styles.td}>
-                            {flower.note ? (
-                              <div style={{ ...styles.noteContentBox, borderLeft: flower.isPrivate ? '3px solid #fbbf24' : '3px solid #10b981' }}>
-                                "{flower.note}"
+                            {editingFlowerId === flower.id ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 200 }}>
+                                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Not İletisi:</span>
+                                <textarea
+                                  value={editNote}
+                                  onChange={(e) => setEditNote(e.target.value)}
+                                  rows={3}
+                                  style={styles.inlineEditTextarea}
+                                  placeholder="Not içeriğini yazın..."
+                                />
+                                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                                  <button
+                                    type="button"
+                                    style={styles.saveEditBtn}
+                                    onClick={() => handleSaveEdit(flower.id)}
+                                  >
+                                    <Save size={14} /> Kaydet
+                                  </button>
+                                  <button
+                                    type="button"
+                                    style={styles.cancelEditBtn}
+                                    onClick={handleCancelEdit}
+                                  >
+                                    <X size={14} /> İptal
+                                  </button>
+                                </div>
                               </div>
                             ) : (
-                              <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.82rem' }}>Not yazılmamış</span>
-                            )}
-                            {flower.isPrivate && (
-                              <div style={{ ...styles.privateBadgeAdmin, marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                                <Lock size={12} color="#f59e0b" /> Gizli Not (Şifre: <code style={styles.codeTag}>{flower.password || 'Yok'}</code>)
-                              </div>
+                              <>
+                                {(localPatches[flower.id]?.note !== undefined ? localPatches[flower.id].note : flower.note) ? (
+                                  <div style={{ ...styles.noteContentBox, borderLeft: flower.isPrivate ? '3px solid #fbbf24' : '3px solid #10b981' }}>
+                                    "{localPatches[flower.id]?.note !== undefined ? localPatches[flower.id].note : flower.note}"
+                                  </div>
+                                ) : (
+                                  <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.82rem' }}>Not yazılmamış</span>
+                                )}
+                                {flower.isPrivate && (
+                                  <div style={{ ...styles.privateBadgeAdmin, marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                    <Lock size={12} color="#f59e0b" /> Gizli Not (Şifre: <code style={styles.codeTag}>{flower.password || 'Yok'}</code>)
+                                  </div>
+                                )}
+                              </>
                             )}
                           </td>
 
@@ -384,6 +480,16 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                           {/* Admin Actions */}
                           <td style={styles.td}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {editingFlowerId !== flower.id && (
+                                <button
+                                  type="button"
+                                  style={styles.editBtn}
+                                  onClick={() => handleStartEdit(flower)}
+                                  title="İsim ve Notu Düzenle"
+                                >
+                                  <Edit3 size={14} /> Düzenle
+                                </button>
+                              )}
                               {flower.approved === 0 && (
                                 <button
                                   type="button"
@@ -442,15 +548,15 @@ const styles = {
     padding: 16
   },
   modalCard: {
-    width: '100%',
-    maxWidth: 960,
-    maxHeight: '92vh',
+    width: '96vw',
+    maxWidth: 1380,
+    maxHeight: '94vh',
     overflowY: 'auto',
     borderRadius: 24,
     padding: 24,
-    background: 'rgba(15, 23, 42, 0.95)',
+    background: 'rgba(15, 23, 42, 0.96)',
     border: '1px solid rgba(255, 255, 255, 0.12)',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
   },
   header: {
     display: 'flex',
@@ -498,6 +604,24 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16
+  },
+  loginTitle: {
+    fontSize: '1.3rem',
+    fontWeight: 800,
+    color: '#f8fafc',
+    marginBottom: 6
+  },
+  loginSubtitle: {
+    fontSize: '0.86rem',
+    color: '#94a3b8',
+    marginBottom: 20
+  },
+  loginForm: {
+    width: '100%',
+    maxWidth: 320,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12
   },
   loginInput: {
     width: '100%',
@@ -623,6 +747,65 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 4
+  },
+  editBtn: {
+    background: 'rgba(168, 85, 247, 0.18)',
+    color: '#c084fc',
+    border: '1px solid rgba(168, 85, 247, 0.35)',
+    borderRadius: 10,
+    padding: '6px 12px',
+    fontSize: '0.8rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4
+  },
+  saveEditBtn: {
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: 8,
+    padding: '6px 14px',
+    fontSize: '0.82rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4
+  },
+  cancelEditBtn: {
+    background: 'rgba(51, 65, 85, 0.8)',
+    color: '#cbd5e1',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    padding: '6px 12px',
+    fontSize: '0.82rem',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4
+  },
+  inlineEditInput: {
+    padding: '6px 10px',
+    borderRadius: 8,
+    border: '1px solid rgba(168, 85, 247, 0.4)',
+    background: 'rgba(30, 41, 59, 0.9)',
+    color: '#f8fafc',
+    fontSize: '0.84rem',
+    outline: 'none',
+    width: '100%'
+  },
+  inlineEditTextarea: {
+    width: '100%',
+    padding: '8px 10px',
+    borderRadius: 8,
+    border: '1px solid rgba(168, 85, 247, 0.4)',
+    background: 'rgba(30, 41, 59, 0.9)',
+    color: '#f8fafc',
+    fontSize: '0.84rem',
+    outline: 'none',
+    resize: 'vertical'
   },
   deleteBtn: {
     background: 'rgba(239, 68, 68, 0.15)',

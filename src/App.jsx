@@ -15,6 +15,7 @@ import {
   fetchFlowersFromApi,
   postFlowerToApi,
   deleteFlowerFromApi,
+  patchFlowerToApi,
   addDeletedId,
   loadDeletedIds,
   addPendingId
@@ -46,6 +47,8 @@ export default function App() {
       saveGardenFlowers(updated);
       return updated;
     });
+    const adminToken = localStorage.getItem('mayko_admin_token') || '';
+    patchFlowerToApi(flowerId, patch, adminToken);
   };
 
   // Camera Viewport Target for Animated Camera focusing
@@ -218,6 +221,7 @@ export default function App() {
     window.history.replaceState(null, '', window.location.pathname);
     showToast('Çiçeğiniz bahçeden başarıyla silindi! 🌿');
   };
+
 
   return (
     <div className="app-container">

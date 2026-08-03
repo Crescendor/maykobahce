@@ -6,7 +6,7 @@ export async function onRequestDelete(context) {
 
   try {
     let body = {};
-    try { body = await request.json(); } catch (e) {}
+    try { body = await request.json(); } catch (e) { }
 
     const deleteCode = (body.deleteCode || '').trim().toUpperCase();
     const adminPassword = body.adminPassword || '';
@@ -43,7 +43,7 @@ export async function onRequestDelete(context) {
     if (env.MAYKO_KV) {
       try {
         await env.MAYKO_KV.delete('flowers_cache');
-      } catch (e) {}
+      } catch (e) { }
     }
 
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
@@ -54,10 +54,10 @@ export async function onRequestDelete(context) {
 
 async function ensureSchema(db) {
   if (!db) return;
-  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 0').run(); } catch (e) {}
-  try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation TEXT DEFAULT NULL').run(); } catch (e) {}
-  try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation_color TEXT DEFAULT NULL').run(); } catch (e) {}
-  try { await db.prepare('ALTER TABLE flowers ADD COLUMN real_sender TEXT DEFAULT NULL').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 0').run(); } catch (e) { }
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation TEXT DEFAULT NULL').run(); } catch (e) { }
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation_color TEXT DEFAULT NULL').run(); } catch (e) { }
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN real_sender TEXT DEFAULT NULL').run(); } catch (e) { }
 }
 
 // PATCH /api/flower/[id] — Admin: approve or set animation
@@ -92,7 +92,7 @@ export async function onRequestPatch(context) {
     if (env.MAYKO_KV) {
       try {
         await env.MAYKO_KV.delete('flowers_cache');
-      } catch (e) {}
+      } catch (e) { }
     }
 
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
