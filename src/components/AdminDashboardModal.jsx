@@ -125,21 +125,33 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
 
   if (!isOpen) return null;
 
-  // Handle Admin Login (Server API verification with local fallback)
+  // Handle Admin Login (Client verification + API fallback)
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError(false);
+
+    const inputPass = (passwordInput || '').trim();
+    const expectedPass = 'Doxish44_';
+
+    if (inputPass === expectedPass) {
+      setIsAuthenticated(true);
+      localStorage.setItem('mayko_admin_auth', 'true');
+      localStorage.setItem('mayko_admin_token', inputPass);
+      if (onAdminAuth) onAdminAuth();
+      return;
+    }
 
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: passwordInput })
+        body: JSON.stringify({ password: inputPass })
       });
-      if (res.ok) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data && data.authenticated) {
         setIsAuthenticated(true);
         localStorage.setItem('mayko_admin_auth', 'true');
-        localStorage.setItem('mayko_admin_token', passwordInput);
+        localStorage.setItem('mayko_admin_token', inputPass);
         if (onAdminAuth) onAdminAuth();
         return;
       } else {
