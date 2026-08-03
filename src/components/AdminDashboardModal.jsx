@@ -345,7 +345,7 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                               <button
                                 type="button"
                                 style={styles.deleteBtn}
-                                onClick={() => onDeleteFlower(flower.id)}
+                                onClick={() => onDeleteFlower(flower.id, flower.deleteCode)}
                                 title="Çiçeği Sil"
                               >
                                 <Trash2 size={14} /> Sil
