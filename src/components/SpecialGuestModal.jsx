@@ -84,7 +84,6 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
                 type="password"
                 value={passwordInput}
                 onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
-                placeholder="••••"
                 style={styles.input}
                 autoFocus
               />
@@ -115,6 +114,10 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
               Bu bahçe tamamen senin için yapıldı. Eğer istersen bırakacağın çiçek tamamen anonim olacak.
               Sana rastgele bir ad vereceğim çiçeğini eklerken ve Burak'ın bundan haberi olmayacak.
               İsterim ki sen de sürpriz yap. Yollarınız yine kesiştiğinde bunu gülerek anlatırsın.
+            </p>
+
+            <p style={{ fontSize: '0.92rem', color: '#f472b6', fontWeight: 700, fontStyle: 'italic', margin: '4px 0' }}>
+              Seni her şeyden çok seviyorum. ❤️
             </p>
 
             <p style={styles.welcomeQuestion}>

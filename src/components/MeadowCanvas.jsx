@@ -87,7 +87,7 @@ export default function MeadowCanvas({
   }, [viewportTarget]);
 
   // Main Canvas Render Loop
-  const render = useCallback(() => {
+  const render = useCallback((time = Date.now() / 1000) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -123,10 +123,10 @@ export default function MeadowCanvas({
     // 2. Render Wooden Fence Perimeter
     drawGardenFences(ctx);
 
-    // 3. Render Flowers
+    // 3. Render Flowers (with wind sway & active animations)
     flowers.forEach((flower) => {
       const isSelected = selectedFlower && selectedFlower.id === flower.id;
-      drawFlower(ctx, flower, isSelected, scale);
+      drawFlower(ctx, flower, isSelected, scale, time);
     });
 
     // 4. Render Pending Planting Flag Pin
@@ -137,9 +137,20 @@ export default function MeadowCanvas({
     ctx.restore();
   }, [flowers, selectedFlower, pendingPlantPosition]);
 
+  // Continuous animation frame loop for smooth wind sway & animations
   useEffect(() => {
-    render();
-  }, [render, transform, flowers, selectedFlower, pendingPlantPosition]);
+    let animId;
+    const loop = () => {
+      const time = Date.now() / 1000;
+      render(time);
+      animId = requestAnimationFrame(loop);
+    };
+    loop();
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [render]);
 
   // Handle Wheel Zoom
   const handleWheel = (e) => {
@@ -354,18 +365,39 @@ function drawGardenFences(ctx) {
 }
 
 /**
- * Render a Single Flower (Vivid Visible Stem + Leaves + Custom Petals, NO name labels)
+ * Render a Single Flower (Vivid Visible Stem + Leaves + Custom Petals + Wind Sway & Animations)
  */
-function drawFlower(ctx, flower, isSelected, zoomScale) {
+function drawFlower(ctx, flower, isSelected, zoomScale, time = 0) {
   const { x, y, strokes, scale = 1, stemAngle = 0 } = flower;
 
   // Unapproved flowers (approved === 0) render at reduced opacity
   const isPending = flower.approved === 0;
   const alpha = isPending ? 0.35 : 1;
 
+  // Gentle wind sway calculation based on coordinates & time
+  const windSway = Math.sin(time * 2 + x * 0.04 + y * 0.03) * 0.07;
+  const currentAngle = stemAngle + windSway;
+
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(x, y);
+
+  // Render Glowing Aura Animation if animation === 'glow'
+  if (flower.animation === 'glow') {
+    ctx.save();
+    const color = flower.animationColor || '#10b981';
+    const pulse = 0.5 + 0.5 * Math.sin(time * 4 + x);
+    const radius = (40 + pulse * 22) * scale;
+    const grad = ctx.createRadialGradient(0, -50 * scale, 5 * scale, 0, -50 * scale, radius);
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.6, color + '77');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(0, -50 * scale, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 
   // Render Highlight Ring if selected
   if (isSelected) {
@@ -402,15 +434,16 @@ function drawFlower(ctx, flower, isSelected, zoomScale) {
     ctx.restore();
   }
 
-  // 2. Draw High-Contrast Vivid Stem & Leaves
+  // 2. Draw High-Contrast Vivid Stem & Leaves (with wind sway)
   ctx.save();
-  ctx.rotate(stemAngle);
+  ctx.rotate(currentAngle);
   drawStem(ctx, flower.stemType || 'classic', flower.stemColor || '#52b788', scale);
   ctx.restore();
 
-  // 3. Draw Petal Top (Petal base at 150, 240 rests on stem tip y = -50 * scale)
+  // 3. Draw Petal Top (Sways together with stem tip at y = -50 * scale)
   ctx.save();
   ctx.translate(0, -50 * scale);
+  ctx.rotate(windSway * 0.5); // extra subtle petal tip tilt
   ctx.scale(scale * 0.20, scale * 0.20);
   ctx.translate(-150, -240);
 
@@ -427,6 +460,47 @@ function drawFlower(ctx, flower, isSelected, zoomScale) {
   }
 
   ctx.restore();
+
+  // Floating Hearts Animation (animation === 'heart')
+  if (flower.animation === 'heart') {
+    ctx.save();
+    for (let i = 0; i < 3; i++) {
+      const phase = (time * 1.6 + i * 1.1 + (x % 5)) % 3; // 0 to 3s cycle
+      const heartY = -50 * scale - phase * 24 * scale;
+      const heartX = Math.sin(time * 3 + i * 2) * 14 * scale;
+      const heartAlpha = phase < 0.4 ? phase / 0.4 : phase > 2.2 ? (3 - phase) / 0.8 : 1;
+      const heartSize = Math.max(12, (16 + Math.sin(time * 4 + i) * 3) * scale);
+
+      ctx.save();
+      ctx.globalAlpha = alpha * Math.max(0, Math.min(1, heartAlpha));
+      ctx.translate(heartX, heartY);
+      ctx.font = `${heartSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('💜', 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // Twinkling Orbiting Stars Animation (animation === 'star')
+  if (flower.animation === 'star') {
+    ctx.save();
+    for (let i = 0; i < 4; i++) {
+      const orbitAngle = time * 2.2 + (i * Math.PI) / 2;
+      const orbitR = (28 + Math.sin(time * 3 + i) * 6) * scale;
+      const starX = Math.cos(orbitAngle) * orbitR;
+      const starY = -50 * scale + Math.sin(orbitAngle) * orbitR * 0.5;
+      const starSize = Math.max(12, (15 + Math.sin(time * 6 + i * 2) * 4) * scale);
+
+      ctx.save();
+      ctx.translate(starX, starY);
+      ctx.font = `${starSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('⭐', 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
 
   ctx.restore();
 }

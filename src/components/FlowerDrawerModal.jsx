@@ -286,7 +286,8 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     setRealSender('Ayşenur');
     setShowSpecialModal(false);
     setPendingStep3(false);
-    setStep(3);
+    // Stay on step 2 so user can enter note & pick stem
+    setStep(2);
   };
 
   // Special guest chose to reveal as Ayşenur
@@ -296,7 +297,8 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     setRealSender('Ayşenur');
     setShowSpecialModal(false);
     setPendingStep3(false);
-    setStep(3);
+    // Stay on step 2 so user can enter note & pick stem
+    setStep(2);
   };
 
   // Final Submit Handler (Step 3)
