@@ -19,10 +19,12 @@ import {
 import InstagramIcon from './InstagramIcon';
 
 export default function AdminDashboardModal({ isOpen, onClose, flowers, onDeleteFlower, onFocusFlower, onAdminAuth }) {
+  // ALL hooks must be declared before any early returns (React rules of hooks)
   const [passwordInput, setPasswordInput] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [localPatches, setLocalPatches] = useState({}); // optimistic UI: { [id]: { approved, animation, animationColor } }
 
   if (!isOpen) return null;
 
@@ -39,7 +41,7 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
       });
       if (res.ok) {
         setIsAuthenticated(true);
-        if (onAdminAuth) onAdminAuth(); // persist to App level
+        if (onAdminAuth) onAdminAuth();
         return;
       }
     } catch (err) {
@@ -54,12 +56,8 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
     }
   };
 
-  // Track local approval/animation state for optimistic UI updates
-  const [localPatches, setLocalPatches] = useState({}); // { [id]: { approved, animation, animationColor } }
-
-  // Patch a flower (approve or set animation) via API
+  // Patch a flower (approve or set animation) via API with optimistic update
   const patchFlower = async (flowerId, patch) => {
-    // Optimistic update
     setLocalPatches((prev) => ({ ...prev, [flowerId]: { ...(prev[flowerId] || {}), ...patch } }));
     try {
       await fetch(`/api/flower/${flowerId}`, {
