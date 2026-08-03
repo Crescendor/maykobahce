@@ -100,6 +100,7 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
   const [editName, setEditName] = useState('');
   const [editNote, setEditNote] = useState('');
   const [editInstagram, setEditInstagram] = useState('');
+  const [viewNoteFlower, setViewNoteFlower] = useState(null);
 
   const handleStartEdit = (flower) => {
     const patch = localPatches[flower.id] || {};
@@ -185,8 +186,6 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
   const privateCount = flowers.filter((f) => f.isPrivate).length;
   const anonCount = flowers.filter((f) => f.isAnonymous).length;
   const pendingCount = mergedFlowers.filter((f) => f.approved === 0).length;
-
-  const [viewNoteFlower, setViewNoteFlower] = useState(null);
 
   const ANIMATIONS = [
     { key: null, label: '— Animasyon Yok', icon: '' },
