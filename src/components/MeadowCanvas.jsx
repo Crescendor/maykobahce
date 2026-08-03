@@ -461,42 +461,204 @@ function drawFlower(ctx, flower, isSelected, zoomScale, time = 0) {
 
   ctx.restore();
 
-  // Floating Hearts Animation (animation === 'heart')
+  // 1. Floating Hearts Animation (animation === 'heart')
   if (flower.animation === 'heart') {
     ctx.save();
-    for (let i = 0; i < 3; i++) {
-      const phase = (time * 1.6 + i * 1.1 + (x % 5)) % 3; // 0 to 3s cycle
-      const heartY = -50 * scale - phase * 24 * scale;
-      const heartX = Math.sin(time * 3 + i * 2) * 14 * scale;
-      const heartAlpha = phase < 0.4 ? phase / 0.4 : phase > 2.2 ? (3 - phase) / 0.8 : 1;
-      const heartSize = Math.max(12, (16 + Math.sin(time * 4 + i) * 3) * scale);
-
+    for (let i = 0; i < 4; i++) {
+      const cycle = (time * 1.5 + i * 0.8 + (x % 7)) % 2.5;
+      const hY = -50 * scale - cycle * 28 * scale;
+      const hX = Math.sin(time * 3 + i * 1.8) * 16 * scale;
+      const hAlpha = cycle < 0.4 ? cycle / 0.4 : cycle > 2.0 ? (2.5 - cycle) / 0.5 : 1;
+      const hSize = Math.max(12, (16 + Math.sin(time * 4 + i) * 3) * scale);
       ctx.save();
-      ctx.globalAlpha = alpha * Math.max(0, Math.min(1, heartAlpha));
-      ctx.translate(heartX, heartY);
-      ctx.font = `${heartSize}px sans-serif`;
+      ctx.globalAlpha = alpha * Math.max(0, Math.min(1, hAlpha));
+      ctx.translate(hX, hY);
+      ctx.font = `${hSize}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText('💜', 0, 0);
+      ctx.fillText(i % 2 === 0 ? '💜' : '💖', 0, 0);
       ctx.restore();
     }
     ctx.restore();
   }
 
-  // Twinkling Orbiting Stars Animation (animation === 'star')
+  // 2. Twinkling Orbiting Stars Animation (animation === 'star')
   if (flower.animation === 'star') {
     ctx.save();
-    for (let i = 0; i < 4; i++) {
-      const orbitAngle = time * 2.2 + (i * Math.PI) / 2;
-      const orbitR = (28 + Math.sin(time * 3 + i) * 6) * scale;
-      const starX = Math.cos(orbitAngle) * orbitR;
-      const starY = -50 * scale + Math.sin(orbitAngle) * orbitR * 0.5;
-      const starSize = Math.max(12, (15 + Math.sin(time * 6 + i * 2) * 4) * scale);
+    for (let i = 0; i < 5; i++) {
+      const angle = time * 2.2 + (i * Math.PI * 2) / 5;
+      const r = (30 + Math.sin(time * 3 + i) * 8) * scale;
+      const sX = Math.cos(angle) * r;
+      const sY = -50 * scale + Math.sin(angle) * r * 0.5;
+      const sSize = Math.max(12, (15 + Math.sin(time * 6 + i * 2) * 4) * scale);
+      ctx.save();
+      ctx.translate(sX, sY);
+      ctx.font = `${sSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(i % 2 === 0 ? '⭐' : '✨', 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 3. Custom Color Mystical Smoke Animation (animation === 'smoke')
+  if (flower.animation === 'smoke') {
+    ctx.save();
+    const smokeColor = flower.animationColor || '#a855f7';
+    for (let i = 0; i < 5; i++) {
+      const cycle = (time * 1.2 + i * 0.6) % 3;
+      const smY = -50 * scale - cycle * 30 * scale;
+      const smX = Math.sin(time * 2 + i * 1.5) * (12 + cycle * 8) * scale;
+      const smRadius = (16 + cycle * 22) * scale;
+      const smAlpha = (1 - cycle / 3) * 0.45;
+
+      const grad = ctx.createRadialGradient(smX, smY, 2 * scale, smX, smY, smRadius);
+      grad.addColorStop(0, smokeColor);
+      grad.addColorStop(0.5, smokeColor + '88');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
 
       ctx.save();
-      ctx.translate(starX, starY);
-      ctx.font = `${starSize}px sans-serif`;
+      ctx.globalAlpha = alpha * Math.max(0, smAlpha);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(smX, smY, smRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 4. Dark Gothic Fluttering Bats Animation (animation === 'bats')
+  if (flower.animation === 'bats') {
+    ctx.save();
+    for (let i = 0; i < 3; i++) {
+      const orbitAngle = time * 2.5 + (i * Math.PI * 2) / 3;
+      const rX = (34 + Math.sin(time * 3 + i) * 10) * scale;
+      const rY = (18 + Math.cos(time * 4 + i) * 6) * scale;
+      const batX = Math.cos(orbitAngle) * rX;
+      const batY = -50 * scale + Math.sin(orbitAngle) * rY;
+      const batSize = Math.max(14, (18 + Math.sin(time * 5 + i) * 3) * scale);
+
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.translate(batX, batY);
+      ctx.font = `${batSize}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText('⭐', 0, 0);
+      ctx.fillText('🦇', 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 5. Floating Glowing Fireflies Animation (animation === 'fireflies')
+  if (flower.animation === 'fireflies') {
+    ctx.save();
+    for (let i = 0; i < 5; i++) {
+      const flyX = Math.sin(time * 1.8 + i * 2.4) * 36 * scale;
+      const flyY = -50 * scale + Math.cos(time * 1.4 + i * 1.9) * 26 * scale;
+      const glowPulse = 0.4 + 0.6 * Math.abs(Math.sin(time * 5 + i * 3));
+
+      ctx.save();
+      ctx.globalAlpha = alpha * glowPulse * 0.6;
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(flyX, flyY, 6 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalAlpha = alpha * glowPulse;
+      ctx.translate(flyX, flyY);
+      ctx.font = `${Math.max(10, 12 * scale)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('✨', 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 6. Fluttering Butterflies Animation (animation === 'butterflies')
+  if (flower.animation === 'butterflies') {
+    ctx.save();
+    for (let i = 0; i < 3; i++) {
+      const angle = time * 1.8 + (i * Math.PI * 2) / 3;
+      const bR = (32 + Math.sin(time * 2.5 + i) * 8) * scale;
+      const bX = Math.cos(angle) * bR;
+      const bY = -50 * scale + Math.sin(angle) * bR * 0.6;
+      const bSize = Math.max(14, (17 + Math.sin(time * 4 + i) * 2) * scale);
+
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.translate(bX, bY);
+      ctx.font = `${bSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🦋', 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 7. Spinning Rainbow Ring Animation (animation === 'rainbow_ring')
+  if (flower.animation === 'rainbow_ring') {
+    ctx.save();
+    const ringAngle = time * 1.5;
+    const ringR = (42 + Math.sin(time * 3) * 6) * scale;
+    ctx.translate(0, -50 * scale);
+    ctx.rotate(ringAngle);
+
+    const ringGrad = ctx.createConicGradient(0, 0, 0);
+    ringGrad.addColorStop(0, '#ff4d6d');
+    ringGrad.addColorStop(0.2, '#ffb703');
+    ringGrad.addColorStop(0.4, '#06d6a0');
+    ringGrad.addColorStop(0.6, '#4cc9f0');
+    ringGrad.addColorStop(0.8, '#7209b7');
+    ringGrad.addColorStop(1, '#ff4d6d');
+
+    ctx.globalAlpha = alpha * 0.55;
+    ctx.lineWidth = 4 * scale;
+    ctx.strokeStyle = ringGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 8. Falling Sakura Petals Animation (animation === 'sakura_petals')
+  if (flower.animation === 'sakura_petals') {
+    ctx.save();
+    for (let i = 0; i < 4; i++) {
+      const cycle = (time * 1.3 + i * 0.7) % 2.8;
+      const sakY = -70 * scale + cycle * 30 * scale;
+      const sakX = Math.sin(time * 2.5 + i * 1.8) * 22 * scale;
+      const sakAlpha = cycle < 0.4 ? cycle / 0.4 : cycle > 2.2 ? (2.8 - cycle) / 0.6 : 1;
+      const sakSize = Math.max(12, (15 + Math.sin(time * 3 + i) * 2) * scale);
+
+      ctx.save();
+      ctx.globalAlpha = alpha * Math.max(0, Math.min(1, sakAlpha));
+      ctx.translate(sakX, sakY);
+      ctx.font = `${sakSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🌸', 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 9. Golden Sparkles Fountain Animation (animation === 'sparkles_gold')
+  if (flower.animation === 'sparkles_gold') {
+    ctx.save();
+    for (let i = 0; i < 5; i++) {
+      const cycle = (time * 2.0 + i * 0.5) % 2;
+      const spY = -50 * scale - Math.sin(cycle * (Math.PI / 2)) * 32 * scale;
+      const spX = (i - 2) * 12 * scale + Math.sin(time * 4 + i) * 6 * scale;
+      const spAlpha = 1 - cycle / 2;
+      const spSize = Math.max(12, (16 + Math.sin(time * 5 + i) * 3) * scale);
+
+      ctx.save();
+      ctx.globalAlpha = alpha * Math.max(0, spAlpha);
+      ctx.translate(spX, spY);
+      ctx.font = `${spSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(i % 2 === 0 ? '💫' : '✨', 0, 0);
       ctx.restore();
     }
     ctx.restore();

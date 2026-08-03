@@ -188,9 +188,16 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
 
   const ANIMATIONS = [
     { key: null, label: '— Yok', icon: '' },
-    { key: 'heart', label: 'Kalp', icon: '💜' },
-    { key: 'star', label: 'Yıldız', icon: '⭐' },
-    { key: 'glow', label: 'Parlamalı', icon: '✨' }
+    { key: 'heart', label: 'Uçan Kalpler', icon: '💜' },
+    { key: 'star', label: 'Yıldız Yağmuru', icon: '⭐' },
+    { key: 'glow', label: 'Neon Halka', icon: '✨' },
+    { key: 'smoke', label: 'Renkli Duman', icon: '🌫️' },
+    { key: 'bats', label: 'Yarasa (Dark)', icon: '🦇' },
+    { key: 'fireflies', label: 'Ateş Böcekleri', icon: '🪲' },
+    { key: 'butterflies', label: 'Kelebekler', icon: '🦋' },
+    { key: 'rainbow_ring', label: 'Gökkuşağı Aurası', icon: '🌈' },
+    { key: 'sakura_petals', label: 'Sakura Dökümü', icon: '🌸' },
+    { key: 'sparkles_gold', label: 'Işıltı Çeşmesi', icon: '💫' }
   ];
 
   return (
@@ -452,12 +459,12 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                                   {anim.icon} {anim.label}
                                 </button>
                               ))}
-                              {flower.animation === 'glow' && (
+                              {(flower.animation === 'glow' || flower.animation === 'smoke') && (
                                 <div style={{ marginTop: 3, display: 'flex', alignItems: 'center', gap: 5 }}>
-                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Renk:</span>
+                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Duman/Neon Renk:</span>
                                   <input
                                     type="color"
-                                    defaultValue={flower.animationColor || '#10b981'}
+                                    defaultValue={flower.animationColor || (flower.animation === 'smoke' ? '#a855f7' : '#10b981')}
                                     onChange={(e) => patchFlower(flower.id, { animationColor: e.target.value })}
                                     style={{ width: 28, height: 22, border: 'none', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}
                                   />
