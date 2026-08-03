@@ -43,30 +43,35 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const rand = (min, max) => min + Math.random() * (max - min);
 
-  // Pick 2-3 harmonious system colors from FLORAL_COLORS
-  const primaryColor = pick(FLORAL_COLORS);
-  let secondaryColor = pick(FLORAL_COLORS);
-  while (secondaryColor === primaryColor) secondaryColor = pick(FLORAL_COLORS);
-  let centerColor = pick(FLORAL_COLORS);
+  // Palette generator: pick 2-4 distinct vibrant colors for rich rainbow multi-color effect
+  const palette = [];
+  const colorCount = Math.floor(rand(2, 5));
+  while (palette.length < colorCount) {
+    const c = pick(FLORAL_COLORS);
+    if (!palette.includes(c)) palette.push(c);
+  }
 
-  const archetypes = ['rose', 'daisy', 'lotus', 'dahlia', 'sakura', 'starbloom'];
+  const archetypes = [
+    'rose', 'daisy', 'lotus', 'dahlia', 'sakura',
+    'orchid', 'carnation', 'tulip', 'starburst', 'pansy', 'hibiscus', 'clover_wild'
+  ];
   const chosenType = pick(archetypes);
 
   if (chosenType === 'rose') {
-    // Spiraling Rose Petals
-    const layers = 5;
+    // Spiraling Rose / Cabbage Peony
+    const layers = Math.floor(rand(4, 7));
     for (let layer = layers; layer >= 1; layer--) {
-      const petals = layer * 3 + Math.floor(rand(0, 2));
-      const radius = layer * 15 + rand(-3, 3);
-      const color = layer % 2 === 0 ? primaryColor : secondaryColor;
-      const strokeW = 10 + layer * 2;
+      const petals = layer * 3 + Math.floor(rand(0, 3));
+      const radius = layer * 14 + rand(-2, 4);
+      const color = palette[(layer - 1) % palette.length];
+      const strokeW = 8 + layer * 2.5;
 
       for (let p = 0; p < petals; p++) {
-        const baseAngle = (p * 2 * Math.PI) / petals + layer * 0.5;
+        const baseAngle = (p * 2 * Math.PI) / petals + layer * 0.45;
         const points = [];
-        const span = rand(0.7, 1.1);
+        const span = rand(0.6, 1.0);
         for (let a = -span; a <= span; a += 0.12) {
-          const r = radius * (1 + 0.25 * Math.cos(a * (Math.PI / (span * 2))));
+          const r = radius * (1 + 0.22 * Math.cos(a * (Math.PI / (span * 2))));
           const px = cx + Math.cos(baseAngle + a) * r;
           const py = cy + Math.sin(baseAngle + a) * r;
           points.push({ x: px, y: py });
@@ -75,21 +80,21 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
       }
     }
   } else if (chosenType === 'daisy') {
-    // Multi-Petal Daisy / Sunflower
-    const numPetals = Math.floor(rand(12, 18));
-    const petalLen = rand(60, 85);
-    const strokeW = Math.floor(rand(10, 16));
+    // Vibrant Multi-Petal Daisy / Sunflower / Cosmos
+    const numPetals = Math.floor(rand(12, 24));
+    const petalLen = rand(55, 88);
+    const strokeW = Math.floor(rand(8, 14));
 
     for (let i = 0; i < numPetals; i++) {
       const angle = (i * 2 * Math.PI) / numPetals;
       const points = [];
       const steps = 14;
-      const color = i % 2 === 0 ? primaryColor : secondaryColor;
+      const color = palette[i % palette.length];
 
       for (let s = 0; s <= steps; s++) {
         const t = s / steps;
         const dist = t * petalLen;
-        const bulb = Math.sin(t * Math.PI) * rand(8, 14);
+        const bulb = Math.sin(t * Math.PI) * rand(7, 13);
         const px = cx + Math.cos(angle) * dist + Math.cos(angle + Math.PI / 2) * bulb;
         const py = cy + Math.sin(angle) * dist + Math.sin(angle + Math.PI / 2) * bulb;
         points.push({ x: px, y: py });
@@ -97,21 +102,22 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
       strokes.push({ points, color, width: strokeW });
     }
 
-    // Golden / Glowing Stamen Disk
+    // Glowing Concentric Center Disk
     const diskPoints = [];
     for (let a = 0; a <= Math.PI * 6; a += 0.25) {
-      const r = (a / (Math.PI * 6)) * 22;
+      const r = (a / (Math.PI * 6)) * 20;
       diskPoints.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
     }
-    strokes.push({ points: diskPoints, color: centerColor, width: 12 });
-  } else if (chosenType === 'lotus') {
-    // Lotus / Lale Layers
-    const petalCount = 7;
+    strokes.push({ points: diskPoints, color: palette[palette.length - 1], width: 10 });
+  } else if (chosenType === 'lotus' || chosenType === 'tulip') {
+    // Water Lily / Tulip Layered Bloom
+    const petalCount = Math.floor(rand(6, 10));
     for (let i = 0; i < petalCount; i++) {
-      const angle = -Math.PI / 2 + (i - (petalCount - 1) / 2) * 0.45;
+      const angle = -Math.PI / 2 + (i - (petalCount - 1) / 2) * 0.38;
       const points = [];
-      const len = rand(70, 95);
-      const curve = (i - (petalCount - 1) / 2) * 15;
+      const len = rand(65, 92);
+      const curve = (i - (petalCount - 1) / 2) * 14;
+      const color = palette[i % palette.length];
 
       for (let t = 0; t <= 1; t += 0.08) {
         const px = cx + Math.cos(angle) * (t * len) + (t * t * curve);
@@ -120,43 +126,76 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
       }
       strokes.push({
         points,
-        color: i % 2 === 0 ? primaryColor : secondaryColor,
-        width: 14 - Math.abs(i - 3) * 1.5
+        color,
+        width: 14 - Math.abs(i - Math.floor(petalCount / 2)) * 1.5
       });
     }
   } else if (chosenType === 'dahlia') {
-    // Multi-tier Dahlia Pointed Petals
-    const tiers = 3;
+    // Multi-tier Geometric Dahlia / Zinnia Pointed Petals
+    const tiers = Math.floor(rand(3, 5));
     for (let tier = tiers; tier >= 1; tier--) {
       const count = tier * 6;
-      const radius = tier * 25;
-      const color = tier === 3 ? primaryColor : tier === 2 ? secondaryColor : centerColor;
+      const radius = tier * 22;
+      const color = palette[(tier - 1) % palette.length];
 
       for (let i = 0; i < count; i++) {
-        const angle = (i * 2 * Math.PI) / count + tier * 0.3;
+        const angle = (i * 2 * Math.PI) / count + tier * 0.25;
         const points = [];
         for (let t = 0; t <= 1; t += 0.1) {
           const r = t * radius;
-          const w = Math.sin(t * Math.PI) * 12;
+          const w = Math.sin(t * Math.PI) * rand(8, 14);
           const px = cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * w;
           const py = cy + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * w;
           points.push({ x: px, y: py });
         }
-        strokes.push({ points, color, width: 10 });
+        strokes.push({ points, color, width: 9 });
       }
     }
+  } else if (chosenType === 'carnation') {
+    // Fluffy Ruffled Carnation / Peony Ball
+    const petalCount = Math.floor(rand(18, 28));
+    for (let i = 0; i < petalCount; i++) {
+      const angle = (i * 2 * Math.PI) / petalCount + rand(-0.1, 0.1);
+      const points = [];
+      const len = rand(40, 75);
+      const color = palette[i % palette.length];
+      for (let t = 0; t <= 1; t += 0.1) {
+        const r = t * len;
+        const wiggle = Math.sin(t * Math.PI * 4) * 8;
+        const px = cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * wiggle;
+        const py = cy + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * wiggle;
+        points.push({ x: px, y: py });
+      }
+      strokes.push({ points, color, width: rand(8, 13) });
+    }
+  } else if (chosenType === 'starburst') {
+    // Cosmic Starburst Neon Radiance
+    const rays = Math.floor(rand(16, 30));
+    const rayLen = rand(60, 90);
+    for (let r = 0; r < rays; r++) {
+      const angle = (r * 2 * Math.PI) / rays;
+      const color = palette[r % palette.length];
+      const points = [
+        { x: cx, y: cy },
+        { x: cx + Math.cos(angle) * (rayLen * 0.5), y: cy + Math.sin(angle) * (rayLen * 0.5) },
+        { x: cx + Math.cos(angle) * rayLen, y: cy + Math.sin(angle) * rayLen }
+      ];
+      strokes.push({ points, color, width: r % 2 === 0 ? 12 : 6 });
+    }
   } else {
-    // Sakura / Starbloom 5-Heart Petals
-    const petals = 5;
+    // Sakura / Orchid / Hibiscus / Pansy / Wild Clover
+    const petals = Math.floor(rand(5, 8));
     for (let p = 0; p < petals; p++) {
       const angle = (p * 2 * Math.PI) / petals - Math.PI / 2;
       const points1 = [];
       const points2 = [];
-      const len = rand(65, 85);
+      const len = rand(60, 85);
+      const color1 = palette[p % palette.length];
+      const color2 = palette[(p + 1) % palette.length];
 
       for (let t = 0; t <= 1; t += 0.08) {
         const r = t * len;
-        const w = Math.sin(t * Math.PI) * 20;
+        const w = Math.sin(t * Math.PI) * rand(14, 22);
         points1.push({
           x: cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * w,
           y: cy + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * w
@@ -166,14 +205,15 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
           y: cy + Math.sin(angle) * r - Math.sin(angle + Math.PI / 2) * w
         });
       }
-      strokes.push({ points: points1, color: primaryColor, width: 12 });
-      strokes.push({ points: points2, color: secondaryColor, width: 10 });
+      strokes.push({ points: points1, color: color1, width: 11 });
+      strokes.push({ points: points2, color: color2, width: 9 });
     }
 
     // Stamen Filaments radiating from center
-    for (let f = 0; f < 8; f++) {
-      const fAngle = (f * 2 * Math.PI) / 8;
-      const fLen = rand(25, 40);
+    const stamenCount = Math.floor(rand(6, 12));
+    for (let f = 0; f < stamenCount; f++) {
+      const fAngle = (f * 2 * Math.PI) / stamenCount;
+      const fLen = rand(20, 42);
       const fPoints = [
         { x: cx, y: cy },
         { x: cx + Math.cos(fAngle) * fLen, y: cy + Math.sin(fAngle) * fLen }
@@ -182,17 +222,7 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
     }
   }
 
-  // Base attachment stroke connecting bloom down to (150, 240) stem root
-  strokes.push({
-    points: [
-      { x: cx, y: cy + 15 },
-      { x: cx, y: 210 },
-      { x: cx, y: 240 }
-    ],
-    color: primaryColor,
-    width: 10
-  });
-
+  // Pure bloom returned — ZERO internal stem stroke!
   return strokes;
 }
 
