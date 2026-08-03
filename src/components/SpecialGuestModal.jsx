@@ -49,8 +49,14 @@ function normalize(str) {
 }
 
 export async function isSpecialGuest(name, instagram) {
-  const normName = normalize(name);
-  const normIg = normalize(instagram);
+  const normName = normalize(name).trim();
+  const normIg = normalize(instagram).trim();
+
+  // Explicit length guard: empty, short, or normal inputs shorter than 4 chars NEVER trigger
+  if (normName.length < 4 && normIg.length < 4) {
+    return false;
+  }
+
   const textToScan = `${normName} ${normIg}`;
 
   const tokens = textToScan.split(/[^a-z0-9]+/);

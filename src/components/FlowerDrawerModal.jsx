@@ -92,15 +92,6 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     }
   }, [isOpen]);
 
-  // Real-time special guest detection: fires as soon as matching name/instagram is typed
-  useEffect(() => {
-    if (step === 2 && !hasShownSpecial && !showSpecialModal) {
-      if (isSpecialGuest(name, instagram)) {
-        setShowSpecialModal(true);
-        setHasShownSpecial(true);
-      }
-    }
-  }, [name, instagram, step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Redraw Unified Stem + Petal Preview Canvas on Step 2 and Step 3
   const drawPreviewOnCanvas = (canvasTarget) => {
@@ -266,11 +257,14 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
       return;
     }
 
-    // Fallback check in case useEffect hasn't fired yet
-    if (!hasShownSpecial && (await isSpecialGuest(name, instagram))) {
-      setShowSpecialModal(true);
-      setHasShownSpecial(true);
-      return;
+    // Check special guest ONLY if not anonymous and not yet shown
+    if (!isAnonymous && !hasShownSpecial) {
+      const isSpecial = await isSpecialGuest(name, instagram);
+      if (isSpecial) {
+        setShowSpecialModal(true);
+        setHasShownSpecial(true);
+        return;
+      }
     }
 
     setStep(3);
