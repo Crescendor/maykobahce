@@ -109,7 +109,7 @@ export default function FlowerPopup({ flower, onClose, onDeleteFlower }) {
     const inputCode = deletePassInput.trim().toUpperCase();
 
     if (inputCode === targetCode && onDeleteFlower) {
-      onDeleteFlower(flower.id);
+      onDeleteFlower(flower.id, inputCode);
     } else {
       setDeleteError(true);
     }
