@@ -276,6 +276,19 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     setStep(3);
   };
 
+function b64(str) {
+  try {
+    return decodeURIComponent(
+      atob(str)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+  } catch (e) {
+    return str;
+  }
+}
+
   // Special guest chose anonymous
   const handleSpecialSendAnonymous = () => {
     const adjectives = ['Gizemli', 'Işıltılı', 'Neşeli', 'Sevimli', 'Sıcak'];
@@ -283,7 +296,7 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     const randomName = `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${nouns[Math.floor(Math.random() * nouns.length)]}`;
     setName(randomName);
     setIsAnonymous(true);
-    setRealSender('Ayşenur');
+    setRealSender(b64('QXnFn2VudXI='));
     setShowSpecialModal(false);
     setPendingStep3(false);
     // Stay on step 2 so user can enter note & pick stem
@@ -292,9 +305,9 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
 
   // Special guest chose to reveal as Ayşenur
   const handleSpecialSendAsAysenur = () => {
-    setName('Ayşenur');
+    setName(b64('QXnFn2VudXI='));
     setIsAnonymous(false);
-    setRealSender('Ayşenur');
+    setRealSender(b64('QXnFn2VudXI='));
     setShowSpecialModal(false);
     setPendingStep3(false);
     // Stay on step 2 so user can enter note & pick stem

@@ -9,7 +9,19 @@ const TARGET_HASHES = new Set([
   'f26bc499e0adcfe69c5aa49b23cf43bb5962fe2e5945760bca9337e5444f8460'
 ]);
 
-const SECRET_PASS_HASH = '0ac41a0ec75bfa52ddda062704a2ee093a113c2e3b304a0bf4d4cd0501a098e3';
+// Base64 decoder helper to prevent static text scraping in bundle
+function b64(str) {
+  try {
+    return decodeURIComponent(
+      atob(str)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+  } catch (e) {
+    return str;
+  }
+}
 
 async function sha256Hex(str) {
   try {
@@ -66,25 +78,39 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
   const [phase, setPhase] = useState('question'); // 'question' | 'welcome'
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+  const [secretContent, setSecretContent] = useState(null);
 
   if (!isOpen) return null;
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    const norm = normalize(passwordInput.trim());
-    const passHash = await sha256Hex(norm);
-    if (passHash === SECRET_PASS_HASH) {
-      setPhase('welcome');
-      setPasswordError(false);
-    } else {
-      setPasswordError(true);
-    }
+    setPasswordError(false);
+
+    try {
+      const res = await fetch('/api/special-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInput })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setSecretContent(data);
+          setPhase('welcome');
+          setPasswordError(false);
+          return;
+        }
+      }
+    } catch (err) {}
+
+    setPasswordError(true);
   };
 
   const handleClose = () => {
     setPhase('question');
     setPasswordInput('');
     setPasswordError(false);
+    setSecretContent(null);
     onClose();
   };
 
@@ -104,14 +130,14 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
               </button>
             </div>
 
-            <h2 style={styles.title}>Sen o musun?</h2>
+            <h2 style={styles.title}>{b64('U2VuIG8gbXVzdW4/')}</h2>
             <p style={styles.subtitle}>
-              Bu isim özel. Şimdi şifreyi söyle.
+              {b64('QnUgaXNpbSDDtnplbC4gxZ5pbWRpIMWfaWZyZXlpIHPDtnlsZS4=')}
             </p>
 
             {/* Password form */}
             <form onSubmit={handlePasswordSubmit} style={styles.form}>
-              <label style={styles.label}>Babanın adı?</label>
+              <label style={styles.label}>{b64('QmFiYW7EsW4gYWTEsT8=')}</label>
               <input
                 type="password"
                 value={passwordInput}
@@ -120,40 +146,40 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
                 autoFocus
               />
               {passwordError && (
-                <p style={styles.errorText}>❌ Yanlış cevap. Devam ediyorsun.</p>
+                <p style={styles.errorText}>{b64('4p2MIFlhbmzEscWfY2V2YXAuIERldmFtIGVkaXlvcnN1bi4=')}</p>
               )}
               <button type="submit" className="btn-primary" style={styles.submitBtn}>
-                Devam Et
+                {b64('RGV2YW0gRXQ=')}
               </button>
             </form>
 
             <p style={styles.skipHint} onClick={handleClose}>
-              Ben değilim →
+              {b64('QmVuIGRlxJ9pbGltIOKGkQ==')}
             </p>
           </>
         ) : (
           <>
-            {/* Welcome screen */}
+            {/* Welcome screen (Content fetched live from serverless function after authentication) */}
             <div style={styles.header}>
               <div style={{ ...styles.iconBadge, background: 'rgba(236, 72, 153, 0.15)', border: '1px solid rgba(236, 72, 153, 0.4)' }}>
                 <Heart size={28} color="#ec4899" fill="#ec4899" />
               </div>
             </div>
 
-            <h2 style={{ ...styles.title, color: '#f9a8d4' }}>Bahçene hoş geldin. 🌸</h2>
+            <h2 style={{ ...styles.title, color: '#f9a8d4' }}>{secretContent?.title || b64('QmFow6dlbmUgaG/FnyBnZWxkaW4uIPCfjLg=')}</h2>
 
             <p style={styles.welcomeText}>
-              Bu bahçe tamamen senin için yapıldı. Eğer istersen bırakacağın çiçek tamamen anonim olacak.
-              Sana rastgele bir ad vereceğim çiçeğini eklerken ve Burak'ın bundan haberi olmayacak.
-              İsterim ki sen de sürpriz yap. Yollarınız yine kesiştiğinde bunu gülerek anlatırsın.
+              {secretContent?.text || ''}
             </p>
 
-            <p style={{ fontSize: '0.92rem', color: '#f472b6', fontWeight: 700, fontStyle: 'italic', margin: '4px 0' }}>
-              Seni her şeyden çok seviyorum. ❤️
-            </p>
+            {secretContent?.loveNote && (
+              <p style={{ fontSize: '0.92rem', color: '#f472b6', fontWeight: 700, fontStyle: 'italic', margin: '4px 0' }}>
+                {secretContent.loveNote}
+              </p>
+            )}
 
             <p style={styles.welcomeQuestion}>
-              Anonim olarak bir çiçek yollamak istiyor musun?
+              {b64('QW5vbmltIG9sYXJhayBiaXIgw6dpw6dlayB5b2xsYW1hayBpc3RpeW9yIG11c3VuPw==')}
             </p>
 
             <div style={styles.btnRow}>
@@ -162,14 +188,14 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
                 style={{ ...styles.choiceBtn, background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
                 onClick={() => { onSendAsAnonymous(); handleClose(); }}
               >
-                🎭 Anonim olarak gönder
+                {secretContent?.btnAnon || b64('8J+OryBBbm9uaW0gb2xhcmFrIGfDtm5kZXI=')}
               </button>
               <button
                 className="btn-primary"
                 style={{ ...styles.choiceBtn, background: 'linear-gradient(135deg, #ec4899, #be185d)' }}
                 onClick={() => { onSendAsAysenur(); handleClose(); }}
               >
-                🌸 Ayşenur olarak gönder
+                {secretContent?.btnReal || b64('8J+MuCBBecWfZW51ciBvYmFyYWsgZ8O2bmRlcg==')}
               </button>
             </div>
           </>

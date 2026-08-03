@@ -18,6 +18,19 @@ import {
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
 
+function b64(str) {
+  try {
+    return decodeURIComponent(
+      atob(str)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+  } catch (e) {
+    return str;
+  }
+}
+
 export default function AdminDashboardModal({ isOpen, onClose, flowers, onDeleteFlower, onFocusFlower, onAdminAuth, onPatchFlower }) {
   // ALL hooks must be declared before any early returns (React rules of hooks)
   const [passwordInput, setPasswordInput] = useState('');
@@ -218,10 +231,10 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                             <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
                               {flower.name || 'Anonim'}
                             </div>
-                            {/* real_sender badge — Ayşenur special marker */}
+                            {/* real_sender badge */}
                             {flower.realSender && (
                               <div style={{ fontSize: '0.76rem', color: '#f9a8d4', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                🌸 {flower.realSender} gönderdi {flower.isAnonymous ? '(Anonim)' : ''}
+                                🌸 {flower.realSender} {b64('Z8O2bmRlcmRp')} {flower.isAnonymous ? b64('KEFub25pbSk=') : ''}
                               </div>
                             )}
                             {flower.instagram && (
