@@ -253,39 +253,42 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
         ) : (
           /* AUTHENTICATED DASHBOARD CONTENT */
           <div style={styles.dashboardBody}>
-            {/* Stats Metrics Row */}
-            <div style={styles.statsRow}>
-              <div style={styles.statCard}>
-                <span style={styles.statNumber}>{flowers.length}</span>
-                <span style={styles.statLabel}>Toplam Çiçek</span>
+            {/* Top Fixed Section: Stats Metrics & Search Bar */}
+            <div style={styles.topFixedSection}>
+              {/* Stats Metrics Row */}
+              <div style={styles.statsRow}>
+                <div style={styles.statCard}>
+                  <span style={styles.statNumber}>{flowers.length}</span>
+                  <span style={styles.statLabel}>Toplam Çiçek</span>
+                </div>
+                <div style={styles.statCard}>
+                  <span style={{ ...styles.statNumber, color: pendingCount > 0 ? '#f87171' : '#34d399' }}>{pendingCount}</span>
+                  <span style={styles.statLabel}>⏳ Onay Bekleyen</span>
+                </div>
+                <div style={styles.statCard}>
+                  <span style={{ ...styles.statNumber, color: '#f59e0b' }}>{privateCount}</span>
+                  <span style={styles.statLabel}>Gizli Notlu</span>
+                </div>
+                <div style={styles.statCard}>
+                  <span style={{ ...styles.statNumber, color: '#38bdf8' }}>{anonCount}</span>
+                  <span style={styles.statLabel}>Anonim</span>
+                </div>
               </div>
-              <div style={styles.statCard}>
-                <span style={{ ...styles.statNumber, color: pendingCount > 0 ? '#f87171' : '#34d399' }}>{pendingCount}</span>
-                <span style={styles.statLabel}>⏳ Onay Bekleyen</span>
-              </div>
-              <div style={styles.statCard}>
-                <span style={{ ...styles.statNumber, color: '#f59e0b' }}>{privateCount}</span>
-                <span style={styles.statLabel}>Gizli Notlu</span>
-              </div>
-              <div style={styles.statCard}>
-                <span style={{ ...styles.statNumber, color: '#38bdf8' }}>{anonCount}</span>
-                <span style={styles.statLabel}>Anonim</span>
+
+              {/* Search Bar */}
+              <div style={styles.searchWrapper}>
+                <Search size={18} color="#94a3b8" />
+                <input
+                  type="text"
+                  placeholder="İsim, Not, Instagram, Şifre veya Silme Koduna Göre Ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={styles.searchInput}
+                />
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div style={styles.searchWrapper}>
-              <Search size={18} color="#94a3b8" />
-              <input
-                type="text"
-                placeholder="İsim, Not, Instagram, Şifre veya Silme Koduna Göre Ara..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={styles.searchInput}
-              />
-            </div>
-
-            {/* Flowers Table / List */}
+            {/* Scrollable Flowers Table / List */}
             <div style={styles.tableContainer}>
               {filteredFlowers.length === 0 ? (
                 <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
@@ -437,34 +440,26 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                             </div>
                           </td>
 
-                          {/* Animation Selector */}
+                          {/* Animation Droplist Selector */}
                           <td style={styles.td}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                              {ANIMATIONS.map((anim) => (
-                                <button
-                                  key={String(anim.key)}
-                                  type="button"
-                                  onClick={() => patchFlower(flower.id, { animation: anim.key })}
-                                  style={{
-                                    fontSize: '0.75rem',
-                                    padding: '3px 8px',
-                                    borderRadius: 8,
-                                    border: `1px solid ${flower.animation === anim.key ? '#10b981' : '#334155'}`,
-                                    background: flower.animation === anim.key ? 'rgba(16,185,129,0.2)' : 'rgba(30,41,59,0.6)',
-                                    color: flower.animation === anim.key ? '#34d399' : '#94a3b8',
-                                    cursor: 'pointer',
-                                    textAlign: 'left'
-                                  }}
-                                >
-                                  {anim.icon} {anim.label}
-                                </button>
-                              ))}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 155 }}>
+                              <select
+                                value={flower.animation || ''}
+                                onChange={(e) => patchFlower(flower.id, { animation: e.target.value || null })}
+                                style={styles.animSelect}
+                              >
+                                {ANIMATIONS.map((anim) => (
+                                  <option key={String(anim.key)} value={anim.key || ''} style={styles.animOption}>
+                                    {anim.icon ? `${anim.icon} ${anim.label}` : anim.label}
+                                  </option>
+                                ))}
+                              </select>
                               {(flower.animation === 'glow' || flower.animation === 'smoke') && (
-                                <div style={{ marginTop: 3, display: 'flex', alignItems: 'center', gap: 5 }}>
-                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Duman/Neon Renk:</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 8 }}>
+                                  <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 600 }}>Renk:</span>
                                   <input
                                     type="color"
-                                    defaultValue={flower.animationColor || (flower.animation === 'smoke' ? '#a855f7' : '#10b981')}
+                                    value={flower.animationColor || (flower.animation === 'smoke' ? '#a855f7' : '#10b981')}
                                     onChange={(e) => patchFlower(flower.id, { animationColor: e.target.value })}
                                     style={{ width: 28, height: 22, border: 'none', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}
                                   />
@@ -546,8 +541,10 @@ const styles = {
   modalCard: {
     width: '96vw',
     maxWidth: 1380,
-    maxHeight: '94vh',
-    overflowY: 'auto',
+    height: '92vh',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
     borderRadius: 24,
     padding: 24,
     background: 'rgba(15, 23, 42, 0.96)',
@@ -558,9 +555,10 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    paddingBottom: 14
+    paddingBottom: 12,
+    flexShrink: 0
   },
   title: {
     fontFamily: 'var(--font-heading)',
@@ -632,7 +630,15 @@ const styles = {
   dashboardBody: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 16
+    flex: 1,
+    overflow: 'hidden',
+    gap: 14
+  },
+  topFixedSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    flexShrink: 0
   },
   statsRow: {
     display: 'grid',
@@ -643,7 +649,7 @@ const styles = {
     background: 'rgba(30, 41, 59, 0.6)',
     border: '1px solid rgba(255, 255, 255, 0.08)',
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center'
@@ -676,6 +682,8 @@ const styles = {
     width: '100%'
   },
   tableContainer: {
+    flex: 1,
+    overflowY: 'auto',
     overflowX: 'auto',
     borderRadius: 16,
     border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -688,7 +696,11 @@ const styles = {
     fontSize: '0.88rem'
   },
   thRow: {
-    background: 'rgba(30, 41, 59, 0.9)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    background: 'rgba(30, 41, 59, 0.98)',
+    backdropFilter: 'blur(8px)',
     borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
   },
   th: {
@@ -703,6 +715,24 @@ const styles = {
   td: {
     padding: '14px 16px',
     verticalAlign: 'middle'
+  },
+  animSelect: {
+    width: '100%',
+    padding: '8px 12px',
+    borderRadius: 10,
+    background: 'rgba(30, 41, 59, 0.95)',
+    border: '1px solid rgba(16, 185, 129, 0.4)',
+    color: '#f8fafc',
+    fontSize: '0.84rem',
+    fontWeight: 600,
+    outline: 'none',
+    cursor: 'pointer'
+  },
+  animOption: {
+    background: '#0f172a',
+    color: '#f8fafc',
+    fontSize: '0.86rem',
+    padding: '6px'
   },
   noteContentBox: {
     background: 'rgba(255, 255, 255, 0.05)',
