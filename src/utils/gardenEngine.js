@@ -7,24 +7,57 @@ export const MIN_FLOWER_DISTANCE = 60; // minimum distance between flowers in pi
 export const MAX_FLOWERS = 3000;
 
 const LOCAL_STORAGE_KEY = 'mayko_garden_flowers_v1';
-const DELETED_IDS_KEY = 'mayko_deleted_flower_ids_v1';
+const DELETED_IDS_KEY  = 'mayko_deleted_flower_ids_v1';
+const PENDING_IDS_KEY  = 'mayko_pending_flower_ids_v1'; // IDs added locally, not yet confirmed in D1
 
-// Load tombstone set of deleted flower IDs
+// ─── Tombstone helpers (deleted flowers never come back) ─────────
 export function loadDeletedIds() {
   try {
-    const stored = localStorage.getItem(DELETED_IDS_KEY);
-    if (stored) return new Set(JSON.parse(stored));
+    const s = localStorage.getItem(DELETED_IDS_KEY);
+    if (s) return new Set(JSON.parse(s));
   } catch (e) {}
   return new Set();
 }
-
-// Mark a flower ID as deleted so it never resurfaces on sync
 export function addDeletedId(id) {
   try {
     const set = loadDeletedIds();
     set.add(id);
     localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(set)));
   } catch (e) {}
+}
+
+// ─── Pending helpers (new local flowers awaiting D1 confirmation) ─
+function loadPendingMap() {
+  try {
+    const s = localStorage.getItem(PENDING_IDS_KEY);
+    if (s) return JSON.parse(s);
+  } catch (e) {}
+  return {};
+}
+export function addPendingId(id) {
+  try {
+    const map = loadPendingMap();
+    map[id] = Date.now();
+    localStorage.setItem(PENDING_IDS_KEY, JSON.stringify(map));
+  } catch (e) {}
+}
+// Returns Set of pending IDs that are < 3 min old AND still not confirmed by remote
+function getActivePendingIds(remoteIds) {
+  const map = loadPendingMap();
+  const now = Date.now();
+  const kept = {};
+  const active = new Set();
+  for (const [id, ts] of Object.entries(map)) {
+    if (now - ts < 3 * 60 * 1000) { // 3 minutes grace
+      if (!remoteIds.has(id)) {
+        kept[id] = ts;   // still not in D1, keep waiting
+        active.add(id);
+      }
+      // if remoteIds has it → confirmed, drop from pending
+    }
+  }
+  localStorage.setItem(PENDING_IDS_KEY, JSON.stringify(kept));
+  return active;
 }
 
 // 5 Distinct Stem Presets with custom leaf shapes & structures
@@ -621,15 +654,23 @@ export async function fetchFlowersFromApi() {
     if (res.ok) {
       const remote = await res.json();
       if (Array.isArray(remote)) {
-        // Remote is source of truth; keep local-only flowers that haven't synced yet
-        // but NEVER re-add tombstoned (locally deleted) flowers
-        const map = new Map();
-        local.forEach((f) => { if (!deleted.has(f.id)) map.set(f.id, f); });
-        remote.forEach((f) => { if (!deleted.has(f.id)) map.set(f.id, f); });
+        const remoteIds = new Set(remote.map((f) => f.id));
 
-        const merged = Array.from(map.values());
-        saveGardenFlowers(merged);
-        return merged;
+        // Pending = locally added flowers not yet in D1 (< 3 min old)
+        const pendingIds = getActivePendingIds(remoteIds);
+
+        // Remote is THE source of truth. Only exception: pending local flowers.
+        const map = new Map(
+          remote.filter((f) => !deleted.has(f.id)).map((f) => [f.id, f])
+        );
+        // Re-attach pending flowers from local state (not yet in D1)
+        local.forEach((f) => {
+          if (pendingIds.has(f.id) && !deleted.has(f.id)) map.set(f.id, f);
+        });
+
+        const result = Array.from(map.values());
+        saveGardenFlowers(result);
+        return result;
       }
     }
   } catch (e) {

@@ -16,7 +16,8 @@ import {
   postFlowerToApi,
   deleteFlowerFromApi,
   addDeletedId,
-  loadDeletedIds
+  loadDeletedIds,
+  addPendingId
 } from './utils/gardenEngine';
 
 export default function App() {
@@ -37,18 +38,11 @@ export default function App() {
 
   // Initialize Flowers & Sync with Cloudflare Edge API
   const syncFlowers = useCallback(async () => {
-    const data = await fetchFlowersFromApi(); // already tombstone-filtered
-    if (data && Array.isArray(data) && data.length > 0) {
-      const deleted = loadDeletedIds();
-      setFlowers((prevFlowers) => {
-        // Remote is source of truth; also keep local flowers not yet in DB
-        // Never re-add tombstoned (locally deleted) flowers
-        const remoteMap = new Map(data.map((f) => [f.id, f]));
-        prevFlowers.forEach((f) => {
-          if (!remoteMap.has(f.id) && !deleted.has(f.id)) remoteMap.set(f.id, f);
-        });
-        return Array.from(remoteMap.values());
-      });
+    const data = await fetchFlowersFromApi();
+    // fetchFlowersFromApi already applies tombstone + pending logic;
+    // just replace state directly (remote = source of truth)
+    if (data && Array.isArray(data)) {
+      setFlowers(data);
     }
   }, []);
 
@@ -179,15 +173,14 @@ export default function App() {
     setFlowers(updatedFlowers);
     saveGardenFlowers(updatedFlowers);
 
+    // Mark as pending so sync won't drop it before D1 confirms it
+    addPendingId(newFlower.id);
+
     // Sync with Cloudflare D1 & KV Edge Storage
     postFlowerToApi(newFlower);
 
     setIsDrawerOpen(false);
-
-    // Open Delete Code Modal first to present the 8-character deletion code
     setNewlyPlantedFlower(newFlower);
-
-    // Focus camera on newly planted flower
     setViewportTarget({ x: newFlower.x, y: newFlower.y, scale: 1.5 });
   };
 
