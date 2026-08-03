@@ -49,17 +49,18 @@ export default function App() {
   useEffect(() => {
     syncFlowers();
 
-    // Poll every 30 seconds — respects Cloudflare KV free-tier limits
-    // (30s × 60min × 24h = 2,880 reads/day per user; stays well within 100k limit)
-    let interval = setInterval(syncFlowers, 30000);
+    // Poll every 10 seconds — safe within Cloudflare D1 free limits
+    // D1: 5M reads/day; 100 users × 8,640 polls/day = 864K reads → well within limit
+    const POLL_MS = 10000;
+    let interval = setInterval(syncFlowers, POLL_MS);
 
-    // Pause polling when tab is hidden, resume immediately on focus (saves API calls)
+    // Pause polling when tab is hidden, resume immediately on focus
     const handleVisibility = () => {
       if (document.hidden) {
         clearInterval(interval);
       } else {
-        syncFlowers(); // immediate refresh on tab re-focus
-        interval = setInterval(syncFlowers, 30000);
+        syncFlowers();
+        interval = setInterval(syncFlowers, POLL_MS);
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
