@@ -65,6 +65,7 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
   const [showSpecialModal, setShowSpecialModal] = useState(false);
   const [realSender, setRealSender] = useState(null); // 'Ayşenur' | null
   const [pendingStep3, setPendingStep3] = useState(false);
+  const [hasShownSpecial, setHasShownSpecial] = useState(false); // prevent repeated popups
 
   // Reset modal when opened
   useEffect(() => {
@@ -86,9 +87,20 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
       setShowSpecialModal(false);
       setRealSender(null);
       setPendingStep3(false);
+      setHasShownSpecial(false);
       setTimeout(() => redrawCanvas([]), 50);
     }
   }, [isOpen]);
+
+  // Real-time special guest detection: fires as soon as matching name/instagram is typed
+  useEffect(() => {
+    if (step === 2 && !hasShownSpecial && !showSpecialModal) {
+      if (isSpecialGuest(name, instagram)) {
+        setShowSpecialModal(true);
+        setHasShownSpecial(true);
+      }
+    }
+  }, [name, instagram, step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Redraw Unified Stem + Petal Preview Canvas on Step 2 and Step 3
   const drawPreviewOnCanvas = (canvasTarget) => {
@@ -244,7 +256,7 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     setStep(2);
   };
 
-  // Step 2 -> Step 3 Validation (with special guest detection)
+  // Step 2 -> Step 3 Validation (special guest check already handled by useEffect)
   const handleProceedToStep3 = (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -254,10 +266,10 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
       return;
     }
 
-    // Check for special guest before proceeding
-    if (isSpecialGuest(name, instagram)) {
-      setPendingStep3(true);
+    // Fallback check in case useEffect hasn't fired yet
+    if (!hasShownSpecial && isSpecialGuest(name, instagram)) {
       setShowSpecialModal(true);
+      setHasShownSpecial(true);
       return;
     }
 
