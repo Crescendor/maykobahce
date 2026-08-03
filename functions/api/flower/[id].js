@@ -87,6 +87,8 @@ export async function onRequestPatch(context) {
       if (body.instagram !== undefined) { updates.push('instagram = ?'); values.push(body.instagram || ''); }
       if (body.x !== undefined) { updates.push('x = ?'); values.push(body.x); }
       if (body.y !== undefined) { updates.push('y = ?'); values.push(body.y); }
+      if (body.theme !== undefined) { updates.push('theme = ?'); values.push(body.theme || null); }
+      if (body.adminComment !== undefined) { updates.push('admin_comment = ?'); values.push(body.adminComment || null); }
 
       if (updates.length > 0) {
         values.push(flowerId);

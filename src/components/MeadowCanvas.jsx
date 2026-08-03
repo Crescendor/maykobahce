@@ -1,6 +1,55 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GARDEN_SIZE, FENCE_PADDING, drawSmoothStroke, drawStem } from '../utils/gardenEngine';
 
+function drawBoundingBoxWithHandles(ctx, x, y, w, h, rotation = 0) {
+  ctx.save();
+  ctx.translate(x, y);
+  if (rotation) ctx.rotate((rotation * Math.PI) / 180);
+
+  // Dashed outline
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 6]);
+  ctx.strokeRect(-w / 2 - 4, -h / 2 - 4, w + 8, h + 8);
+  ctx.setLineDash([]);
+
+  // 4 Corner Resize Handles
+  const corners = [
+    { x: -w / 2 - 4, y: -h / 2 - 4 },
+    { x: w / 2 + 4, y: -h / 2 - 4 },
+    { x: -w / 2 - 4, y: h / 2 + 4 },
+    { x: w / 2 + 4, y: h / 2 + 4 }
+  ];
+
+  corners.forEach((c) => {
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+
+  // Top Rotation Handle Stem & Icon Dot
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -h / 2 - 4);
+  ctx.lineTo(0, -h / 2 - 24);
+  ctx.stroke();
+
+  ctx.fillStyle = '#f59e0b';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, -h / 2 - 24, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 export default function MeadowCanvas({
   flowers,
   selectedFlower,
@@ -14,6 +63,7 @@ export default function MeadowCanvas({
   isAdminAuthenticated,
   adminTool,
   adminColor,
+  adminFont,
   adminBrushSize,
   onUpdateFlowerLocalPos,
   onUpdateFlowerPosition,
@@ -162,35 +212,124 @@ export default function MeadowCanvas({
     // 2. Render Wooden Fence Perimeter
     drawGardenFences(ctx);
 
-    // 3. Render Custom Admin Meadow Objects (Strokes, Text Labels & PNG Stickers)
+    // 3. Render Custom Admin Meadow Objects (Strokes, Text, Shapes, Bubbles & PNGs)
     if (meadowObjects && meadowObjects.length > 0) {
       meadowObjects.forEach((obj) => {
         if (obj.type === 'stroke') {
           drawSmoothStroke(ctx, { color: obj.color, size: obj.size, points: obj.points });
         } else if (obj.type === 'text') {
           ctx.save();
-          ctx.font = `bold ${obj.fontSize || 24}px sans-serif`;
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          ctx.font = `bold ${obj.fontSize || 26}px ${obj.fontFamily || 'sans-serif'}`;
           ctx.fillStyle = obj.color || '#ffffff';
           ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
           ctx.shadowBlur = 8;
-          ctx.fillText(obj.text, obj.x, obj.y);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(obj.text, 0, 0);
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            const metrics = ctx.measureText(obj.text);
+            const w = Math.max(80, metrics.width + 20);
+            const h = (obj.fontSize || 26) + 16;
+            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
+          }
+          ctx.restore();
+        } else if (obj.type === 'circle') {
+          ctx.save();
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          const r = (obj.radius || 65) * (obj.scale || 1);
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          if (obj.isFilled !== false) {
+            ctx.fillStyle = obj.color || '#38bdf8';
+            ctx.fill();
+          }
+          ctx.strokeStyle = obj.color || '#38bdf8';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            drawBoundingBoxWithHandles(ctx, 0, 0, r * 2, r * 2, 0);
+          }
+          ctx.restore();
+        } else if (obj.type === 'rect') {
+          ctx.save();
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          const w = (obj.width || 130) * (obj.scale || 1);
+          const h = (obj.height || 130) * (obj.scale || 1);
+          if (obj.isFilled !== false) {
+            ctx.fillStyle = obj.color || '#38bdf8';
+            ctx.fillRect(-w / 2, -h / 2, w, h);
+          }
+          ctx.strokeStyle = obj.color || '#38bdf8';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
+          }
+          ctx.restore();
+        } else if (obj.type === 'bubble') {
+          ctx.save();
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          const w = (obj.width || 200) * (obj.scale || 1);
+          const h = (obj.height || 95) * (obj.scale || 1);
+          const r = 16;
+
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+          ctx.shadowBlur = 10;
+
+          ctx.beginPath();
+          ctx.moveTo(-w / 2 + r, -h / 2);
+          ctx.lineTo(w / 2 - r, -h / 2);
+          ctx.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+          ctx.lineTo(w / 2, h / 2 - r);
+          ctx.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+          ctx.lineTo(15, h / 2);
+          ctx.lineTo(0, h / 2 + 18);
+          ctx.lineTo(-10, h / 2);
+          ctx.lineTo(-w / 2 + r, h / 2);
+          ctx.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
+          ctx.lineTo(-w / 2, -h / 2 + r);
+          ctx.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
+          ctx.closePath();
+
+          ctx.fillStyle = obj.bgColor || 'rgba(255, 255, 255, 0.95)';
+          ctx.fill();
+          ctx.strokeStyle = obj.color || '#38bdf8';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          ctx.shadowColor = 'transparent';
+          ctx.fillStyle = obj.textColor || '#0f172a';
+          ctx.font = `bold ${obj.fontSize || 18}px ${obj.fontFamily || 'sans-serif'}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(obj.text || 'Sohbet Balonu', 0, -2);
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            drawBoundingBoxWithHandles(ctx, 0, 0, w, h + 18, 0);
+          }
           ctx.restore();
         } else if (obj.type === 'image') {
           const img = getCachedImage(obj.imageUrl);
           if (img && img.complete && img.naturalWidth > 0) {
             ctx.save();
+            ctx.translate(obj.x, obj.y);
+            if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
             const w = (obj.width || 160) * (obj.scale || 1);
             const h = (obj.height || (w * (img.naturalHeight / img.naturalWidth))) * (obj.scale || 1);
             ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
             ctx.shadowBlur = 10;
-            ctx.drawImage(img, obj.x - w / 2, obj.y - h / 2, w, h);
+            ctx.drawImage(img, -w / 2, -h / 2, w, h);
 
             if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-              ctx.strokeStyle = '#38bdf8';
-              ctx.lineWidth = 3;
-              ctx.setLineDash([6, 6]);
-              ctx.strokeRect(obj.x - w / 2 - 4, obj.y - h / 2 - 4, w + 8, h + 8);
-              ctx.setLineDash([]);
+              drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
             }
             ctx.restore();
           }
@@ -265,17 +404,21 @@ export default function MeadowCanvas({
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
 
-    // Check hit on PNG sticker or meadow object first
+    // Check hit on PNG sticker, shape, bubble, or text object first
     let hitMeadowObj = null;
     if (isAdminAuthenticated && meadowObjects && meadowObjects.length > 0) {
       hitMeadowObj = meadowObjects.slice().reverse().find((o) => {
-        if (o.type === 'image') {
+        if (o.type === 'image' || o.type === 'rect' || o.type === 'bubble') {
           const w = (o.width || 160) * (o.scale || 1);
           const h = (o.height || 160) * (o.scale || 1);
           return Math.abs(o.x - worldX) < w / 2 && Math.abs(o.y - worldY) < h / 2;
         }
+        if (o.type === 'circle') {
+          const r = (o.radius || 65) * (o.scale || 1);
+          return Math.hypot(o.x - worldX, o.y - worldY) < r;
+        }
         if (o.type === 'text') {
-          return Math.hypot(o.x - worldX, o.y - worldY) < 40;
+          return Math.hypot(o.x - worldX, o.y - worldY) < 45;
         }
         return false;
       });
@@ -443,7 +586,8 @@ export default function MeadowCanvas({
             x: Math.round(worldX),
             y: Math.round(worldY),
             color: adminColor || '#ffffff',
-            fontSize: 24
+            fontFamily: adminFont || 'sans-serif',
+            fontSize: 26
           };
           if (onAddMeadowObject) onAddMeadowObject(newTextObj);
         }

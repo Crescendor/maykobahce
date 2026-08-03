@@ -115,11 +115,35 @@ export default function FlowerPopup({ flower, onClose, onDeleteFlower }) {
     }
   };
 
+const CARD_THEMES = {
+  gold: { background: 'linear-gradient(135deg, #451a03 0%, #78350f 50%, #b45309 100%)', border: '2px solid #f59e0b', color: '#fffbeb' },
+  dark_gothic: { background: 'linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%)', border: '2px solid #a855f7', color: '#f4f4f5' },
+  love_romance: { background: 'linear-gradient(135deg, #831843 0%, #be185d 100%)', border: '2px solid #f43f5e', color: '#fff1f2' },
+  starry_galaxy: { background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', border: '2px solid #38bdf8', color: '#f0f9ff' },
+  neon_cyber: { background: 'linear-gradient(135deg, #022c22 0%, #064e3b 100%)', border: '2px solid #34d399', color: '#ecfdf5' },
+  sakura_bloom: { background: 'linear-gradient(135deg, #500724 0%, #9d174d 100%)', border: '2px solid #f472b6', color: '#fdf2f8' },
+  ocean_breeze: { background: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%)', border: '2px solid #38bdf8', color: '#f0f9ff' },
+  sunset_glow: { background: 'linear-gradient(135deg, #7c2d12 0%, #c2410c 100%)', border: '2px solid #fb923c', color: '#fff7ed' },
+  emerald_forest: { background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', border: '2px solid #10b981', color: '#ecfdf5' },
+  royal_purple: { background: 'linear-gradient(135deg, #3b0764 0%, #6b21a8 100%)', border: '2px solid #c084fc', color: '#faf5ff' },
+  vintage_sepia: { background: 'linear-gradient(135deg, #451a03 0%, #78350f 100%)', border: '2px solid #d97706', color: '#fffbeb' },
+  fire_blaze: { background: 'linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%)', border: '2px solid #ef4444', color: '#fef2f2' },
+  ice_frost: { background: 'linear-gradient(135deg, #164e63 0%, #0891b2 100%)', border: '2px solid #22d3ee', color: '#ecfeff' },
+  fairy_magic: { background: 'linear-gradient(135deg, #701a75 0%, #a21caf 100%)', border: '2px solid #e879f9', color: '#fdf4ff' },
+  cosmic_aurora: { background: 'linear-gradient(135deg, #064e3b 0%, #1e1b4b 100%)', border: '2px solid #a7f3d0', color: '#ecfdf5' },
+  sunflower_summer: { background: 'linear-gradient(135deg, #713f12 0%, #ca8a04 100%)', border: '2px solid #facc15', color: '#fefce8' },
+  midnight_shadow: { background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)', border: '2px solid #64748b', color: '#f8fafc' },
+  diamond_crystal: { background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '2px solid #e2e8f0', color: '#f8fafc' },
+  rainbow_dream: { background: 'linear-gradient(135deg, #831843 0%, #1e1b4b 50%, #064e3b 100%)', border: '2px solid #f472b6', color: '#ffffff' }
+};
+
+  const themeStyle = flower.theme && CARD_THEMES[flower.theme] ? CARD_THEMES[flower.theme] : null;
+
   return (
     <div style={styles.overlay} className="animate-fade-in">
-      <div style={styles.card} className="glass-card-light animate-slide-up">
+      <div style={{ ...styles.card, ...(themeStyle || {}) }} className="glass-card-light animate-slide-up">
         {/* Close Button */}
-        <button style={styles.closeBtn} onClick={onClose}>
+        <button style={{ ...styles.closeBtn, ...(themeStyle ? { color: '#ffffff', background: 'rgba(255,255,255,0.2)' } : {}) }} onClick={onClose}>
           <X size={20} />
         </button>
 
@@ -130,7 +154,7 @@ export default function FlowerPopup({ flower, onClose, onDeleteFlower }) {
 
         {/* Creator Info */}
         <div style={styles.infoSection}>
-          <h3 style={styles.creatorName}>
+          <h3 style={{ ...styles.creatorName, ...(themeStyle ? { color: '#ffffff' } : {}) }}>
             {flower.name || 'Anonim'}
           </h3>
 
@@ -139,23 +163,42 @@ export default function FlowerPopup({ flower, onClose, onDeleteFlower }) {
               href={`https://instagram.com/${cleanIg}`}
               target="_blank"
               rel="noopener noreferrer"
-              style={styles.igLink}
+              style={{ ...styles.igLink, ...(themeStyle ? { color: '#f472b6' } : {}) }}
             >
               <InstagramIcon size={16} /> {flower.instagram} <ExternalLink size={12} />
             </a>
           )}
 
-          <p style={styles.timestamp}>
+          <p style={{ ...styles.timestamp, ...(themeStyle ? { color: 'rgba(255,255,255,0.7)' } : {}) }}>
             <Calendar size={14} /> {formattedDate}
           </p>
         </div>
+
+        {/* Admin Yorumu / Notu Badge (Only visible if adminComment exists!) */}
+        {flower.adminComment && (
+          <div style={{
+            background: 'rgba(245, 158, 11, 0.18)',
+            border: '1.5px solid #f59e0b',
+            borderRadius: 14,
+            padding: '10px 14px',
+            marginBottom: 12,
+            boxShadow: '0 0 15px rgba(245, 158, 11, 0.3)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#fbbf24', fontWeight: 800, fontSize: '0.84rem' }}>
+              👑 Yönetici Yorumu
+            </div>
+            <p style={{ color: '#fffbeb', fontSize: '0.88rem', marginTop: 4, fontStyle: 'italic', lineHeight: 1.4 }}>
+              "{flower.adminComment}"
+            </p>
+          </div>
+        )}
 
         {/* Note Content Section */}
         <div style={styles.noteSection}>
           {!flower.isPrivate || isUnlocked ? (
             /* Unlocked / Public Note */
             <div style={styles.unlockedNoteBox}>
-              <p style={styles.noteText}>
+              <p style={{ ...styles.noteText, ...(themeStyle ? { color: '#ffffff' } : {}) }}>
                 {flower.note ? `"${flower.note}"` : 'Bu çiçeğe yazılı bir not iliştirilmemiş.'}
               </p>
               {flower.isPrivate && (

@@ -186,8 +186,10 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
   const anonCount = flowers.filter((f) => f.isAnonymous).length;
   const pendingCount = mergedFlowers.filter((f) => f.approved === 0).length;
 
+  const [viewNoteFlower, setViewNoteFlower] = useState(null);
+
   const ANIMATIONS = [
-    { key: null, label: '— Yok', icon: '' },
+    { key: null, label: '— Animasyon Yok', icon: '' },
     { key: 'heart', label: 'Uçan Kalpler', icon: '💜' },
     { key: 'star', label: 'Yıldız Yağmuru', icon: '⭐' },
     { key: 'glow', label: 'Neon Halka', icon: '✨' },
@@ -198,6 +200,29 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
     { key: 'rainbow_ring', label: 'Gökkuşağı Aurası', icon: '🌈' },
     { key: 'sakura_petals', label: 'Sakura Dökümü', icon: '🌸' },
     { key: 'sparkles_gold', label: 'Işıltı Çeşmesi', icon: '💫' }
+  ];
+
+  const CARD_THEMES_OPTIONS = [
+    { key: '', label: '— Varsayılan Tema 🌿' },
+    { key: 'gold', label: 'Saf Altın & Lüks ✨' },
+    { key: 'dark_gothic', label: 'Gotik Dark (Yarasalı) 🦇' },
+    { key: 'love_romance', label: 'Aşk & Romantizm ❤️' },
+    { key: 'starry_galaxy', label: 'Yıldızlar & Galaksi 🌌' },
+    { key: 'neon_cyber', label: 'Neon Siberpunk ⚡' },
+    { key: 'sakura_bloom', label: 'Pembe Sakura 🌸' },
+    { key: 'ocean_breeze', label: 'Okyanus Esintisi 🌊' },
+    { key: 'sunset_glow', label: 'Gün Batımı 🌅' },
+    { key: 'emerald_forest', label: 'Zümrüt Ormanı 🌲' },
+    { key: 'royal_purple', label: 'Kraliyet Moru 👑' },
+    { key: 'vintage_sepia', label: 'Nostaljik Sepya 📜' },
+    { key: 'fire_blaze', label: 'Alev & Ateş 🔥' },
+    { key: 'ice_frost', label: 'Buz & Don ❄️' },
+    { key: 'fairy_magic', label: 'Peri Masalı ✨' },
+    { key: 'cosmic_aurora', label: 'Kutup Işıkları 🌌' },
+    { key: 'sunflower_summer', label: 'Yaz Güneşi ☀️' },
+    { key: 'midnight_shadow', label: 'Gece Yarısı 🌙' },
+    { key: 'diamond_crystal', label: 'Elmas & Kristal 💎' },
+    { key: 'rainbow_dream', label: 'Gökkuşağı Rüyası 🌈' }
   ];
 
   return (
@@ -300,8 +325,8 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                     <tr style={styles.thRow}>
                       <th style={styles.th}>Çiçek / Oluşturan</th>
                       <th style={styles.th}>İçerik & Not</th>
-                      <th style={styles.th}>Kodlar</th>
-                      <th style={styles.th}>Animasyon</th>
+                      <th style={styles.th}>Kodlar & Şifre</th>
+                      <th style={styles.th}>Animasyon & Tema</th>
                       <th style={styles.th}>İşlemler</th>
                     </tr>
                   </thead>
@@ -314,66 +339,49 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                         minute: '2-digit'
                       });
 
+                      const noteText = localPatches[flower.id]?.note !== undefined ? localPatches[flower.id].note : flower.note;
+
                       return (
                         <tr key={flower.id} style={{ ...styles.tr, opacity: flower.approved === 0 ? 0.75 : 1 }}>
                           {/* Creator Info & Flower Image Preview */}
                           <td style={styles.td}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               <FlowerThumbnail flower={flower} />
-                              <div style={{ minWidth: 160 }}>
+                              <div style={{ minWidth: 150 }}>
                                 {editingFlowerId === flower.id ? (
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                    <div>
-                                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block' }}>İsim:</span>
-                                      <input
-                                        type="text"
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                        style={styles.inlineEditInput}
-                                        placeholder="İsim girin..."
-                                      />
-                                    </div>
-                                    <div>
-                                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block' }}>Instagram:</span>
-                                      <input
-                                        type="text"
-                                        value={editInstagram}
-                                        onChange={(e) => setEditInstagram(e.target.value)}
-                                        style={styles.inlineEditInput}
-                                        placeholder="@kullanici"
-                                      />
-                                    </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    <input
+                                      type="text"
+                                      value={editName}
+                                      onChange={(e) => setEditName(e.target.value)}
+                                      style={styles.inlineEditInput}
+                                      placeholder="İsim..."
+                                    />
+                                    <input
+                                      type="text"
+                                      value={editInstagram}
+                                      onChange={(e) => setEditInstagram(e.target.value)}
+                                      style={styles.inlineEditInput}
+                                      placeholder="@kullanici"
+                                    />
                                   </div>
                                 ) : (
                                   <>
-                                    <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
+                                    <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.88rem' }}>
                                       {(localPatches[flower.id]?.name !== undefined ? localPatches[flower.id].name : flower.name) || 'Anonim'}
                                     </div>
-                                    {/* real_sender badge */}
                                     {flower.realSender && (
-                                      <div style={{ fontSize: '0.76rem', color: '#f9a8d4', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                        🌸 {flower.realSender} {b64('Z8O2bmRlcmRp')} {flower.isAnonymous ? b64('KEFub25pbSk=') : ''}
+                                      <div style={{ fontSize: '0.72rem', color: '#f9a8d4', fontWeight: 700 }}>
+                                        🌸 {flower.realSender}
                                       </div>
                                     )}
                                     {(localPatches[flower.id]?.instagram !== undefined ? localPatches[flower.id].instagram : flower.instagram) && (
-                                      <div style={{ fontSize: '0.78rem', color: '#ec4899', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                                        <InstagramIcon size={12} /> {localPatches[flower.id]?.instagram !== undefined ? localPatches[flower.id].instagram : flower.instagram}
+                                      <div style={{ fontSize: '0.74rem', color: '#ec4899', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                        <InstagramIcon size={11} /> {localPatches[flower.id]?.instagram !== undefined ? localPatches[flower.id].instagram : flower.instagram}
                                       </div>
                                     )}
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                      <Calendar size={12} /> {formattedDate}
-                                    </div>
-                                    {/* Approval badge */}
-                                    <div style={{ marginTop: 5 }}>
-                                      {flower.approved === 0 ? (
-                                        <span style={{ fontSize: '0.72rem', background: 'rgba(251,146,60,0.2)', color: '#fb923c', padding: '2px 8px', borderRadius: 99, border: '1px solid #fb923c' }}>
-                                          ⏳ Onay Bekliyor
-                                        </span>
-                                      ) : (
-                                        <span style={{ fontSize: '0.72rem', background: 'rgba(52,211,153,0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 99, border: '1px solid #34d399' }}>
-                                          ✅ Onaylandı
-                                        </span>
-                                      )}
+                                    <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                      <Calendar size={11} /> {formattedDate}
                                     </div>
                                   </>
                                 )}
@@ -381,68 +389,70 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                             </div>
                           </td>
 
-                          {/* Note Content (Always Visible & Editable to Admin) */}
+                          {/* Note Content & Preview Modal Trigger */}
                           <td style={styles.td}>
                             {editingFlowerId === flower.id ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 200 }}>
-                                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Not İletisi:</span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180 }}>
                                 <textarea
                                   value={editNote}
                                   onChange={(e) => setEditNote(e.target.value)}
-                                  rows={3}
+                                  rows={2}
                                   style={styles.inlineEditTextarea}
-                                  placeholder="Not içeriğini yazın..."
+                                  placeholder="Not..."
                                 />
-                                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                                  <button
-                                    type="button"
-                                    style={styles.saveEditBtn}
-                                    onClick={() => handleSaveEdit(flower.id)}
-                                  >
-                                    <Save size={14} /> Kaydet
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <button type="button" style={styles.saveEditBtn} onClick={() => handleSaveEdit(flower.id)}>
+                                    <Save size={12} /> Kaydet
                                   </button>
-                                  <button
-                                    type="button"
-                                    style={styles.cancelEditBtn}
-                                    onClick={handleCancelEdit}
-                                  >
-                                    <X size={14} /> İptal
+                                  <button type="button" style={styles.cancelEditBtn} onClick={handleCancelEdit}>
+                                    <X size={12} /> İptal
                                   </button>
                                 </div>
                               </div>
                             ) : (
-                              <>
-                                {(localPatches[flower.id]?.note !== undefined ? localPatches[flower.id].note : flower.note) ? (
-                                  <div style={{ ...styles.noteContentBox, borderLeft: flower.isPrivate ? '3px solid #fbbf24' : '3px solid #10b981' }}>
-                                    "{localPatches[flower.id]?.note !== undefined ? localPatches[flower.id].note : flower.note}"
-                                  </div>
-                                ) : (
-                                  <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.82rem' }}>Not yazılmamış</span>
-                                )}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 220 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontSize: '0.8rem', color: noteText ? '#e2e8f0' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+                                    {noteText ? `"${noteText}"` : 'Not yok'}
+                                  </span>
+                                  {noteText && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setViewNoteFlower(flower)}
+                                      style={styles.viewNoteBtn}
+                                      title="Notu Tam Ekran Göster"
+                                    >
+                                      👁️ Göster
+                                    </button>
+                                  )}
+                                </div>
                                 {flower.isPrivate && (
-                                  <div style={{ ...styles.privateBadgeAdmin, marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                                    <Lock size={12} color="#f59e0b" /> Gizli Not (Şifre: <code style={styles.codeTag}>{flower.password || 'Yok'}</code>)
+                                  <div style={{ fontSize: '0.72rem', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                    <Lock size={11} /> Şifre: <code style={styles.codeTag}>{flower.password || 'Yok'}</code>
                                   </div>
                                 )}
-                              </>
+                              </div>
                             )}
                           </td>
 
                           {/* Passwords & Codes */}
                           <td style={styles.td}>
-                            {flower.isPrivate && (
-                              <div style={{ fontSize: '0.82rem', color: '#fbbf24', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <Key size={13} /> Şifre: <code style={styles.codeTag}>{flower.password}</code>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: '0.78rem' }}>
+                              {flower.isPrivate && (
+                                <div style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                  <Key size={12} /> <code style={styles.codeTag}>{flower.password}</code>
+                                </div>
+                              )}
+                              <div style={{ color: '#38bdf8', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                <ShieldAlert size={12} /> <code style={styles.codeTag}>{flower.deleteCode || 'K8X9P4M2'}</code>
                               </div>
-                            )}
-                            <div style={{ fontSize: '0.82rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <ShieldAlert size={13} /> Silme Kodu: <code style={styles.codeTag}>{flower.deleteCode || 'K8X9P4M2'}</code>
                             </div>
                           </td>
 
-                          {/* Animation Droplist Selector */}
+                          {/* Animation, 20 Themes & Admin Comment Droplists */}
                           <td style={styles.td}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 155 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 160 }}>
+                              {/* Animasyon Select */}
                               <select
                                 value={flower.animation || ''}
                                 onChange={(e) => patchFlower(flower.id, { animation: e.target.value || null })}
@@ -454,33 +464,34 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                                   </option>
                                 ))}
                               </select>
-                              {(flower.animation === 'glow' || flower.animation === 'smoke') && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 8 }}>
-                                  <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 600 }}>Renk:</span>
-                                  <input
-                                    type="color"
-                                    value={flower.animationColor || (flower.animation === 'smoke' ? '#a855f7' : '#10b981')}
-                                    onChange={(e) => patchFlower(flower.id, { animationColor: e.target.value })}
-                                    style={{ width: 28, height: 22, border: 'none', borderRadius: 5, cursor: 'pointer', background: 'transparent' }}
-                                  />
-                                </div>
-                              )}
+
+                              {/* 20 Kart Teması Select */}
+                              <select
+                                value={flower.theme || ''}
+                                onChange={(e) => patchFlower(flower.id, { theme: e.target.value || null })}
+                                style={styles.themeSelect}
+                              >
+                                {CARD_THEMES_OPTIONS.map((t) => (
+                                  <option key={t.key} value={t.key} style={styles.animOption}>
+                                    {t.label}
+                                  </option>
+                                ))}
+                              </select>
+
+                              {/* Admin Yorumu Input */}
+                              <input
+                                type="text"
+                                placeholder="👑 Admin Yorumu..."
+                                defaultValue={flower.adminComment || ''}
+                                onBlur={(e) => patchFlower(flower.id, { adminComment: e.target.value.trim() || null })}
+                                style={styles.adminCommentInput}
+                              />
                             </div>
                           </td>
 
-                          {/* Admin Actions */}
+                          {/* Compact Action Dropdown & Approval Button */}
                           <td style={styles.td}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                              {editingFlowerId !== flower.id && (
-                                <button
-                                  type="button"
-                                  style={styles.editBtn}
-                                  onClick={() => handleStartEdit(flower)}
-                                  title="İsim ve Notu Düzenle"
-                                >
-                                  <Edit3 size={14} /> Düzenle
-                                </button>
-                              )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               {flower.approved === 0 && (
                                 <button
                                   type="button"
@@ -488,25 +499,28 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                                   onClick={() => patchFlower(flower.id, { approved: 1 })}
                                   title="Onayla"
                                 >
-                                  <CheckCircle size={14} /> Onayla
+                                  <CheckCircle size={13} /> Onayla
                                 </button>
                               )}
-                              <button
-                                type="button"
-                                style={styles.focusBtn}
-                                onClick={() => { onFocusFlower(flower); onClose(); }}
-                                title="Haritada Göster"
+
+                              {/* Action Select Dropdown */}
+                              <select
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === 'edit') handleStartEdit(flower);
+                                  if (val === 'focus') { onFocusFlower(flower); onClose(); }
+                                  if (val === 'delete') onDeleteFlower(flower.id, flower.deleteCode);
+                                  if (val === 'note') setViewNoteFlower(flower);
+                                  e.target.value = '';
+                                }}
+                                style={styles.actionsSelect}
                               >
-                                <MapPin size={14} /> Göster
-                              </button>
-                              <button
-                                type="button"
-                                style={styles.deleteBtn}
-                                onClick={() => onDeleteFlower(flower.id, flower.deleteCode)}
-                                title="Çiçeği Sil"
-                              >
-                                <Trash2 size={14} /> Sil
-                              </button>
+                                <option value="">⚙️ İşlemler...</option>
+                                <option value="edit">✏️ İsim & Not Düzenle</option>
+                                <option value="note">👁️ Notu Tam Göster</option>
+                                <option value="focus">📍 Haritada Göster</option>
+                                <option value="delete">🗑️ Çiçeği Sil</option>
+                              </select>
                             </div>
                           </td>
                         </tr>
@@ -519,6 +533,37 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
           </div>
         )}
       </div>
+
+      {/* Clean Minified Note Preview Modal */}
+      {viewNoteFlower && (
+        <div style={styles.overlayNoteModal} onClick={() => setViewNoteFlower(null)}>
+          <div style={styles.cardNoteModal} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#f8fafc' }}>
+                🌸 {viewNoteFlower.name || 'Anonim'} Çiçeğinin Notu
+              </h4>
+              <button style={styles.closeBtn} onClick={() => setViewNoteFlower(null)}>
+                <X size={18} color="#94a3b8" />
+              </button>
+            </div>
+            <div style={{ background: 'rgba(30, 41, 59, 0.9)', padding: 14, borderRadius: 12, color: '#f1f5f9', fontSize: '0.9rem', lineHeight: 1.5, maxHeight: 180, overflowY: 'auto' }}>
+              "{viewNoteFlower.note || 'Bu çiçeğe herhangi bir not eklenmemiş.'}"
+            </div>
+            {viewNoteFlower.isPrivate && (
+              <div style={{ marginTop: 10, fontSize: '0.8rem', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Key size={13} /> Şifreli Not (Şifre: <code style={styles.codeTag}>{viewNoteFlower.password}</code>)
+              </div>
+            )}
+            <button
+              onClick={() => setViewNoteFlower(null)}
+              className="btn-primary"
+              style={{ width: '100%', marginTop: 14, padding: '8px', fontSize: '0.85rem' }}
+            >
+              Kapat
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -858,5 +903,69 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 4
+  },
+  themeSelect: {
+    width: '100%',
+    padding: '6px 10px',
+    borderRadius: 8,
+    background: 'rgba(30, 41, 59, 0.95)',
+    border: '1px solid rgba(245, 158, 11, 0.4)',
+    color: '#fbbf24',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    outline: 'none',
+    cursor: 'pointer'
+  },
+  adminCommentInput: {
+    width: '100%',
+    padding: '5px 8px',
+    borderRadius: 8,
+    background: 'rgba(245, 158, 11, 0.12)',
+    border: '1px dashed rgba(245, 158, 11, 0.5)',
+    color: '#fffbeb',
+    fontSize: '0.76rem',
+    outline: 'none'
+  },
+  actionsSelect: {
+    padding: '6px 10px',
+    borderRadius: 8,
+    background: 'rgba(51, 65, 85, 0.9)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    color: '#f8fafc',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    outline: 'none',
+    cursor: 'pointer'
+  },
+  viewNoteBtn: {
+    padding: '2px 8px',
+    borderRadius: 6,
+    background: 'rgba(56, 189, 248, 0.2)',
+    border: '1px solid rgba(56, 189, 248, 0.4)',
+    color: '#38bdf8',
+    fontSize: '0.74rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap'
+  },
+  overlayNoteModal: {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 3000,
+    background: 'rgba(0, 0, 0, 0.75)',
+    backdropFilter: 'blur(8px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20
+  },
+  cardNoteModal: {
+    width: '100%',
+    maxWidth: 400,
+    background: 'rgba(15, 23, 42, 0.98)',
+    border: '1.5px solid rgba(56, 189, 248, 0.4)',
+    borderRadius: 20,
+    padding: 20,
+    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8)'
   }
 };

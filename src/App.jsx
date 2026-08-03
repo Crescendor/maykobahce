@@ -47,6 +47,7 @@ export default function App() {
   // Admin Interactive Mode Tools & State
   const [adminTool, setAdminTool] = useState(null); // null (pan) | 'move_flower' | 'draw' | 'text' | 'delete'
   const [adminColor, setAdminColor] = useState('#ffffff');
+  const [adminFont, setAdminFont] = useState('sans-serif');
   const [selectedMeadowObj, setSelectedMeadowObj] = useState(null);
 
   const [meadowObjects, setMeadowObjects] = useState(() => {
@@ -97,7 +98,68 @@ export default function App() {
     saveMeadowObjects([...meadowObjects, newSticker]);
     setSelectedMeadowObj(newSticker);
     setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 1.2 });
-    showToast('PNG görsel haritaya eklendi! Taşıyabilir ve boyutunu ayarlayabilirsiniz. 🖼️');
+    showToast('PNG görsel haritaya eklendi! 🖼️');
+  };
+
+  const handleAddCircleShape = () => {
+    const circle = {
+      id: `obj-${Date.now()}`,
+      type: 'circle',
+      x: GARDEN_SIZE / 2,
+      y: GARDEN_SIZE / 2,
+      radius: 65,
+      color: adminColor || '#38bdf8',
+      isFilled: true,
+      scale: 1,
+      rotation: 0
+    };
+    saveMeadowObjects([...meadowObjects, circle]);
+    setSelectedMeadowObj(circle);
+    setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 1.2 });
+    showToast('⭕ Daire şekli haritaya eklendi!');
+  };
+
+  const handleAddSquareShape = () => {
+    const square = {
+      id: `obj-${Date.now()}`,
+      type: 'rect',
+      x: GARDEN_SIZE / 2,
+      y: GARDEN_SIZE / 2,
+      width: 130,
+      height: 130,
+      color: adminColor || '#38bdf8',
+      isFilled: true,
+      scale: 1,
+      rotation: 0
+    };
+    saveMeadowObjects([...meadowObjects, square]);
+    setSelectedMeadowObj(square);
+    setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 1.2 });
+    showToast('🔲 Kare şekli haritaya eklendi!');
+  };
+
+  const handleAddSpeechBubble = () => {
+    const text = prompt('Sohbet balonuna yazılacak metin:', 'Merhaba Bahçe! 🌸') || 'Sohbet Balonu';
+    const bubble = {
+      id: `obj-${Date.now()}`,
+      type: 'bubble',
+      text,
+      x: GARDEN_SIZE / 2,
+      y: GARDEN_SIZE / 2,
+      width: 200,
+      height: 95,
+      color: adminColor || '#38bdf8',
+      bgColor: 'rgba(255, 255, 255, 0.95)',
+      textColor: '#0f172a',
+      fontFamily: adminFont || 'sans-serif',
+      fontSize: 18,
+      scale: 1,
+      rotation: 0
+    };
+    saveMeadowObjects([...meadowObjects, bubble]);
+    setSelectedMeadowObj(bubble);
+    setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 1.2 });
+    showToast('💬 Sohbet balonu haritaya eklendi!');
   };
 
   const handleUpdateMeadowObjPos = (objId, x, y) => {
@@ -348,12 +410,17 @@ export default function App() {
         setAdminTool={setAdminTool}
         adminColor={adminColor}
         setAdminColor={setAdminColor}
+        adminFont={adminFont}
+        setAdminFont={setAdminFont}
         onOpenDashboard={() => setIsAdminOpen(true)}
         meadowObjectsCount={meadowObjects.length}
         onClearAllMeadowDrawings={handleClearAllMeadowDrawings}
         onAddPngSticker={handleAddPngSticker}
+        onAddCircleShape={handleAddCircleShape}
+        onAddSquareShape={handleAddSquareShape}
+        onAddSpeechBubble={handleAddSpeechBubble}
         onPublishMeadowObjects={handlePublishMeadowObjects}
-        selectedImageSize={selectedMeadowObj && selectedMeadowObj.type === 'image' ? selectedMeadowObj.width || 180 : null}
+        selectedImageSize={selectedMeadowObj && (selectedMeadowObj.type === 'image' || selectedMeadowObj.type === 'rect' || selectedMeadowObj.type === 'circle' || selectedMeadowObj.type === 'bubble') ? selectedMeadowObj.width || selectedMeadowObj.radius * 2 || 180 : null}
         onUpdateSelectedImageSize={handleUpdateSelectedImageSize}
       />
 
@@ -370,6 +437,7 @@ export default function App() {
         isAdminAuthenticated={isAdminAuthenticated}
         adminTool={adminTool}
         adminColor={adminColor}
+        adminFont={adminFont}
         adminBrushSize={10}
         onUpdateFlowerLocalPos={handleUpdateFlowerLocalPos}
         onUpdateFlowerPosition={handleUpdateFlowerPosition}

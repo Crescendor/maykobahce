@@ -6,6 +6,8 @@ async function ensureSchema(db) {
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation TEXT DEFAULT NULL').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation_color TEXT DEFAULT NULL').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN real_sender TEXT DEFAULT NULL').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN theme TEXT DEFAULT NULL').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN admin_comment TEXT DEFAULT NULL').run(); } catch (e) {}
 }
 
 export async function onRequestGet(context) {
@@ -44,7 +46,9 @@ export async function onRequestGet(context) {
         approved: (row.approved === undefined || row.approved === null) ? 1 : Number(row.approved),
         animation: row.animation || null,
         animationColor: row.animation_color || null,
-        realSender: row.real_sender || null
+        realSender: row.real_sender || null,
+        theme: row.theme || null,
+        adminComment: row.admin_comment || null
       }));
 
       // Extra strict safety filter for non-admin public requests

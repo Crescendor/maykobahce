@@ -7,10 +7,15 @@ export default function AdminFloatingToolbar({
   setAdminTool,
   adminColor,
   setAdminColor,
+  adminFont,
+  setAdminFont,
   onOpenDashboard,
   meadowObjectsCount,
   onClearAllMeadowDrawings,
   onAddPngSticker,
+  onAddCircleShape,
+  onAddSquareShape,
+  onAddSpeechBubble,
   onPublishMeadowObjects,
   selectedImageSize,
   onUpdateSelectedImageSize
@@ -87,6 +92,34 @@ export default function AdminFloatingToolbar({
           <Type size={15} /> Yazı Ekle
         </button>
 
+        {/* Shape Buttons */}
+        <button
+          type="button"
+          style={styles.toolBtn}
+          onClick={onAddCircleShape}
+          title="Haritaya Yuvarlak / Daire Şekli Ekle"
+        >
+          ⭕ Yuvarlak
+        </button>
+
+        <button
+          type="button"
+          style={styles.toolBtn}
+          onClick={onAddSquareShape}
+          title="Haritaya Kare / Dikdörtgen Şekli Ekle"
+        >
+          🔲 Kare
+        </button>
+
+        <button
+          type="button"
+          style={styles.toolBtn}
+          onClick={onAddSpeechBubble}
+          title="Haritaya Sohbet Balonu Ekle"
+        >
+          💬 Balon
+        </button>
+
         {/* PNG Upload Button */}
         <button
           type="button"
@@ -106,6 +139,33 @@ export default function AdminFloatingToolbar({
           <Trash2 size={15} /> Sil
         </button>
       </div>
+
+      {/* Font Family Selector */}
+      {adminTool === 'text' && (
+        <div style={styles.colorWrapper}>
+          <span style={{ fontSize: '0.74rem', color: '#cbd5e1', fontWeight: 600 }}>Yazı Tipi:</span>
+          <select
+            value={adminFont || 'sans-serif'}
+            onChange={(e) => setAdminFont && setAdminFont(e.target.value)}
+            style={{
+              padding: '4px 8px',
+              borderRadius: 8,
+              background: '#0f172a',
+              color: '#f8fafc',
+              border: '1px solid rgba(255,255,255,0.2)',
+              fontSize: '0.76rem',
+              fontWeight: 700
+            }}
+          >
+            <option value="sans-serif">Standart (Sans)</option>
+            <option value="serif">Zarif (Serif)</option>
+            <option value="monospace">Kod (Monospace)</option>
+            <option value="cursive">Romantik (Script)</option>
+            <option value="Impact, sans-serif">Dev (Impact)</option>
+            <option value="'Playfair Display', serif">Kraliyet (Playfair)</option>
+          </select>
+        </div>
+      )}
 
       {/* Color Picker for Draw & Text Tools */}
       {(adminTool === 'draw' || adminTool === 'text') && (
