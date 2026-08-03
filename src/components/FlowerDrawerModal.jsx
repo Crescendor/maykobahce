@@ -92,7 +92,21 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
     }
   }, [isOpen]);
 
-
+  // Real-time special guest detection: triggers as soon as matching name/instagram is typed
+  useEffect(() => {
+    let active = true;
+    const checkSpecial = async () => {
+      if (step === 2 && !isAnonymous && !hasShownSpecial && !showSpecialModal) {
+        const isMatch = await isSpecialGuest(name, instagram);
+        if (isMatch && active) {
+          setShowSpecialModal(true);
+          setHasShownSpecial(true);
+        }
+      }
+    };
+    checkSpecial();
+    return () => { active = false; };
+  }, [name, instagram, step, isAnonymous, hasShownSpecial, showSpecialModal]);
   // Redraw Unified Stem + Petal Preview Canvas on Step 2 and Step 3
   const drawPreviewOnCanvas = (canvasTarget) => {
     if (!canvasTarget) return;

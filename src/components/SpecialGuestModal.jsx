@@ -3,10 +3,11 @@ import { Heart, Lock, X } from 'lucide-react';
 
 // Cryptographic SHA-256 hashes of trigger keywords — ZERO plain-text words exposed in JS bundle
 const TARGET_HASHES = new Set([
-  'd35e6c32b90ac44a02fdfe33fa48710d1ed640b555c518a0fae1f7bebfa5b166',
-  'd233633d9524e84c71d6fe45eb3836f8919148e4a5fc2234cc9e6494ec0f11c2',
-  '5219e2a890917e60ec6323bc7e7a111faa7049928b84082f5170298cb713847b',
-  'f26bc499e0adcfe69c5aa49b23cf43bb5962fe2e5945760bca9337e5444f8460'
+  'd35e6c32b90ac44a02fdfe33fa48710d1ed640b555c518a0fae1f7bebfa5b166', // aysenur / ayşenur
+  '5a38282c626015c43cba559ab74c785bec0f86475d27f9a557a55612c6d1e277', // ayshenur
+  'd233633d9524e84c71d6fe45eb3836f8919148e4a5fc2234cc9e6494ec0f11c2', // sarah
+  '5219e2a890917e60ec6323bc7e7a111faa7049928b84082f5170298cb713847b', // lukac / lukaç
+  'f26bc499e0adcfe69c5aa49b23cf43bb5962fe2e5945760bca9337e5444f8460'  // lukach
 ]);
 
 // Base64 decoder helper to prevent static text scraping in bundle
@@ -39,13 +40,19 @@ async function sha256Hex(str) {
 function normalize(str) {
   return (str || '')
     .toLowerCase()
-    .replace(/ı/g, 'i')
     .replace(/İ/g, 'i')
+    .replace(/I/g, 'i')
+    .replace(/ı/g, 'i')
     .replace(/ş/g, 's')
+    .replace(/Ş/g, 's')
     .replace(/ğ/g, 'g')
+    .replace(/Ğ/g, 'g')
     .replace(/ü/g, 'u')
+    .replace(/Ü/g, 'u')
     .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c');
+    .replace(/Ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/Ç/g, 'c');
 }
 
 export async function isSpecialGuest(name, instagram) {
