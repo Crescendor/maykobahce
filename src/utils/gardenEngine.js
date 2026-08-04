@@ -103,18 +103,23 @@ export function formatInstagramHandle(input) {
 }
 
 export function isPositionValid(x, y, existingFlowers, minDistance = MIN_FLOWER_DISTANCE) {
-  if (
-    x < FENCE_PADDING + 40 ||
-    x > GARDEN_SIZE - FENCE_PADDING - 40 ||
-    y < FENCE_PADDING + 40 ||
-    y > GARDEN_SIZE - FENCE_PADDING - 40
-  ) {
+  const minBound = FENCE_PADDING + 15;
+  const maxBound = GARDEN_SIZE - FENCE_PADDING - 15;
+
+  if (x < minBound || x > maxBound || y < minBound || y > maxBound) {
     return { valid: false, reason: 'Çitlerin dışına çiçek dikilemez!' };
   }
 
-  for (const flower of existingFlowers) {
-    const dx = flower.x - x;
-    const dy = flower.y - y;
+  for (const rawFlower of existingFlowers) {
+    let fx = Number(rawFlower.x) || 0;
+    let fy = Number(rawFlower.y) || 0;
+    if (fx > 2000 || fy > 2000) {
+      fx = Math.round(fx * 0.5);
+      fy = Math.round(fy * 0.5);
+    }
+
+    const dx = fx - x;
+    const dy = fy - y;
     const distSq = dx * dx + dy * dy;
     if (distSq < minDistance * minDistance) {
       return { valid: false, reason: 'Bu nokta başka bir çiçeğe çok yakın! Lütfen biraz boşluk bırakın.' };

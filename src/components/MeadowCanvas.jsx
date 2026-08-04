@@ -1,14 +1,13 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GARDEN_SIZE, FENCE_PADDING, drawSmoothStroke, drawStem } from '../utils/gardenEngine';
 
-function getEffectiveFlower(flower) {
+export function getEffectiveFlower(flower) {
   if (!flower) return flower;
-  let x = flower.x;
-  let y = flower.y;
+  let x = Number(flower.x) || 0;
+  let y = Number(flower.y) || 0;
 
-  // Legacy coordinate mapping: if flower was saved in 4000x4000 coordinate space,
-  // scale coordinates by 0.5 so they fit inside the new 2000x2000 meadow!
-  if (x > 1800 || y > 1800 || (x > 1100 && y > 1100 && !flower._v2Scaled)) {
+  // Only scale legacy flowers from the old 4000x4000 canvas size (> 2000)
+  if (x > 2000 || y > 2000) {
     x = Math.round(x * 0.5);
     y = Math.round(y * 0.5);
   }
