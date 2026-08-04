@@ -697,7 +697,8 @@ export async function fetchFlowersFromApi(isAdmin = false) {
       ? `/api/flowers?adminPassword=${encodeURIComponent(adminToken)}`
       : '/api/flowers';
     const res = await fetch(apiUrl);
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       const remote = await res.json();
       if (Array.isArray(remote)) {
         const remoteIds = new Set(remote.map((f) => f.id));
@@ -734,7 +735,7 @@ export async function postFlowerToApi(newFlower) {
       body: JSON.stringify(newFlower)
     });
     if (res.ok) {
-      return await res.json();
+      return await res.json().catch(() => null);
     }
   } catch (e) {
     console.warn('Cloudflare API post offline, saved locally');
@@ -750,7 +751,7 @@ export async function deleteFlowerFromApi(flowerId, deleteCode = '', adminPasswo
       body: JSON.stringify({ deleteCode, adminPassword })
     });
     if (res.ok) {
-      return await res.json();
+      return await res.json().catch(() => null);
     }
   } catch (e) {
     console.warn('Cloudflare API delete offline, deleted locally');
@@ -766,7 +767,7 @@ export async function patchFlowerToApi(flowerId, updates, adminPassword = '') {
       body: JSON.stringify({ ...updates, adminPassword })
     });
     if (res.ok) {
-      return await res.json();
+      return await res.json().catch(() => null);
     }
   } catch (e) {
     console.warn('Cloudflare API patch offline, patched locally');
@@ -777,7 +778,8 @@ export async function patchFlowerToApi(flowerId, updates, adminPassword = '') {
 export async function fetchMeadowObjectsFromApi() {
   try {
     const res = await fetch('/api/meadow-objects');
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       const data = await res.json();
       if (Array.isArray(data)) {
         return data;

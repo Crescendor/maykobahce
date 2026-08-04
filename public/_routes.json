@@ -4,6 +4,9 @@
     "/api/*"
   ],
   "exclude": [
-    "/*"
+    "/assets/*",
+    "/favicon.svg",
+    "/icons.svg",
+    "/mayko_logo.png"
   ]
 }
