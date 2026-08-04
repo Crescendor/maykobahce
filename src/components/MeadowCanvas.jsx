@@ -93,20 +93,16 @@ export default function MeadowCanvas({
 
     const scale = transformRef.current.scale;
 
-    ctx.fillStyle = '#2d6a4f';
+    // 1. Render Meadow Lawn Base (Lush vibrant natural green)
+    ctx.fillStyle = '#3fa34d';
     ctx.fillRect(0, 0, GARDEN_SIZE, GARDEN_SIZE);
 
     drawLawnDetails(ctx);
 
+    // 2. Render Wooden Fence Outer Boundary
     ctx.strokeStyle = '#1b4332';
     ctx.lineWidth = 14;
     ctx.strokeRect(FENCE_PADDING, FENCE_PADDING, GARDEN_SIZE - 2 * FENCE_PADDING, GARDEN_SIZE - 2 * FENCE_PADDING);
-
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 4;
-    ctx.setLineDash([12, 8]);
-    ctx.strokeRect(FENCE_PADDING + 8, FENCE_PADDING + 8, GARDEN_SIZE - 2 * FENCE_PADDING - 16, GARDEN_SIZE - 2 * FENCE_PADDING - 16);
-    ctx.setLineDash([]);
 
     if (flowers && flowers.length > 0) {
       flowers.forEach((flower) => {
