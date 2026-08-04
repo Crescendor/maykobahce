@@ -42,6 +42,29 @@ export function isPointInsideObject(o, worldX, worldY) {
   return false;
 }
 
+export function getMeadowObjDimensions(obj) {
+  if (!obj) return { w: 160, h: 160 };
+  let w = 160;
+  let h = 160;
+  if (obj.type === 'circle') {
+    w = (obj.radius || 65) * 2;
+    h = w;
+  } else if (obj.type === 'rect' || obj.type === 'image') {
+    w = obj.width || 160;
+    h = obj.height || 160;
+  } else if (obj.type === 'line') {
+    w = obj.width || 240;
+    h = Math.max(30, (obj.strokeWidth || obj.size || 12) + 14);
+  } else if (obj.type === 'bubble') {
+    w = obj.width || 200;
+    h = (obj.height || 95) + 18;
+  } else if (obj.type === 'text') {
+    w = 140;
+    h = (obj.fontSize || 26) + 16;
+  }
+  return { w, h };
+}
+
 function drawBoundingBoxWithHandles(ctx, x, y, w, h, rotation = 0) {
   ctx.save();
   ctx.translate(x, y);
@@ -473,21 +496,7 @@ export default function MeadowCanvas({
     if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects && meadowObjects.length > 0) {
       const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
       if (selectedObj) {
-        let w = 160;
-        let h = 160;
-        if (selectedObj.type === 'circle') {
-          w = (selectedObj.radius || 65) * 2;
-          h = w;
-        } else if (selectedObj.type === 'rect' || selectedObj.type === 'image') {
-          w = selectedObj.width || 160;
-          h = selectedObj.height || 160;
-        } else if (selectedObj.type === 'bubble') {
-          w = selectedObj.width || 200;
-          h = (selectedObj.height || 95) + 18;
-        } else if (selectedObj.type === 'text') {
-          w = 140;
-          h = (selectedObj.fontSize || 26) + 16;
-        }
+        const { w, h } = getMeadowObjDimensions(selectedObj);
 
         const rotRad = ((selectedObj.rotation || 0) * Math.PI) / 180;
         const toWorld = (lx, ly) => ({
@@ -536,13 +545,16 @@ export default function MeadowCanvas({
     }
 
     if (isAdminAuthenticated && hitMeadowObj) {
-      isDraggingMeadowObjRef.current = true;
-      draggedMeadowObjIdRef.current = hitMeadowObj.id;
-      draggedMeadowObjOffsetRef.current = {
-        x: hitMeadowObj.x - worldX,
-        y: hitMeadowObj.y - worldY
-      };
       if (onSelectMeadowObj) onSelectMeadowObj(hitMeadowObj);
+      // ONLY start position dragging if adminTool === 'move_flower'!
+      if (adminTool === 'move_flower') {
+        isDraggingMeadowObjRef.current = true;
+        draggedMeadowObjIdRef.current = hitMeadowObj.id;
+        draggedMeadowObjOffsetRef.current = {
+          x: hitMeadowObj.x - worldX,
+          y: hitMeadowObj.y - worldY
+        };
+      }
       isDraggingRef.current = false;
       return;
     }
@@ -621,6 +633,9 @@ export default function MeadowCanvas({
         } else if (obj.type === 'text') {
           const newFont = Math.max(12, Math.round(handleDragStartRef.current.startFontSize * factor));
           onUpdateMeadowObj(obj.id, { fontSize: newFont });
+        } else if (obj.type === 'line') {
+          const newW = Math.max(40, Math.round(handleDragStartRef.current.startWidth * factor));
+          onUpdateMeadowObj(obj.id, { width: newW });
         } else {
           const newW = Math.max(40, Math.round(handleDragStartRef.current.startWidth * factor));
           const newH = Math.max(30, Math.round(handleDragStartRef.current.startHeight * factor));
