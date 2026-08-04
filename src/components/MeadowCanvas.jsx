@@ -15,6 +15,47 @@ export function getEffectiveFlower(flower) {
   return { ...flower, x, y };
 }
 
+export function clampTransform(nextTransform) {
+  const screenW = window.innerWidth;
+  const screenH = window.innerHeight;
+
+  // Minimum scale limit: Ensure garden fills a healthy portion of the screen (at least 60% of viewport)
+  const minScale = Math.max(0.48, Math.min(screenW / (GARDEN_SIZE * 1.15), screenH / (GARDEN_SIZE * 1.15)));
+  const scale = Math.min(Math.max(nextTransform.scale, minScale), 2.2);
+
+  const gardenW = GARDEN_SIZE * scale;
+  const gardenH = GARDEN_SIZE * scale;
+
+  // Maximum padding allowed outside: keep fence comfortably viewable, max 20% screen padding
+  const maxPaddingX = Math.min(screenW * 0.2, 160);
+  const maxPaddingY = Math.min(screenH * 0.2, 160);
+
+  let minX, maxX, minY, maxY;
+
+  if (gardenW >= screenW) {
+    minX = screenW - gardenW - maxPaddingX;
+    maxX = maxPaddingX;
+  } else {
+    const centerOffset = (screenW - gardenW) / 2;
+    minX = centerOffset - maxPaddingX;
+    maxX = centerOffset + maxPaddingX;
+  }
+
+  if (gardenH >= screenH) {
+    minY = screenH - gardenH - maxPaddingY;
+    maxY = maxPaddingY;
+  } else {
+    const centerOffset = (screenH - gardenH) / 2;
+    minY = centerOffset - maxPaddingY;
+    maxY = centerOffset + maxPaddingY;
+  }
+
+  const clampedX = Math.min(Math.max(nextTransform.x, minX), maxX);
+  const clampedY = Math.min(Math.max(nextTransform.y, minY), maxY);
+
+  return { x: clampedX, y: clampedY, scale };
+}
+
 export default function MeadowCanvas({
   flowers,
   selectedFlower,
@@ -32,11 +73,13 @@ export default function MeadowCanvas({
 }) {
   const canvasRef = useRef(null);
 
-  const [transform, setTransform] = useState({
-    x: -GARDEN_SIZE / 2 + window.innerWidth / 2,
-    y: -GARDEN_SIZE / 2 + window.innerHeight / 2,
-    scale: 0.85
-  });
+  const [transform, setTransform] = useState(() =>
+    clampTransform({
+      x: -GARDEN_SIZE / 2 + window.innerWidth / 2,
+      y: -GARDEN_SIZE / 2 + window.innerHeight / 2,
+      scale: 0.85
+    })
+  );
 
   const transformRef = useRef(transform);
   transformRef.current = transform;
@@ -61,6 +104,8 @@ export default function MeadowCanvas({
     const targetX = -viewportTarget.x * targetScale + window.innerWidth / 2;
     const targetY = -viewportTarget.y * targetScale + window.innerHeight / 2;
 
+    const clampedTarget = clampTransform({ x: targetX, y: targetY, scale: targetScale });
+
     const startTime = performance.now();
     const duration = 650;
 
@@ -69,11 +114,11 @@ export default function MeadowCanvas({
       const progress = Math.min(elapsed / duration, 1);
       const easeProgress = 1 - Math.pow(1 - progress, 3);
 
-      const nextTransform = {
-        x: startX + (targetX - startX) * easeProgress,
-        y: startY + (targetY - startY) * easeProgress,
-        scale: startScale + (targetScale - startScale) * easeProgress
-      };
+      const nextTransform = clampTransform({
+        x: startX + (clampedTarget.x - startX) * easeProgress,
+        y: startY + (clampedTarget.y - startY) * easeProgress,
+        scale: startScale + (clampedTarget.scale - startScale) * easeProgress
+      });
 
       setTransform(nextTransform);
       if (onViewportChange) onViewportChange(nextTransform);
@@ -100,6 +145,10 @@ export default function MeadowCanvas({
     }
 
     ctx.clearRect(0, 0, width, height);
+
+    // Fill entire screen viewport with lush grass green FIRST (zero dark void!)
+    ctx.fillStyle = '#2d6a4f';
+    ctx.fillRect(0, 0, width, height);
 
     ctx.save();
     ctx.translate(transformRef.current.x, transformRef.current.y);
@@ -149,7 +198,7 @@ export default function MeadowCanvas({
       e.preventDefault();
       const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
       const oldScale = transformRef.current.scale;
-      const newScale = Math.min(Math.max(oldScale * zoomFactor, 0.3), 2.5);
+      const newScale = oldScale * zoomFactor;
 
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
@@ -158,7 +207,7 @@ export default function MeadowCanvas({
       const newX = mouseX - (mouseX - transformRef.current.x) * (newScale / oldScale);
       const newY = mouseY - (mouseY - transformRef.current.y) * (newScale / oldScale);
 
-      const nextTransform = { x: newX, y: newY, scale: newScale };
+      const nextTransform = clampTransform({ x: newX, y: newY, scale: newScale });
 
       setTransform(nextTransform);
       if (onViewportChange) onViewportChange(nextTransform);
@@ -219,11 +268,12 @@ export default function MeadowCanvas({
     }
 
     if (isDraggingRef.current) {
-      const nextTransform = {
+      const unclamped = {
         ...transformRef.current,
         x: e.clientX - dragStartRef.current.x,
         y: e.clientY - dragStartRef.current.y
       };
+      const nextTransform = clampTransform(unclamped);
 
       setTransform(nextTransform);
       if (onViewportChange) onViewportChange(nextTransform);
@@ -293,7 +343,7 @@ export default function MeadowCanvas({
         const newX = midX - (midX - transformRef.current.x) * (newScale / oldScale);
         const newY = midY - (midY - transformRef.current.y) * (newScale / oldScale);
 
-        const nextTransform = { x: newX, y: newY, scale: newScale };
+        const nextTransform = clampTransform({ x: newX, y: newY, scale: newScale });
 
         setTransform(nextTransform);
         if (onViewportChange) onViewportChange(nextTransform);
