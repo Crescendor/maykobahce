@@ -127,13 +127,15 @@ export default function AdminDashboardModal({
         height: customBg?.height || 2000,
         opacity: customBg?.opacity !== undefined ? customBg.opacity : 1.0
       };
-      if (onUpdateCustomBg) onUpdateCustomBg(newBg);
+      const pass = passwordInput || localStorage.getItem('mayko_admin_pass') || 'Doxish44_';
+      if (onUpdateCustomBg) onUpdateCustomBg(newBg, pass);
     };
     reader.readAsDataURL(file);
   };
 
   const handleRemoveBg = () => {
-    if (onUpdateCustomBg) onUpdateCustomBg(null);
+    const pass = passwordInput || localStorage.getItem('mayko_admin_pass') || 'Doxish44_';
+    if (onUpdateCustomBg) onUpdateCustomBg(null, pass);
   };
 
   const handleStartEdit = (flower) => {
@@ -171,6 +173,7 @@ export default function AdminDashboardModal({
       setIsAuthenticated(true);
       localStorage.setItem('mayko_admin_auth', 'true');
       localStorage.setItem('mayko_admin_token', inputPass);
+      localStorage.setItem('mayko_admin_pass', inputPass);
       if (onAdminAuth) onAdminAuth();
       return;
     }

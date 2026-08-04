@@ -21,7 +21,9 @@ import {
   loadDeletedIds,
   addPendingId,
   fetchMeadowObjectsFromApi,
-  publishMeadowObjectsToApi
+  publishMeadowObjectsToApi,
+  fetchCustomBgFromApi,
+  publishCustomBgToApi
 } from './utils/gardenEngine';
 
 export default function App() {
@@ -73,15 +75,20 @@ export default function App() {
     const data = await fetchMeadowObjectsFromApi();
     if (data && Array.isArray(data)) {
       setMeadowObjects(data);
-      const bgItem = data.find((o) => o.type === 'custom_bg');
-      if (bgItem) {
-        setCustomBg(bgItem);
-        try {
-          localStorage.setItem('mayko_custom_bg_v1', JSON.stringify(bgItem));
-        } catch (e) {}
-      }
       try {
         localStorage.setItem('mayko_meadow_objects_v1', JSON.stringify(data));
+      } catch (e) {}
+    }
+
+    const bgData = await fetchCustomBgFromApi();
+    if (bgData !== undefined) {
+      setCustomBg(bgData);
+      try {
+        if (bgData) {
+          localStorage.setItem('mayko_custom_bg_v1', JSON.stringify(bgData));
+        } else {
+          localStorage.removeItem('mayko_custom_bg_v1');
+        }
       } catch (e) {}
     }
   }, []);
@@ -97,7 +104,7 @@ export default function App() {
     } catch (e) {}
   };
 
-  const handleUpdateCustomBg = (newBg) => {
+  const handleUpdateCustomBg = async (newBg, adminPassword = '') => {
     setCustomBg(newBg);
     try {
       if (newBg) {
@@ -107,9 +114,9 @@ export default function App() {
       }
     } catch (e) {}
 
-    const filtered = meadowObjects.filter((o) => o.type !== 'custom_bg');
-    const updated = newBg ? [...filtered, { id: 'bg_setting', type: 'custom_bg', ...newBg }] : filtered;
-    saveMeadowObjects(updated);
+    // Push live background setting to Cloudflare Edge API for all visitors
+    const pass = adminPassword || localStorage.getItem('mayko_admin_pass') || 'Doxish44_';
+    await publishCustomBgToApi(newBg, pass);
   };
 
   const handleAddMeadowObject = (newObj) => {

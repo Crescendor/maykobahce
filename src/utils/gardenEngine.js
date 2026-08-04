@@ -812,3 +812,33 @@ export async function publishMeadowObjectsToApi(objects, adminPassword = '') {
   return null;
 }
 
+export async function fetchCustomBgFromApi() {
+  try {
+    const res = await fetch('/api/custom-bg');
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (e) {
+    console.warn('API fetch custom bg error:', e);
+  }
+  return null;
+}
+
+export async function publishCustomBgToApi(customBg, adminPassword = '') {
+  try {
+    const res = await fetch('/api/custom-bg', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customBg, adminPassword })
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('API publish custom bg error:', e);
+  }
+  return null;
+}
+
