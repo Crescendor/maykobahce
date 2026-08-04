@@ -1,129 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GARDEN_SIZE, FENCE_PADDING, drawSmoothStroke, drawStem } from '../utils/gardenEngine';
 
-export function isPointInsideObject(o, worldX, worldY) {
-  if (!o) return false;
-  const dx = worldX - o.x;
-  const dy = worldY - o.y;
-
-  let localX = dx;
-  let localY = dy;
-  if (o.rotation) {
-    const rad = (-o.rotation * Math.PI) / 180;
-    localX = dx * Math.cos(rad) - dy * Math.sin(rad);
-    localY = dx * Math.sin(rad) + dy * Math.cos(rad);
-  }
-
-  if (o.type === 'circle') {
-    const r = (o.radius || 65) * (o.scale || 1);
-    return Math.hypot(dx, dy) <= r + 12;
-  }
-  if (o.type === 'rect' || o.type === 'image') {
-    const w = (o.width || 160) * (o.scale || 1);
-    const h = (o.height || 160) * (o.scale || 1);
-    return Math.abs(localX) <= w / 2 + 12 && Math.abs(localY) <= h / 2 + 12;
-  }
-  if (o.type === 'line') {
-    const w = (o.width || 240) * (o.scale || 1);
-    const h = Math.max(30, (o.strokeWidth || o.size || 8) + 12);
-    return Math.abs(localX) <= w / 2 + 12 && Math.abs(localY) <= h / 2 + 12;
-  }
-  if (o.type === 'bubble') {
-    const w = (o.width || 200) * (o.scale || 1);
-    const h = (o.height || 95) * (o.scale || 1) + 18;
-    return Math.abs(localX) <= w / 2 + 12 && Math.abs(localY) <= h / 2 + 12;
-  }
-  if (o.type === 'text') {
-    return Math.hypot(dx, dy) <= 45;
-  }
-  if (o.type === 'stroke' && o.points) {
-    return o.points.some((p) => Math.hypot(p.x - worldX, p.y - worldY) < 30);
-  }
-  return false;
-}
-
-export function getMeadowObjDimensions(obj) {
-  if (!obj) return { w: 160, h: 160 };
-  let w = 160;
-  let h = 160;
-  if (obj.type === 'circle') {
-    w = (obj.radius || 65) * 2;
-    h = w;
-  } else if (obj.type === 'rect' || obj.type === 'image') {
-    w = obj.width || 160;
-    h = obj.height || 160;
-  } else if (obj.type === 'line') {
-    w = obj.width || 240;
-    h = Math.max(30, (obj.strokeWidth || obj.size || 12) + 14);
-  } else if (obj.type === 'bubble') {
-    w = obj.width || 200;
-    h = (obj.height || 95) + 18;
-  } else if (obj.type === 'text') {
-    w = 140;
-    h = (obj.fontSize || 26) + 16;
-  }
-  return { w, h };
-}
-
-export function getLocalPointerPos(selectedObj, worldX, worldY) {
-  const dx = worldX - selectedObj.x;
-  const dy = worldY - selectedObj.y;
-  const rad = (-(selectedObj.rotation || 0) * Math.PI) / 180;
-  return {
-    x: dx * Math.cos(rad) - dy * Math.sin(rad),
-    y: dx * Math.sin(rad) + dy * Math.cos(rad)
-  };
-}
-
-function drawBoundingBoxWithHandles(ctx, x, y, w, h, rotation = 0) {
-  ctx.save();
-  ctx.translate(x, y);
-  if (rotation) ctx.rotate((rotation * Math.PI) / 180);
-
-  // Dashed outline
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 2.5;
-  ctx.setLineDash([6, 6]);
-  ctx.strokeRect(-w / 2, -h / 2, w, h);
-  ctx.setLineDash([]);
-
-  // 4 Corner Resize Handles
-  const corners = [
-    { x: -w / 2, y: -h / 2 },
-    { x: w / 2, y: -h / 2 },
-    { x: -w / 2, y: h / 2 },
-    { x: w / 2, y: h / 2 }
-  ];
-
-  corners.forEach((c) => {
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  });
-
-  // Top Rotation Handle Stem & Icon Dot
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(0, -h / 2);
-  ctx.lineTo(0, -h / 2 - 26);
-  ctx.stroke();
-
-  ctx.fillStyle = '#f59e0b';
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.arc(0, -h / 2 - 26, 9, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.restore();
-}
-
 export default function MeadowCanvas({
   flowers,
   selectedFlower,
@@ -135,19 +12,9 @@ export default function MeadowCanvas({
   onViewportChange,
   isAdminAuthenticated,
   adminTool,
-  adminColor,
-  adminFont,
-  adminBrushSize,
   onUpdateFlowerLocalPos,
   onUpdateFlowerPosition,
-  meadowObjects,
-  onAddMeadowObject,
-  onDeleteMeadowObject,
-  onDeleteFlower,
-  selectedMeadowObjId,
-  onSelectMeadowObj,
-  onUpdateMeadowObjPos,
-  onUpdateMeadowObj
+  onDeleteFlower
 }) {
   const canvasRef = useRef(null);
 
@@ -168,17 +35,6 @@ export default function MeadowCanvas({
   const isDraggingFlowerRef = useRef(false);
   const draggedFlowerIdRef = useRef(null);
   const draggedFlowerOffsetRef = useRef({ x: 0, y: 0 });
-
-  const isDrawingMeadowRef = useRef(false);
-  const currentMeadowStrokeRef = useRef(null);
-
-  const isDraggingMeadowObjRef = useRef(false);
-  const draggedMeadowObjIdRef = useRef(null);
-  const draggedMeadowObjOffsetRef = useRef({ x: 0, y: 0 });
-
-  const activeHandleRef = useRef(null); 
-  const handleDragObjRef = useRef(null);
-  const handleDragStartRef = useRef({});
 
   useEffect(() => {
     if (!viewportTarget) return;
@@ -235,6 +91,8 @@ export default function MeadowCanvas({
     ctx.translate(transformRef.current.x, transformRef.current.y);
     ctx.scale(transformRef.current.scale, transformRef.current.scale);
 
+    const scale = transformRef.current.scale;
+
     ctx.fillStyle = '#2d6a4f';
     ctx.fillRect(0, 0, GARDEN_SIZE, GARDEN_SIZE);
 
@@ -250,175 +108,6 @@ export default function MeadowCanvas({
     ctx.strokeRect(FENCE_PADDING + 8, FENCE_PADDING + 8, GARDEN_SIZE - 2 * FENCE_PADDING - 16, GARDEN_SIZE - 2 * FENCE_PADDING - 16);
     ctx.setLineDash([]);
 
-    // 3. Render Custom Meadow Objects (PNG Stickers, Shapes, Speech Bubbles, Freehand Strokes)
-    if (meadowObjects && meadowObjects.length > 0) {
-      meadowObjects.forEach((obj) => {
-        if (obj.type === 'image' && obj.imageUrl) {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const w = (obj.width || 160) * (obj.scale || 1);
-          const h = (obj.height || 160) * (obj.scale || 1);
-
-          let img = window[`__img_cache_${obj.imageUrl}`];
-          if (!img) {
-            img = new Image();
-            img.src = obj.imageUrl;
-            window[`__img_cache_${obj.imageUrl}`] = img;
-            img.onload = () => render(Date.now() / 1000);
-          }
-
-          if (img.complete && img.naturalWidth > 0) {
-            ctx.drawImage(img, -w / 2, -h / 2, w, h);
-          } else {
-            ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
-            ctx.fillRect(-w / 2, -h / 2, w, h);
-          }
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'text') {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          ctx.fillStyle = obj.color || '#ffffff';
-          ctx.font = `bold ${obj.fontSize || 26}px ${obj.fontFamily || 'sans-serif'}`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(obj.text, 0, 0);
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            const metrics = ctx.measureText(obj.text);
-            const w = Math.max(80, metrics.width + 20);
-            const h = (obj.fontSize || 26) + 16;
-            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'circle') {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const r = (obj.radius || 65) * (obj.scale || 1);
-          ctx.beginPath();
-          ctx.arc(0, 0, r, 0, Math.PI * 2);
-          if (obj.isFilled !== false) {
-            ctx.fillStyle = obj.color || '#38bdf8';
-            ctx.fill();
-          }
-          ctx.strokeStyle = obj.color || '#38bdf8';
-          ctx.lineWidth = 4;
-          ctx.stroke();
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            drawBoundingBoxWithHandles(ctx, 0, 0, r * 2, r * 2, 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'rect') {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const w = (obj.width || 130) * (obj.scale || 1);
-          const h = (obj.height || 130) * (obj.scale || 1);
-          if (obj.isFilled !== false) {
-            ctx.fillStyle = obj.color || '#38bdf8';
-            ctx.fillRect(-w / 2, -h / 2, w, h);
-          }
-          ctx.strokeStyle = obj.color || '#38bdf8';
-          ctx.lineWidth = 4;
-          ctx.strokeRect(-w / 2, -h / 2, w, h);
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'line') {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const w = (obj.width || 240) * (obj.scale || 1);
-          const sw = obj.strokeWidth || obj.size || 12;
-
-          ctx.strokeStyle = obj.color || '#38bdf8';
-          ctx.lineWidth = sw;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(-w / 2, 0);
-          ctx.lineTo(w / 2, 0);
-          ctx.stroke();
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            drawBoundingBoxWithHandles(ctx, 0, 0, w, Math.max(30, sw + 14), 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'bubble') {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const w = (obj.width || 200) * (obj.scale || 1);
-          const h = (obj.height || 95) * (obj.scale || 1);
-          const r = 16;
-
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-          ctx.shadowBlur = 10;
-
-          ctx.beginPath();
-          ctx.moveTo(-w / 2 + r, -h / 2);
-          ctx.lineTo(w / 2 - r, -h / 2);
-          ctx.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
-          ctx.lineTo(w / 2, h / 2 - r);
-          ctx.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
-          ctx.lineTo(15, h / 2);
-          ctx.lineTo(0, h / 2 + 18);
-          ctx.lineTo(-10, h / 2);
-          ctx.lineTo(-w / 2 + r, h / 2);
-          ctx.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
-          ctx.lineTo(-w / 2, -h / 2 + r);
-          ctx.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
-          ctx.closePath();
-
-          ctx.fillStyle = obj.bgColor || 'rgba(255, 255, 255, 0.95)';
-          ctx.fill();
-          ctx.strokeStyle = obj.color || '#38bdf8';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-
-          ctx.shadowColor = 'transparent';
-          ctx.fillStyle = obj.textColor || '#0f172a';
-          ctx.font = `bold ${obj.fontSize || 18}px ${obj.fontFamily || 'sans-serif'}`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(obj.text || 'Sohbet Balonu', 0, -2);
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            drawBoundingBoxWithHandles(ctx, 0, 0, w, h + 18, 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'stroke' && obj.points && obj.points.length > 0) {
-          ctx.save();
-          ctx.strokeStyle = obj.color || '#ffffff';
-          ctx.lineWidth = obj.size || 10;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          drawSmoothStroke(ctx, obj.points);
-          ctx.restore();
-        }
-      });
-    }
-
-    // Render active freehand stroke
-    if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
-      ctx.save();
-      ctx.strokeStyle = currentMeadowStrokeRef.current.color;
-      ctx.lineWidth = currentMeadowStrokeRef.current.size;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      drawSmoothStroke(ctx, currentMeadowStrokeRef.current.points);
-      ctx.restore();
-    }
-
-    // 4. Render Flowers (with wind sway & active animations)
     if (flowers && flowers.length > 0) {
       flowers.forEach((flower) => {
         const isSelected = selectedFlower && selectedFlower.id === flower.id;
@@ -426,13 +115,12 @@ export default function MeadowCanvas({
       });
     }
 
-    // 5. Render Pending Planting Flag Pin
     if (pendingPlantPosition) {
       drawPlantingFlag(ctx, pendingPlantPosition.x, pendingPlantPosition.y, scale);
     }
 
     ctx.restore();
-  }, [flowers, selectedFlower, pendingPlantPosition, meadowObjects, selectedMeadowObjId, isAdminAuthenticated]);
+  }, [flowers, selectedFlower, pendingPlantPosition]);
 
   useEffect(() => {
     const loop = (time) => {
@@ -445,16 +133,20 @@ export default function MeadowCanvas({
 
   const handleWheel = (e) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    const newScale = Math.min(Math.max(transform.scale * zoomFactor, 0.3), 3);
+    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+    const oldScale = transform.scale;
+    const newScale = Math.min(Math.max(oldScale * zoomFactor, 0.35), 2.8);
+
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const newX = mouseX - (mouseX - transform.x) * (newScale / transform.scale);
-    const newY = mouseY - (mouseY - transform.y) * (newScale / transform.scale);
-    const next = { x: newX, y: newY, scale: newScale };
-    setTransform(next);
-    if (onViewportChange) onViewportChange(next);
+
+    const newX = mouseX - (mouseX - transform.x) * (newScale / oldScale);
+    const newY = mouseY - (mouseY - transform.y) * (newScale / oldScale);
+
+    const nextTransform = { x: newX, y: newY, scale: newScale };
+    setTransform(nextTransform);
+    if (onViewportChange) onViewportChange(nextTransform);
   };
 
   const handlePointerDown = (e) => {
@@ -463,63 +155,31 @@ export default function MeadowCanvas({
     const worldX = (e.clientX - rect.left - transformRef.current.x) / transformRef.current.scale;
     const worldY = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
 
-    if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects) {
-      const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
-      if (selectedObj) {
-        const { w, h } = getMeadowObjDimensions(selectedObj);
-        const local = getLocalPointerPos(selectedObj, worldX, worldY);
-        const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
-
-        if (Math.hypot(local.x - 0, local.y - (-h / 2 - 26)) < handleHitRadius) {
-          activeHandleRef.current = 'ROT';
-          handleDragObjRef.current = selectedObj;
-          handleDragStartRef.current = { startWorldX: worldX, startWorldY: worldY, startRotation: selectedObj.rotation || 0 };
-          return;
-        }
-
-        const localCorners = [
-          { name: 'TL', x: -w / 2, y: -h / 2 },
-          { name: 'TR', x: w / 2, y: -h / 2 },
-          { name: 'BL', x: -w / 2, y: h / 2 },
-          { name: 'BR', x: w / 2, y: h / 2 }
-        ];
-
-        const hitCorner = localCorners.find((c) => Math.hypot(local.x - c.x, local.y - c.y) < handleHitRadius);
-        if (hitCorner) {
-          activeHandleRef.current = hitCorner.name;
-          handleDragObjRef.current = selectedObj;
-          handleDragStartRef.current = {
-            startWorldX: worldX,
-            startWorldY: worldY,
-            startWidth: selectedObj.width || 160,
-            startHeight: selectedObj.height || 160,
-            startRadius: selectedObj.radius || 65,
-            startFontSize: selectedObj.fontSize || 26
-          };
-          return;
-        }
+    let hitFlower = null;
+    for (const flower of flowers) {
+      const dist = Math.hypot(flower.x - worldX, flower.y - worldY);
+      if (dist < 45) {
+        hitFlower = flower;
+        break;
       }
     }
 
-    let hitMeadowObj = meadowObjects?.slice().reverse().find((o) => isPointInsideObject(o, worldX, worldY));
-    if (isAdminAuthenticated && hitMeadowObj) {
-      if (onSelectMeadowObj) onSelectMeadowObj(hitMeadowObj);
-      if (adminTool === 'move_flower') {
-        isDraggingMeadowObjRef.current = true;
-        draggedMeadowObjIdRef.current = hitMeadowObj.id;
-        draggedMeadowObjOffsetRef.current = { x: hitMeadowObj.x - worldX, y: hitMeadowObj.y - worldY };
-      }
-      return;
-    }
-
-    if (isAdminAuthenticated && adminTool === 'draw') {
-      isDrawingMeadowRef.current = true;
-      currentMeadowStrokeRef.current = { id: `obj-${Date.now()}`, type: 'stroke', color: adminColor, size: adminBrushSize, points: [{ x: worldX, y: worldY }] };
+    if (isAdminAuthenticated && adminTool === 'move_flower' && hitFlower) {
+      isDraggingFlowerRef.current = true;
+      draggedFlowerIdRef.current = hitFlower.id;
+      draggedFlowerOffsetRef.current = {
+        x: hitFlower.x - worldX,
+        y: hitFlower.y - worldY
+      };
+      isDraggingRef.current = false;
       return;
     }
 
     isDraggingRef.current = true;
-    dragStartRef.current = { x: e.clientX - transformRef.current.x, y: e.clientY - transformRef.current.y };
+    dragStartRef.current = {
+      x: e.clientX - transformRef.current.x,
+      y: e.clientY - transformRef.current.y
+    };
   };
 
   const handlePointerMove = (e) => {
@@ -527,80 +187,33 @@ export default function MeadowCanvas({
     const worldX = (e.clientX - rect.left - transformRef.current.x) / transformRef.current.scale;
     const worldY = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
 
-    if (canvasRef.current && !isDraggingRef.current && !activeHandleRef.current && !isDraggingMeadowObjRef.current) {
-        if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects) {
-            const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
-            if (selectedObj) {
-                const { w, h } = getMeadowObjDimensions(selectedObj);
-                const local = getLocalPointerPos(selectedObj, worldX, worldY);
-                const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
-                if (Math.hypot(local.x - 0, local.y - (-h / 2 - 26)) < handleHitRadius) {
-                    canvasRef.current.style.cursor = 'grab';
-                } else if ([{x: -w/2, y: -h/2}, {x: w/2, y: -h/2}, {x: -w/2, y: h/2}, {x: w/2, y: h/2}].some((c) => Math.hypot(local.x - c.x, local.y - c.y) < handleHitRadius)) {
-                    canvasRef.current.style.cursor = 'nwse-resize';
-                } else {
-                    canvasRef.current.style.cursor = 'default';
-                }
-            }
-        }
-    }
-
-    if (activeHandleRef.current && handleDragObjRef.current) {
-      const obj = handleDragObjRef.current;
-      const deltaX = worldX - handleDragStartRef.current.startWorldX;
-      const deltaY = worldY - handleDragStartRef.current.startWorldY;
-
-      if (activeHandleRef.current === 'ROT') {
-        const rad = Math.atan2(worldY - obj.y, worldX - obj.x);
-        let deg = Math.round(rad * (180 / Math.PI) + 90);
-        deg = (deg % 360 + 360) % 360;
-        if (onUpdateMeadowObj) onUpdateMeadowObj(obj.id, { rotation: deg });
-        return;
+    if (isDraggingFlowerRef.current && draggedFlowerIdRef.current) {
+      const newX = Math.round(worldX + draggedFlowerOffsetRef.current.x);
+      const newY = Math.round(worldY + draggedFlowerOffsetRef.current.y);
+      if (onUpdateFlowerLocalPos) {
+        onUpdateFlowerLocalPos(draggedFlowerIdRef.current, newX, newY);
       }
-
-      let wChange = 0, hChange = 0;
-      if (activeHandleRef.current === 'BR') { wChange = deltaX; hChange = deltaY; }
-      else if (activeHandleRef.current === 'TR') { wChange = deltaX; hChange = -deltaY; }
-      else if (activeHandleRef.current === 'BL') { wChange = -deltaX; hChange = deltaY; }
-      else if (activeHandleRef.current === 'TL') { wChange = -deltaX; hChange = -deltaY; }
-
-      if (onUpdateMeadowObj) {
-        if (obj.type === 'circle') onUpdateMeadowObj(obj.id, { radius: Math.max(15, Math.round(handleDragStartRef.current.startRadius + wChange / 2)) });
-        else if (obj.type === 'text') onUpdateMeadowObj(obj.id, { fontSize: Math.max(12, Math.round(handleDragStartRef.current.startFontSize + hChange / 2)) });
-        else if (obj.type === 'line') onUpdateMeadowObj(obj.id, { width: Math.max(30, Math.round(handleDragStartRef.current.startWidth + wChange)) });
-        else onUpdateMeadowObj(obj.id, { width: Math.max(30, Math.round(handleDragStartRef.current.startWidth + wChange)), height: Math.max(30, Math.round(handleDragStartRef.current.startHeight + hChange)) });
-      }
-      return;
-    }
-
-    if (isDraggingMeadowObjRef.current && draggedMeadowObjIdRef.current) {
-      onUpdateMeadowObjPos(draggedMeadowObjIdRef.current, Math.round(worldX + draggedMeadowObjOffsetRef.current.x), Math.round(worldY + draggedMeadowObjOffsetRef.current.y));
-      return;
-    }
-
-    if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
-      currentMeadowStrokeRef.current.points.push({ x: worldX, y: worldY });
       return;
     }
 
     if (isDraggingRef.current) {
-      setTransform(t => ({ ...t, x: e.clientX - dragStartRef.current.x, y: e.clientY - dragStartRef.current.y }));
+      const nextTransform = {
+        ...transformRef.current,
+        x: e.clientX - dragStartRef.current.x,
+        y: e.clientY - dragStartRef.current.y
+      };
+      setTransform(nextTransform);
+      if (onViewportChange) onViewportChange(nextTransform);
     }
   };
 
-  // Pointer Up / Tap Detection
   const handlePointerUp = (e) => {
-    activeHandleRef.current = null;
-    isDraggingMeadowObjRef.current = false;
-    draggedMeadowObjIdRef.current = null;
-
     const rect = canvasRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
 
-    // 1. Finish Dragging Flower
     if (isDraggingFlowerRef.current && draggedFlowerIdRef.current) {
       isDraggingFlowerRef.current = false;
       const finalX = Math.round(worldX + draggedFlowerOffsetRef.current.x);
@@ -612,69 +225,19 @@ export default function MeadowCanvas({
       return;
     }
 
-    // 2. Finish Meadow Freehand Drawing
-    if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
-      isDrawingMeadowRef.current = false;
-      if (onAddMeadowObject) {
-        onAddMeadowObject(currentMeadowStrokeRef.current);
-      }
-      currentMeadowStrokeRef.current = null;
-      return;
-    }
-
     isDraggingRef.current = false;
     touchPinchDistRef.current = null;
 
-    // Check if it was a quick click/tap without dragging
     const moveDist = Math.hypot(
       e.clientX - clickStartPosRef.current.x,
       e.clientY - clickStartPosRef.current.y
     );
 
     if (moveDist < 8) {
-      // Admin Text Placement Tool
-      if (isAdminAuthenticated && adminTool === 'text') {
-        const textInput = prompt('Harita Üzerine Eklemek İstediğiniz Yazı:');
-        if (textInput && textInput.trim()) {
-          const newTextObj = {
-            id: `obj-${Date.now()}`,
-            type: 'text',
-            text: textInput.trim(),
-            x: Math.round(worldX),
-            y: Math.round(worldY),
-            color: adminColor || '#ffffff',
-            fontFamily: adminFont || 'sans-serif',
-            fontSize: 26
-          };
-          if (onAddMeadowObject) onAddMeadowObject(newTextObj);
-        }
-        return;
-      }
-
-      // Admin Delete Tool
-      if (isAdminAuthenticated && adminTool === 'delete') {
-        if (meadowObjects && meadowObjects.length > 0) {
-          const hitObj = meadowObjects.find((o) => isPointInsideObject(o, worldX, worldY));
-          if (hitObj) {
-            if (onDeleteMeadowObject) onDeleteMeadowObject(hitObj.id);
-            return;
-          }
-        }
-
-        const hitFlower = flowers.find((f) => Math.hypot(f.x - worldX, f.y - worldY) < 40);
-        if (hitFlower) {
-          if (window.confirm(`"${hitFlower.name || 'Anonim'}" çiçeğini haritadan silmek istediğinize emin misiniz?`)) {
-            if (onDeleteFlower) onDeleteFlower(hitFlower.id, hitFlower.deleteCode);
-          }
-          return;
-        }
-      }
-
-      // Default flower selection or planting
       let hitFlower = null;
       for (const flower of flowers) {
         const dist = Math.hypot(flower.x - worldX, flower.y - worldY);
-        if (dist < 40) {
+        if (dist < 45) {
           hitFlower = flower;
           break;
         }
@@ -688,7 +251,6 @@ export default function MeadowCanvas({
     }
   };
 
-  // Touch Gesture Handling for Mobile Pinch Zoom
   const handleTouchMove = (e) => {
     if (e.touches.length === 2) {
       isDraggingRef.current = false;
@@ -717,11 +279,7 @@ export default function MeadowCanvas({
 
   const getCanvasCursor = () => {
     if (isPlantingMode) return 'crosshair';
-    if (isAdminAuthenticated) {
-      if (adminTool === 'move_flower') return 'move';
-      if (adminTool === 'draw' || adminTool === 'text') return 'crosshair';
-      if (adminTool === 'delete') return 'pointer';
-    }
+    if (isAdminAuthenticated && adminTool === 'move_flower') return 'move';
     return 'grab';
   };
 
@@ -744,11 +302,6 @@ export default function MeadowCanvas({
   );
 }
 
-// Auxiliary Canvas Drawing Helpers
-
-/**
- * Draw realistic grass tufts, clovers, and textured lawn details across the meadow
- */
 function drawLawnDetails(ctx) {
   // 1. Organic Grass Blade Tufts
   const grassColors = ['#52b788', '#74c69d', '#38b000', '#95d5b2', '#2d6a4f'];

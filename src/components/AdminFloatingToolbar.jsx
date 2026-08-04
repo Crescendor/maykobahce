@@ -5,52 +5,11 @@ export default function AdminFloatingToolbar({
   isAdminAuthenticated,
   adminTool,
   setAdminTool,
-  adminColor,
-  setAdminColor,
-  adminFont,
-  setAdminFont,
-  adminBrushSize,
-  setAdminBrushSize,
-  adminIsFilled,
-  setAdminIsFilled,
-  onOpenDashboard,
-  meadowObjectsCount,
-  onClearAllMeadowDrawings,
-  onAddPngSticker,
-  onAddCircleShape,
-  onAddSquareShape,
-  onAddStraightLine,
-  onAddSpeechBubble,
-  onPublishMeadowObjects,
-  selectedImageSize,
-  onUpdateSelectedImageSize,
-  selectedMeadowObjId,
-  onDeleteSelectedMeadowObject
+  onOpenDashboard
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const fileInputRef = useRef(null);
 
   if (!isAdminAuthenticated) return null;
-
-  const handleImageFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      alert('Lütfen geçerli bir PNG veya görsel dosyası seçin.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result;
-      if (dataUrl && onAddPngSticker) {
-        onAddPngSticker(dataUrl);
-      }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
 
   // Render Collapsed Small Left Handle Button
   if (isCollapsed) {
@@ -60,7 +19,7 @@ export default function AdminFloatingToolbar({
           type="button"
           onClick={() => setIsCollapsed(false)}
           style={styles.collapsedBtn}
-          title="Photoshop Admin Alet Çubuğunu Genişlet 🎨"
+          title="Admin Alet Çubuğunu Genişlet 🎨"
         >
           <Crown size={18} color="#f59e0b" />
           <span style={{ fontWeight: 800, color: '#fbbf24', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>Admin Aletleri</span>
@@ -70,23 +29,14 @@ export default function AdminFloatingToolbar({
     );
   }
 
-  // Render Expanded Left Vertical Photoshop Toolbar
+  // Render Expanded Left Vertical Toolbar
   return (
     <div style={styles.container} className="animate-slide-up glass-panel">
-      {/* Hidden File Input for PNG Upload */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/png,image/webp,image/jpeg"
-        onChange={handleImageFileChange}
-        style={{ display: 'none' }}
-      />
-
       {/* Header: Admin Mode Badge & Collapse Toggle */}
       <div style={styles.headerRow}>
         <div style={styles.badge}>
           <Crown size={18} color="#f59e0b" />
-          <span style={{ fontWeight: 800, color: '#fbbf24', fontSize: '0.86rem' }}>Photoshop Modu</span>
+          <span style={{ fontWeight: 800, color: '#fbbf24', fontSize: '0.86rem' }}>Admin Aletleri</span>
         </div>
         <button
           type="button"
@@ -100,242 +50,15 @@ export default function AdminFloatingToolbar({
 
       <div style={styles.dividerHorizontal} />
 
-      {/* Primary Photoshop Vertical Tool Grid */}
+      {/* Tools Column: Çiçek Taşı & Yönetim Konsolu */}
       <div style={styles.toolsColumn}>
         <button
           type="button"
           style={{ ...styles.toolBtn, ...(adminTool === 'move_flower' ? styles.activeToolBtn : {}) }}
           onClick={() => setAdminTool(adminTool === 'move_flower' ? null : 'move_flower')}
-          title="Çiçekleri ve PNG Görsellerini Taşı (Tekrar basarak kapatın)"
+          title="Çiçeklerin Yerini Değiştir / Taşı (Tekrar basarak kapatın)"
         >
-          <Move size={15} /> Taşı
-        </button>
-
-        <button
-          type="button"
-          style={{ ...styles.toolBtn, ...(adminTool === 'draw' ? styles.activeToolBtn : {}) }}
-          onClick={() => setAdminTool(adminTool === 'draw' ? null : 'draw')}
-          title="Harita Üzerine Serbest Çizim Yap (Tekrar basarak kapatın)"
-        >
-          <Paintbrush size={15} /> Çizim
-        </button>
-
-        <button
-          type="button"
-          style={styles.toolBtn}
-          onClick={onAddStraightLine}
-          title="Haritaya Düz Çizgi Ekle"
-        >
-          📏 Düz Çizgi
-        </button>
-
-        <button
-          type="button"
-          style={{ ...styles.toolBtn, ...(adminTool === 'text' ? styles.activeToolBtn : {}) }}
-          onClick={() => setAdminTool(adminTool === 'text' ? null : 'text')}
-          title="Haritaya Yazı Metni Ekle (Tekrar basarak kapatın)"
-        >
-          <Type size={15} /> Yazı Ekle
-        </button>
-
-        {/* Shapes Group */}
-        <div style={styles.shapesGrid}>
-          <button
-            type="button"
-            style={styles.toolBtnSmall}
-            onClick={onAddCircleShape}
-            title="Daire Şekli Ekle"
-          >
-            ⭕ Yuvarlak
-          </button>
-
-          <button
-            type="button"
-            style={styles.toolBtnSmall}
-            onClick={onAddSquareShape}
-            title="Kare Şekli Ekle"
-          >
-            🔲 Kare
-          </button>
-        </div>
-
-        <button
-          type="button"
-          style={styles.toolBtn}
-          onClick={onAddSpeechBubble}
-          title="Haritaya Sohbet Balonu Ekle"
-        >
-          💬 Balon Ekle
-        </button>
-
-        {/* PNG Upload Button */}
-        <button
-          type="button"
-          style={styles.toolBtn}
-          onClick={() => fileInputRef.current?.click()}
-          title="Haritaya Özel PNG Görsel / Çıkartma Yükle"
-        >
-          <ImagePlus size={15} color="#38bdf8" /> PNG Ekle
-        </button>
-
-        <button
-          type="button"
-          style={{ ...styles.toolBtn, ...(adminTool === 'delete' ? styles.activeToolBtn : {}) }}
-          onClick={() => setAdminTool(adminTool === 'delete' ? null : 'delete')}
-          title="Çiçek, Çizim veya PNG Görseli Sil (Tekrar basarak kapatın)"
-        >
-          <Trash2 size={15} /> Sil
-        </button>
-      </div>
-
-      <div style={styles.dividerHorizontal} />
-
-      {/* Color Picker Control */}
-      <div style={styles.colorWrapper}>
-        <span style={{ fontSize: '0.74rem', color: '#cbd5e1', fontWeight: 600 }}>Renk:</span>
-        <input
-          type="color"
-          value={adminColor || '#38bdf8'}
-          onChange={(e) => setAdminColor && setAdminColor(e.target.value)}
-          style={styles.colorInput}
-          title="Çizim, Çizgi ve Şekil Rengi"
-        />
-      </div>
-
-      {/* Brush / Stroke Thickness Slider */}
-      <div style={styles.sizeSliderWrapper}>
-        <Sliders size={13} color="#38bdf8" />
-        <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 600 }}>
-          Çizgi Kalınlığı: {adminBrushSize || 12}px
-        </span>
-        <input
-          type="range"
-          min="2"
-          max="80"
-          value={adminBrushSize || 12}
-          onChange={(e) => setAdminBrushSize && setAdminBrushSize(Number(e.target.value))}
-          style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
-        />
-      </div>
-
-      {/* Fill Toggle Control */}
-      <button
-        type="button"
-        onClick={() => setAdminIsFilled && setAdminIsFilled(!adminIsFilled)}
-        style={{
-          width: '100%',
-          padding: '5px 8px',
-          borderRadius: 10,
-          background: adminIsFilled ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.8)',
-          border: '1px solid rgba(56, 189, 248, 0.4)',
-          color: '#38bdf8',
-          fontSize: '0.74rem',
-          fontWeight: 700,
-          cursor: 'pointer'
-        }}
-        title="Şekil İç Dolgusu (Dolu veya İçi Boş Çerçeve)"
-      >
-        İç Dolgu: {adminIsFilled ? 'Dolu ⬛' : 'Boş Kontur ⬜'}
-      </button>
-
-      {/* Conditional Tool Settings: Font Family Selector */}
-      {adminTool === 'text' && (
-        <>
-          <div style={styles.dividerHorizontal} />
-          <div style={styles.colorWrapper}>
-            <span style={{ fontSize: '0.74rem', color: '#cbd5e1', fontWeight: 600 }}>Yazı Tipi:</span>
-            <select
-              value={adminFont || 'sans-serif'}
-              onChange={(e) => setAdminFont && setAdminFont(e.target.value)}
-              style={styles.fontSelect}
-            >
-              <option value="sans-serif">Standart (Sans)</option>
-              <option value="serif">Zarif (Serif)</option>
-              <option value="monospace">Kod (Monospace)</option>
-              <option value="cursive">Romantik (Script)</option>
-              <option value="Impact, sans-serif">Dev (Impact)</option>
-              <option value="'Playfair Display', serif">Kraliyet (Playfair)</option>
-            </select>
-          </div>
-        </>
-      )}
-
-      {/* PNG / Shape Size Slider Control */}
-      {selectedImageSize && (
-        <>
-          <div style={styles.dividerHorizontal} />
-          <div style={styles.sizeSliderWrapper}>
-            <Sliders size={14} color="#38bdf8" />
-            <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 600 }}>
-              Genel Boyut: {selectedImageSize}px
-            </span>
-            <input
-              type="range"
-              min="30"
-              max="700"
-              value={selectedImageSize}
-              onChange={(e) => onUpdateSelectedImageSize && onUpdateSelectedImageSize(Number(e.target.value))}
-              style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
-            />
-          </div>
-        </>
-      )}
-
-      {/* Delete Only Selected Meadow Object */}
-      {selectedMeadowObjId && (
-        <>
-          <div style={styles.dividerHorizontal} />
-          <button
-            type="button"
-            onClick={() => onDeleteSelectedMeadowObject && onDeleteSelectedMeadowObject(selectedMeadowObjId)}
-            style={{
-              width: '100%',
-              padding: '7px 10px',
-              borderRadius: 12,
-              background: 'rgba(239, 68, 68, 0.25)',
-              border: '1.5px solid rgba(239, 68, 68, 0.6)',
-              color: '#f87171',
-              fontSize: '0.76rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5
-            }}
-            title="Yalnızca Seçtiğiniz Bu Tek Nesneyi Silin"
-          >
-            <Trash2 size={14} /> Seçilen Nesneyi Sil
-          </button>
-        </>
-      )}
-
-      {/* Clear All Meadow Drawings */}
-      {meadowObjectsCount > 0 && (
-        <>
-          <div style={styles.dividerHorizontal} />
-          <button
-            type="button"
-            onClick={onClearAllMeadowDrawings}
-            style={styles.clearBtn}
-            title="Haritadaki Tüm Çizimleri Temizle"
-          >
-            <X size={14} /> Tümünü Temizle ({meadowObjectsCount})
-          </button>
-        </>
-      )}
-
-      <div style={styles.dividerHorizontal} />
-
-      {/* Actions: Publish & Management Console */}
-      <div style={styles.actionsColumn}>
-        <button
-          type="button"
-          onClick={onPublishMeadowObjects}
-          style={styles.publishBtn}
-          title="Haritaya Koyduğunuz Tüm Çizim, Yazı ve PNG Görsellerini Canlıya Alın"
-        >
-          <Globe size={15} /> Uygula / Yayınla
+          <Move size={15} /> Çiçekleri Taşı
         </button>
 
         <button

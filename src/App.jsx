@@ -457,32 +457,12 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Interactive Admin Mode Floating HUD Toolbar */}
+      {/* Admin Floating Left Photoshop-style Toolbar */}
       <AdminFloatingToolbar
         isAdminAuthenticated={isAdminAuthenticated}
         adminTool={adminTool}
         setAdminTool={setAdminTool}
-        adminColor={adminColor}
-        setAdminColor={handleColorChange}
-        adminFont={adminFont}
-        setAdminFont={setAdminFont}
-        adminBrushSize={adminBrushSize}
-        setAdminBrushSize={handleBrushSizeChange}
-        adminIsFilled={adminIsFilled}
-        setAdminIsFilled={handleIsFilledToggle}
         onOpenDashboard={() => setIsAdminOpen(true)}
-        meadowObjectsCount={meadowObjects.length}
-        onClearAllMeadowDrawings={handleClearAllMeadowDrawings}
-        onAddPngSticker={handleAddPngSticker}
-        onAddCircleShape={handleAddCircleShape}
-        onAddSquareShape={handleAddSquareShape}
-        onAddStraightLine={handleAddStraightLine}
-        onAddSpeechBubble={handleAddSpeechBubble}
-        onPublishMeadowObjects={handlePublishMeadowObjects}
-        selectedImageSize={selectedMeadowObj && (selectedMeadowObj.type === 'image' || selectedMeadowObj.type === 'rect' || selectedMeadowObj.type === 'circle' || selectedMeadowObj.type === 'bubble' || selectedMeadowObj.type === 'line') ? selectedMeadowObj.width || selectedMeadowObj.radius * 2 || 180 : null}
-        onUpdateSelectedImageSize={handleUpdateSelectedImageSize}
-        selectedMeadowObjId={selectedMeadowObj ? selectedMeadowObj.id : null}
-        onDeleteSelectedMeadowObject={handleDeleteMeadowObject}
       />
 
       {/* Interactive Meadow Canvas */}
@@ -497,19 +477,9 @@ export default function App() {
         onViewportChange={(tf) => setCurrentScale(tf.scale)}
         isAdminAuthenticated={isAdminAuthenticated}
         adminTool={adminTool}
-        adminColor={adminColor}
-        adminFont={adminFont}
-        adminBrushSize={adminBrushSize}
         onUpdateFlowerLocalPos={handleUpdateFlowerLocalPos}
         onUpdateFlowerPosition={handleUpdateFlowerPosition}
-        meadowObjects={meadowObjects}
-        onAddMeadowObject={handleAddMeadowObject}
-        onDeleteMeadowObject={handleDeleteMeadowObject}
         onDeleteFlower={handleDeleteFlower}
-        selectedMeadowObjId={selectedMeadowObj ? selectedMeadowObj.id : null}
-        onSelectMeadowObj={setSelectedMeadowObj}
-        onUpdateMeadowObjPos={handleUpdateMeadowObjPos}
-        onUpdateMeadowObj={handleUpdateMeadowObj}
       />
 
       {/* Floating HUD Controls */}
