@@ -1,38 +1,5 @@
-function clampTransform(unclamped) {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-
-  // Minimum scale is calculated so that GARDEN_SIZE covers/fits the viewport cleanly
-  // Prevents zooming out into empty black space beyond the garden boundaries
-  const minScale = Math.max(width / GARDEN_SIZE, height / GARDEN_SIZE);
-  const maxScale = 2.5;
-
-  const scale = Math.min(Math.max(unclamped.scale, minScale), maxScale);
-
-  const worldW = GARDEN_SIZE * scale;
-  const worldH = GARDEN_SIZE * scale;
-
-  let x = unclamped.x;
-  let y = unclamped.y;
-
-  if (worldW <= width) {
-    x = (width - worldW) / 2;
-  } else {
-    const minX = width - worldW;
-    const maxX = 0;
-    x = Math.min(Math.max(x, minX), maxX);
-  }
-
-  if (worldH <= height) {
-    y = (height - worldH) / 2;
-  } else {
-    const minY = height - worldH;
-    const maxY = 0;
-    y = Math.min(Math.max(y, minY), maxY);
-  }
-
-  return { x, y, scale };
-}
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { GARDEN_SIZE, FENCE_PADDING, drawSmoothStroke, drawStem } from '../utils/gardenEngine';
 
 export default function MeadowCanvas({
   flowers,
@@ -51,13 +18,11 @@ export default function MeadowCanvas({
 }) {
   const canvasRef = useRef(null);
 
-  const [transform, setTransform] = useState(() =>
-    clampTransform({
-      x: -GARDEN_SIZE / 2 + window.innerWidth / 2,
-      y: -GARDEN_SIZE / 2 + window.innerHeight / 2,
-      scale: 0.8
-    })
-  );
+  const [transform, setTransform] = useState({
+    x: -GARDEN_SIZE / 2 + window.innerWidth / 2,
+    y: -GARDEN_SIZE / 2 + window.innerHeight / 2,
+    scale: 0.75
+  });
 
   const transformRef = useRef(transform);
   transformRef.current = transform;
@@ -70,17 +35,6 @@ export default function MeadowCanvas({
   const isDraggingFlowerRef = useRef(false);
   const draggedFlowerIdRef = useRef(null);
   const draggedFlowerOffsetRef = useRef({ x: 0, y: 0 });
-
-  // Keep camera clamped on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      const clamped = clampTransform(transformRef.current);
-      setTransform(clamped);
-      if (onViewportChange) onViewportChange(clamped);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [onViewportChange]);
 
   useEffect(() => {
     if (!viewportTarget) return;
@@ -101,12 +55,11 @@ export default function MeadowCanvas({
       const progress = Math.min(elapsed / duration, 1);
       const easeProgress = 1 - Math.pow(1 - progress, 3);
 
-      const unclamped = {
+      const nextTransform = {
         x: startX + (targetX - startX) * easeProgress,
         y: startY + (targetY - startY) * easeProgress,
         scale: startScale + (targetScale - startScale) * easeProgress
       };
-      const nextTransform = clampTransform(unclamped);
 
       setTransform(nextTransform);
       if (onViewportChange) onViewportChange(nextTransform);
@@ -132,9 +85,7 @@ export default function MeadowCanvas({
       canvas.height = height;
     }
 
-    // Outer background fill (prevents subpixel artifacts)
-    ctx.fillStyle = '#0f2317';
-    ctx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width, height);
 
     ctx.save();
     ctx.translate(transformRef.current.x, transformRef.current.y);
@@ -142,21 +93,13 @@ export default function MeadowCanvas({
 
     const scale = transformRef.current.scale;
 
-    // 1. Outer Countryside Ground Base
-    ctx.fillStyle = '#1e402e';
-    ctx.fillRect(0, 0, GARDEN_SIZE, GARDEN_SIZE);
-
-    // 2. Render Outer Countryside Scenery (Trees, River, Bridge, Cottages, Windmill)
-    drawOuterScenery(ctx, time);
-
-    // 3. Render Inner Plantable Meadow Lawn Base
+    // 1. Render Meadow Lawn Base
     ctx.fillStyle = '#2d6a4f';
-    const innerSize = GARDEN_SIZE - 2 * FENCE_PADDING;
-    ctx.fillRect(FENCE_PADDING, FENCE_PADDING, innerSize, innerSize);
+    ctx.fillRect(0, 0, GARDEN_SIZE, GARDEN_SIZE);
 
     drawLawnDetails(ctx);
 
-    // 4. Render Wooden Fence Outer Boundary
+    // 2. Render Wooden Fence Outer Boundary
     drawGardenFences(ctx);
 
     if (flowers && flowers.length > 0) {
@@ -191,7 +134,7 @@ export default function MeadowCanvas({
       e.preventDefault();
       const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
       const oldScale = transformRef.current.scale;
-      const newScale = oldScale * zoomFactor;
+      const newScale = Math.min(Math.max(oldScale * zoomFactor, 0.3), 2.5);
 
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
@@ -200,8 +143,7 @@ export default function MeadowCanvas({
       const newX = mouseX - (mouseX - transformRef.current.x) * (newScale / oldScale);
       const newY = mouseY - (mouseY - transformRef.current.y) * (newScale / oldScale);
 
-      const unclamped = { x: newX, y: newY, scale: newScale };
-      const nextTransform = clampTransform(unclamped);
+      const nextTransform = { x: newX, y: newY, scale: newScale };
 
       setTransform(nextTransform);
       if (onViewportChange) onViewportChange(nextTransform);
@@ -367,325 +309,6 @@ export default function MeadowCanvas({
       }}
     />
   );
-}
-
-/**
- * Draw Cozy Countryside Scenery Outside the Flower Garden Fences
- * (Trees, River with Ripples, Stone Bridges, Wooden Cottages, Smoking Chimney, Windmill, Cobblestone Paths)
- */
-function drawOuterScenery(ctx, time = 0) {
-  const p = FENCE_PADDING;
-  const size = GARDEN_SIZE;
-
-  // 1. Winding Blue River & Stone Bridge along the right outer margin
-  ctx.save();
-  // River Bank / Dirt Bed
-  ctx.strokeStyle = '#343a40';
-  ctx.lineWidth = 64;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(size - 75, 0);
-  ctx.bezierCurveTo(size - 160, 700, size - 30, 1500, size - 85, size);
-  ctx.stroke();
-
-  // Water Stream
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 46;
-  ctx.beginPath();
-  ctx.moveTo(size - 75, 0);
-  ctx.bezierCurveTo(size - 160, 700, size - 30, 1500, size - 85, size);
-  ctx.stroke();
-
-  // Animated Water Ripples
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-  ctx.lineWidth = 3;
-  for (let y = 120; y < size; y += 220) {
-    const waveX = (size - 85) + Math.sin(time * 3 + y * 0.02) * 22;
-    const waveY = y + (Math.cos(time * 2 + y * 0.01) * 10);
-    ctx.beginPath();
-    ctx.arc(waveX, waveY, 14, 0, Math.PI);
-    ctx.stroke();
-  }
-
-  // Stone Bridge over the river at (size - 100, 1200)
-  const brX = size - 95;
-  const brY = 1200;
-  ctx.fillStyle = '#64748b';
-  ctx.fillRect(brX - 35, brY - 15, 70, 30);
-  ctx.strokeStyle = '#1e293b';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(brX - 35, brY - 15, 70, 30);
-  // Bridge Wooden Railings
-  ctx.fillStyle = '#8b5a2b';
-  ctx.fillRect(brX - 35, brY - 20, 70, 5);
-  ctx.fillRect(brX - 35, brY + 15, 70, 5);
-  ctx.restore();
-
-  // 2. Cozy Country Cottage with Smoking Chimney (Top-Left Outer Corner)
-  drawCottage(ctx, 110, 110, time);
-
-  // 3. Traditional Wooden Windmill with Rotating Blades (Bottom-Left Outer Corner)
-  drawWindmill(ctx, 110, size - 110, time);
-
-  // 4. Gardener's Shed & Flower Cart (Top-Right Outer Corner)
-  drawGardenerShed(ctx, size - 110, 110);
-
-  // 5. Cobblestone Pathways connecting houses to garden fences
-  drawCobblestonePaths(ctx);
-
-  // 6. Lush Outer Forest Trees (Pine, Oak, Sakura, Autumn Orange)
-  drawOuterTrees(ctx, time);
-}
-
-function drawCottage(ctx, x, y, time) {
-  ctx.save();
-  ctx.translate(x, y);
-
-  // Ground Shadow
-  ctx.fillStyle = 'rgba(10, 25, 18, 0.5)';
-  ctx.beginPath();
-  ctx.ellipse(0, 35, 45, 18, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // House Body
-  ctx.fillStyle = '#fef3c7';
-  ctx.strokeStyle = '#78350f';
-  ctx.lineWidth = 3;
-  ctx.fillRect(-35, -20, 70, 50);
-  ctx.strokeRect(-35, -20, 70, 50);
-
-  // Red Tiled Roof
-  ctx.fillStyle = '#b91c1c';
-  ctx.beginPath();
-  ctx.moveTo(-45, -20);
-  ctx.lineTo(0, -55);
-  ctx.lineTo(45, -20);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Chimney & Animated Smoke
-  ctx.fillStyle = '#451a03';
-  ctx.fillRect(18, -48, 12, 22);
-
-  // Smoke Puffs
-  for (let i = 0; i < 3; i++) {
-    const cycle = (time * 1.5 + i * 0.8) % 2.5;
-    const smY = -52 - cycle * 22;
-    const smX = 24 + Math.sin(time * 2 + i) * 8;
-    const smAlpha = 1 - cycle / 2.5;
-    const smSize = 6 + cycle * 5;
-
-    ctx.save();
-    ctx.globalAlpha = Math.max(0, smAlpha * 0.7);
-    ctx.fillStyle = '#e2e8f0';
-    ctx.beginPath();
-    ctx.arc(smX, smY, smSize, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Wooden Door
-  ctx.fillStyle = '#78350f';
-  ctx.fillRect(-10, 10, 20, 20);
-
-  // Glowing Yellow Window
-  ctx.fillStyle = '#fef08a';
-  ctx.fillRect(-28, -5, 14, 14);
-  ctx.fillRect(14, -5, 14, 14);
-  ctx.strokeStyle = '#78350f';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(-28, -5, 14, 14);
-  ctx.strokeRect(14, -5, 14, 14);
-
-  ctx.restore();
-}
-
-function drawWindmill(ctx, x, y, time) {
-  ctx.save();
-  ctx.translate(x, y);
-
-  // Ground Shadow
-  ctx.fillStyle = 'rgba(10, 25, 18, 0.5)';
-  ctx.beginPath();
-  ctx.ellipse(0, 35, 40, 16, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Tower Base (Trapezoid)
-  ctx.fillStyle = '#d97706';
-  ctx.strokeStyle = '#451a03';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(-25, 30);
-  ctx.lineTo(-15, -45);
-  ctx.lineTo(15, -45);
-  ctx.lineTo(25, 30);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Cap Roof
-  ctx.fillStyle = '#78350f';
-  ctx.beginPath();
-  ctx.arc(0, -45, 16, Math.PI, 0);
-  ctx.fill();
-
-  // Rotating Blades
-  ctx.save();
-  ctx.translate(0, -45);
-  ctx.rotate(time * 0.8);
-
-  ctx.strokeStyle = '#fef3c7';
-  ctx.lineWidth = 3;
-  ctx.fillStyle = 'rgba(254, 243, 199, 0.85)';
-
-  for (let i = 0; i < 4; i++) {
-    ctx.rotate(Math.PI / 2);
-    ctx.fillRect(0, -4, 42, 8);
-    ctx.strokeRect(0, -4, 42, 8);
-  }
-  ctx.restore();
-
-  ctx.restore();
-}
-
-function drawGardenerShed(ctx, x, y) {
-  ctx.save();
-  ctx.translate(x, y);
-
-  // Shadow
-  ctx.fillStyle = 'rgba(10, 25, 18, 0.5)';
-  ctx.beginPath();
-  ctx.ellipse(0, 25, 35, 14, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Wooden Shed
-  ctx.fillStyle = '#854d0e';
-  ctx.strokeStyle = '#365314';
-  ctx.lineWidth = 3;
-  ctx.fillRect(-28, -15, 56, 40);
-  ctx.strokeRect(-28, -15, 56, 40);
-
-  // Roof
-  ctx.fillStyle = '#166534';
-  ctx.beginPath();
-  ctx.moveTo(-35, -15);
-  ctx.lineTo(0, -40);
-  ctx.lineTo(35, -15);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Flower Cart next to shed
-  ctx.fillStyle = '#b45309';
-  ctx.fillRect(32, 5, 24, 14);
-  ctx.fillStyle = '#ff4d6d';
-  ctx.beginPath();
-  ctx.arc(38, 2, 5, 0, Math.PI * 2);
-  ctx.arc(48, 0, 6, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
-function drawCobblestonePaths(ctx) {
-  ctx.save();
-  ctx.fillStyle = 'rgba(148, 163, 184, 0.45)';
-
-  const stones = [
-    { x: 130, y: 170 }, { x: 145, y: 195 }, { x: 160, y: 220 },
-    { x: 175, y: 240 }, { x: 200, y: 240 }, { x: 225, y: 240 },
-    { x: 1400, y: 2600 }, { x: 1400, y: 2630 }, { x: 1400, y: 2660 }
-  ];
-
-  stones.forEach((st) => {
-    ctx.beginPath();
-    ctx.ellipse(st.x, st.y, 7, 4, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  ctx.restore();
-}
-
-function drawOuterTrees(ctx, time) {
-  ctx.save();
-  const p = FENCE_PADDING;
-  const size = GARDEN_SIZE;
-
-  const treePositions = [];
-
-  // Top Border
-  for (let x = 60; x < size; x += 110) {
-    if (x < p - 30 || x > size - p + 30) treePositions.push({ x, y: 60, type: x % 3 });
-    treePositions.push({ x, y: p / 2, type: (x + 1) % 3 });
-  }
-  // Bottom Border
-  for (let x = 60; x < size; x += 110) {
-    if (x < p - 30 || x > size - p + 30) treePositions.push({ x, y: size - 60, type: (x + 2) % 3 });
-    treePositions.push({ x, y: size - p / 2, type: x % 3 });
-  }
-  // Left Border
-  for (let y = 60; y < size; y += 110) {
-    treePositions.push({ x: 60, y, type: y % 3 });
-    treePositions.push({ x: p / 2, y, type: (y + 1) % 3 });
-  }
-  // Right Border
-  for (let y = 60; y < size; y += 110) {
-    if (y < 1000 || y > 1400) {
-      treePositions.push({ x: size - 60, y, type: (y + 2) % 3 });
-    }
-  }
-
-  treePositions.forEach((tp) => {
-    const sway = Math.sin(time * 1.8 + tp.x * 0.02 + tp.y * 0.01) * 0.05;
-    ctx.save();
-    ctx.translate(tp.x, tp.y);
-    ctx.rotate(sway);
-
-    if (tp.type === 0) {
-      // Pine Tree 🌲
-      ctx.fillStyle = '#451a03';
-      ctx.fillRect(-4, 0, 8, 16);
-      ctx.fillStyle = '#14532d';
-      ctx.beginPath();
-      ctx.moveTo(0, -42);
-      ctx.lineTo(-20, -18);
-      ctx.lineTo(20, -18);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#166534';
-      ctx.beginPath();
-      ctx.moveTo(0, -28);
-      ctx.lineTo(-24, 0);
-      ctx.lineTo(24, 0);
-      ctx.closePath();
-      ctx.fill();
-    } else if (tp.type === 1) {
-      // Oak Tree 🌳
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(-5, 0, 10, 18);
-      ctx.fillStyle = '#15803d';
-      ctx.beginPath();
-      ctx.arc(0, -18, 22, 0, Math.PI * 2);
-      ctx.arc(-10, -10, 16, 0, Math.PI * 2);
-      ctx.arc(10, -10, 16, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // Sakura / Autumn Tree 🌸
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(-4, 0, 8, 16);
-      ctx.fillStyle = tp.x % 2 === 0 ? '#f472b6' : '#f97316';
-      ctx.beginPath();
-      ctx.arc(0, -16, 20, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-  });
-
-  ctx.restore();
 }
 
 function drawLawnDetails(ctx) {
