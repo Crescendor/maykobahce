@@ -250,6 +250,7 @@ export default function MeadowCanvas({
     ctx.strokeRect(FENCE_PADDING + 8, FENCE_PADDING + 8, GARDEN_SIZE - 2 * FENCE_PADDING - 16, GARDEN_SIZE - 2 * FENCE_PADDING - 16);
     ctx.setLineDash([]);
 
+    // 3. Render Custom Meadow Objects (PNG Stickers, Shapes, Speech Bubbles, Freehand Strokes)
     if (meadowObjects && meadowObjects.length > 0) {
       meadowObjects.forEach((obj) => {
         if (obj.type === 'image' && obj.imageUrl) {
@@ -264,6 +265,7 @@ export default function MeadowCanvas({
             img = new Image();
             img.src = obj.imageUrl;
             window[`__img_cache_${obj.imageUrl}`] = img;
+            img.onload = () => render(Date.now() / 1000);
           }
 
           if (img.complete && img.naturalWidth > 0) {
@@ -288,18 +290,107 @@ export default function MeadowCanvas({
           ctx.fillText(obj.text, 0, 0);
 
           if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-             const metrics = ctx.measureText(obj.text);
-             drawBoundingBoxWithHandles(ctx, 0, 0, metrics.width + 20, obj.fontSize + 16, 0);
+            const metrics = ctx.measureText(obj.text);
+            const w = Math.max(80, metrics.width + 20);
+            const h = (obj.fontSize || 26) + 16;
+            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
+          }
+          ctx.restore();
+        } else if (obj.type === 'circle') {
+          ctx.save();
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          const r = (obj.radius || 65) * (obj.scale || 1);
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          if (obj.isFilled !== false) {
+            ctx.fillStyle = obj.color || '#38bdf8';
+            ctx.fill();
+          }
+          ctx.strokeStyle = obj.color || '#38bdf8';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            drawBoundingBoxWithHandles(ctx, 0, 0, r * 2, r * 2, 0);
+          }
+          ctx.restore();
+        } else if (obj.type === 'rect') {
+          ctx.save();
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          const w = (obj.width || 130) * (obj.scale || 1);
+          const h = (obj.height || 130) * (obj.scale || 1);
+          if (obj.isFilled !== false) {
+            ctx.fillStyle = obj.color || '#38bdf8';
+            ctx.fillRect(-w / 2, -h / 2, w, h);
+          }
+          ctx.strokeStyle = obj.color || '#38bdf8';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
+          }
+          ctx.restore();
+        } else if (obj.type === 'line') {
+          ctx.save();
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          const w = (obj.width || 240) * (obj.scale || 1);
+          const sw = obj.strokeWidth || obj.size || 12;
+
+          ctx.strokeStyle = obj.color || '#38bdf8';
+          ctx.lineWidth = sw;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-w / 2, 0);
+          ctx.lineTo(w / 2, 0);
+          ctx.stroke();
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            drawBoundingBoxWithHandles(ctx, 0, 0, w, Math.max(30, sw + 14), 0);
           }
           ctx.restore();
         } else if (obj.type === 'bubble') {
           ctx.save();
           ctx.translate(obj.x, obj.y);
           if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const w = (obj.width || 200);
-          const h = (obj.height || 95);
-          ctx.fillStyle = 'white';
-          ctx.fillRect(-w / 2, -h / 2, w, h);
+          const w = (obj.width || 200) * (obj.scale || 1);
+          const h = (obj.height || 95) * (obj.scale || 1);
+          const r = 16;
+
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+          ctx.shadowBlur = 10;
+
+          ctx.beginPath();
+          ctx.moveTo(-w / 2 + r, -h / 2);
+          ctx.lineTo(w / 2 - r, -h / 2);
+          ctx.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+          ctx.lineTo(w / 2, h / 2 - r);
+          ctx.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+          ctx.lineTo(15, h / 2);
+          ctx.lineTo(0, h / 2 + 18);
+          ctx.lineTo(-10, h / 2);
+          ctx.lineTo(-w / 2 + r, h / 2);
+          ctx.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
+          ctx.lineTo(-w / 2, -h / 2 + r);
+          ctx.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
+          ctx.closePath();
+
+          ctx.fillStyle = obj.bgColor || 'rgba(255, 255, 255, 0.95)';
+          ctx.fill();
+          ctx.strokeStyle = obj.color || '#38bdf8';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          ctx.shadowColor = 'transparent';
+          ctx.fillStyle = obj.textColor || '#0f172a';
+          ctx.font = `bold ${obj.fontSize || 18}px ${obj.fontFamily || 'sans-serif'}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(obj.text || 'Sohbet Balonu', 0, -2);
+
           if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
             drawBoundingBoxWithHandles(ctx, 0, 0, w, h + 18, 0);
           }
@@ -316,6 +407,7 @@ export default function MeadowCanvas({
       });
     }
 
+    // Render active freehand stroke
     if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
       ctx.save();
       ctx.strokeStyle = currentMeadowStrokeRef.current.color;
@@ -326,8 +418,21 @@ export default function MeadowCanvas({
       ctx.restore();
     }
 
+    // 4. Render Flowers (with wind sway & active animations)
+    if (flowers && flowers.length > 0) {
+      flowers.forEach((flower) => {
+        const isSelected = selectedFlower && selectedFlower.id === flower.id;
+        drawFlower(ctx, flower, isSelected, scale, time);
+      });
+    }
+
+    // 5. Render Pending Planting Flag Pin
+    if (pendingPlantPosition) {
+      drawPlantingFlag(ctx, pendingPlantPosition.x, pendingPlantPosition.y, scale);
+    }
+
     ctx.restore();
-  }, [flowers, selectedFlower, meadowObjects, selectedMeadowObjId, isAdminAuthenticated]);
+  }, [flowers, selectedFlower, pendingPlantPosition, meadowObjects, selectedMeadowObjId, isAdminAuthenticated]);
 
   useEffect(() => {
     const loop = (time) => {
