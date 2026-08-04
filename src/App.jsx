@@ -46,8 +46,10 @@ export default function App() {
 
   // Admin Interactive Mode Tools & State
   const [adminTool, setAdminTool] = useState(null); // null (pan) | 'move_flower' | 'draw' | 'text' | 'delete'
-  const [adminColor, setAdminColor] = useState('#ffffff');
+  const [adminColor, setAdminColor] = useState('#38bdf8');
   const [adminFont, setAdminFont] = useState('sans-serif');
+  const [adminBrushSize, setAdminBrushSize] = useState(12);
+  const [adminIsFilled, setAdminIsFilled] = useState(true);
   const [selectedMeadowObj, setSelectedMeadowObj] = useState(null);
 
   const [meadowObjects, setMeadowObjects] = useState(() => {
@@ -109,7 +111,7 @@ export default function App() {
       y: GARDEN_SIZE / 2,
       radius: 65,
       color: adminColor || '#38bdf8',
-      isFilled: true,
+      isFilled: adminIsFilled !== false,
       scale: 1,
       rotation: 0
     };
@@ -128,7 +130,7 @@ export default function App() {
       width: 130,
       height: 130,
       color: adminColor || '#38bdf8',
-      isFilled: true,
+      isFilled: adminIsFilled !== false,
       scale: 1,
       rotation: 0
     };
@@ -136,6 +138,24 @@ export default function App() {
     setSelectedMeadowObj(square);
     setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 1.2 });
     showToast('🔲 Kare şekli haritaya eklendi!');
+  };
+
+  const handleAddStraightLine = () => {
+    const line = {
+      id: `obj-${Date.now()}`,
+      type: 'line',
+      x: GARDEN_SIZE / 2,
+      y: GARDEN_SIZE / 2,
+      width: 240,
+      height: 12,
+      color: adminColor || '#38bdf8',
+      strokeWidth: adminBrushSize || 12,
+      rotation: 0
+    };
+    saveMeadowObjects([...meadowObjects, line]);
+    setSelectedMeadowObj(line);
+    setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 1.2 });
+    showToast('📏 Düz çizgi haritaya eklendi!');
   };
 
   const handleAddSpeechBubble = () => {
@@ -181,6 +201,29 @@ export default function App() {
       return updated;
     });
     setSelectedMeadowObj((prev) => (prev && prev.id === objId ? { ...prev, ...patch } : prev));
+  };
+
+  const handleColorChange = (newColor) => {
+    setAdminColor(newColor);
+    if (selectedMeadowObj) {
+      handleUpdateMeadowObj(selectedMeadowObj.id, { color: newColor });
+    }
+  };
+
+  const handleBrushSizeChange = (newSize) => {
+    setAdminBrushSize(newSize);
+    if (selectedMeadowObj) {
+      if (selectedMeadowObj.type === 'line' || selectedMeadowObj.type === 'stroke') {
+        handleUpdateMeadowObj(selectedMeadowObj.id, { size: newSize, strokeWidth: newSize });
+      }
+    }
+  };
+
+  const handleIsFilledToggle = (filled) => {
+    setAdminIsFilled(filled);
+    if (selectedMeadowObj && (selectedMeadowObj.type === 'circle' || selectedMeadowObj.type === 'rect')) {
+      handleUpdateMeadowObj(selectedMeadowObj.id, { isFilled: filled });
+    }
   };
 
   const handleUpdateSelectedImageSize = (newWidth) => {
@@ -420,18 +463,23 @@ export default function App() {
         adminTool={adminTool}
         setAdminTool={setAdminTool}
         adminColor={adminColor}
-        setAdminColor={setAdminColor}
+        setAdminColor={handleColorChange}
         adminFont={adminFont}
         setAdminFont={setAdminFont}
+        adminBrushSize={adminBrushSize}
+        setAdminBrushSize={handleBrushSizeChange}
+        adminIsFilled={adminIsFilled}
+        setAdminIsFilled={handleIsFilledToggle}
         onOpenDashboard={() => setIsAdminOpen(true)}
         meadowObjectsCount={meadowObjects.length}
         onClearAllMeadowDrawings={handleClearAllMeadowDrawings}
         onAddPngSticker={handleAddPngSticker}
         onAddCircleShape={handleAddCircleShape}
         onAddSquareShape={handleAddSquareShape}
+        onAddStraightLine={handleAddStraightLine}
         onAddSpeechBubble={handleAddSpeechBubble}
         onPublishMeadowObjects={handlePublishMeadowObjects}
-        selectedImageSize={selectedMeadowObj && (selectedMeadowObj.type === 'image' || selectedMeadowObj.type === 'rect' || selectedMeadowObj.type === 'circle' || selectedMeadowObj.type === 'bubble') ? selectedMeadowObj.width || selectedMeadowObj.radius * 2 || 180 : null}
+        selectedImageSize={selectedMeadowObj && (selectedMeadowObj.type === 'image' || selectedMeadowObj.type === 'rect' || selectedMeadowObj.type === 'circle' || selectedMeadowObj.type === 'bubble' || selectedMeadowObj.type === 'line') ? selectedMeadowObj.width || selectedMeadowObj.radius * 2 || 180 : null}
         onUpdateSelectedImageSize={handleUpdateSelectedImageSize}
         selectedMeadowObjId={selectedMeadowObj ? selectedMeadowObj.id : null}
         onDeleteSelectedMeadowObject={handleDeleteMeadowObject}
@@ -451,7 +499,7 @@ export default function App() {
         adminTool={adminTool}
         adminColor={adminColor}
         adminFont={adminFont}
-        adminBrushSize={10}
+        adminBrushSize={adminBrushSize}
         onUpdateFlowerLocalPos={handleUpdateFlowerLocalPos}
         onUpdateFlowerPosition={handleUpdateFlowerPosition}
         meadowObjects={meadowObjects}

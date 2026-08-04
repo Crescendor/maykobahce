@@ -9,12 +9,17 @@ export default function AdminFloatingToolbar({
   setAdminColor,
   adminFont,
   setAdminFont,
+  adminBrushSize,
+  setAdminBrushSize,
+  adminIsFilled,
+  setAdminIsFilled,
   onOpenDashboard,
   meadowObjectsCount,
   onClearAllMeadowDrawings,
   onAddPngSticker,
   onAddCircleShape,
   onAddSquareShape,
+  onAddStraightLine,
   onAddSpeechBubble,
   onPublishMeadowObjects,
   selectedImageSize,
@@ -117,6 +122,15 @@ export default function AdminFloatingToolbar({
 
         <button
           type="button"
+          style={styles.toolBtn}
+          onClick={onAddStraightLine}
+          title="Haritaya Düz Çizgi Ekle"
+        >
+          📏 Düz Çizgi
+        </button>
+
+        <button
+          type="button"
           style={{ ...styles.toolBtn, ...(adminTool === 'text' ? styles.activeToolBtn : {}) }}
           onClick={() => setAdminTool(adminTool === 'text' ? null : 'text')}
           title="Haritaya Yazı Metni Ekle (Tekrar basarak kapatın)"
@@ -174,6 +188,56 @@ export default function AdminFloatingToolbar({
         </button>
       </div>
 
+      <div style={styles.dividerHorizontal} />
+
+      {/* Color Picker Control */}
+      <div style={styles.colorWrapper}>
+        <span style={{ fontSize: '0.74rem', color: '#cbd5e1', fontWeight: 600 }}>Renk:</span>
+        <input
+          type="color"
+          value={adminColor || '#38bdf8'}
+          onChange={(e) => setAdminColor && setAdminColor(e.target.value)}
+          style={styles.colorInput}
+          title="Çizim, Çizgi ve Şekil Rengi"
+        />
+      </div>
+
+      {/* Brush / Stroke Thickness Slider */}
+      <div style={styles.sizeSliderWrapper}>
+        <Sliders size={13} color="#38bdf8" />
+        <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 600 }}>
+          Çizgi Kalınlığı: {adminBrushSize || 12}px
+        </span>
+        <input
+          type="range"
+          min="2"
+          max="80"
+          value={adminBrushSize || 12}
+          onChange={(e) => setAdminBrushSize && setAdminBrushSize(Number(e.target.value))}
+          style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
+        />
+      </div>
+
+      {/* Fill Toggle Control */}
+      <button
+        type="button"
+        onClick={() => setAdminIsFilled && setAdminIsFilled(!adminIsFilled)}
+        style={{
+          width: '100%',
+          padding: '5px 8px',
+          borderRadius: 10,
+          background: adminIsFilled ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.8)',
+          border: '1px solid rgba(56, 189, 248, 0.4)',
+          color: '#38bdf8',
+          fontSize: '0.74rem',
+          fontWeight: 700,
+          cursor: 'pointer'
+        }}
+        title="Şekil İç Dolgusu (Dolu veya İçi Boş Çerçeve)"
+      >
+        İç Dolgu: {adminIsFilled ? 'Dolu ⬛' : 'Boş Kontur ⬜'}
+      </button>
+
       {/* Conditional Tool Settings: Font Family Selector */}
       {adminTool === 'text' && (
         <>
@@ -196,23 +260,6 @@ export default function AdminFloatingToolbar({
         </>
       )}
 
-      {/* Conditional Tool Settings: Color Picker for Draw & Text Tools */}
-      {(adminTool === 'draw' || adminTool === 'text') && (
-        <>
-          <div style={styles.dividerHorizontal} />
-          <div style={styles.colorWrapper}>
-            <span style={{ fontSize: '0.74rem', color: '#cbd5e1', fontWeight: 600 }}>Renk:</span>
-            <input
-              type="color"
-              value={adminColor}
-              onChange={(e) => setAdminColor(e.target.value)}
-              style={styles.colorInput}
-              title="Çizim/Yazı Rengi"
-            />
-          </div>
-        </>
-      )}
-
       {/* PNG / Shape Size Slider Control */}
       {selectedImageSize && (
         <>
@@ -220,12 +267,12 @@ export default function AdminFloatingToolbar({
           <div style={styles.sizeSliderWrapper}>
             <Sliders size={14} color="#38bdf8" />
             <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 600 }}>
-              Boyut: {selectedImageSize}px
+              Genel Boyut: {selectedImageSize}px
             </span>
             <input
               type="range"
-              min="40"
-              max="600"
+              min="30"
+              max="700"
               value={selectedImageSize}
               onChange={(e) => onUpdateSelectedImageSize && onUpdateSelectedImageSize(Number(e.target.value))}
               style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}

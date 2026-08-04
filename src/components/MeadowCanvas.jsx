@@ -23,6 +23,11 @@ export function isPointInsideObject(o, worldX, worldY) {
     const h = (o.height || 160) * (o.scale || 1);
     return Math.abs(localX) <= w / 2 + 12 && Math.abs(localY) <= h / 2 + 12;
   }
+  if (o.type === 'line') {
+    const w = (o.width || 240) * (o.scale || 1);
+    const h = Math.max(30, (o.strokeWidth || o.size || 8) + 12);
+    return Math.abs(localX) <= w / 2 + 12 && Math.abs(localY) <= h / 2 + 12;
+  }
   if (o.type === 'bubble') {
     const w = (o.width || 200) * (o.scale || 1);
     const h = (o.height || 95) * (o.scale || 1) + 18;
@@ -312,6 +317,25 @@ export default function MeadowCanvas({
 
           if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
             drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
+          }
+          ctx.restore();
+        } else if (obj.type === 'line') {
+          ctx.save();
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          const w = (obj.width || 240) * (obj.scale || 1);
+          const sw = obj.strokeWidth || obj.size || 12;
+
+          ctx.strokeStyle = obj.color || '#38bdf8';
+          ctx.lineWidth = sw;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-w / 2, 0);
+          ctx.lineTo(w / 2, 0);
+          ctx.stroke();
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            drawBoundingBoxWithHandles(ctx, 0, 0, w, Math.max(30, sw + 14), 0);
           }
           ctx.restore();
         } else if (obj.type === 'bubble') {
