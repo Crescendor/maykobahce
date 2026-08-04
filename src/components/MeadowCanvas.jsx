@@ -125,23 +125,34 @@ export default function MeadowCanvas({
     return () => cancelAnimationFrame(id);
   }, [render]);
 
-  const handleWheel = (e) => {
-    e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
-    const oldScale = transform.scale;
-    const newScale = Math.min(Math.max(oldScale * zoomFactor, 0.35), 2.8);
+  // Non-passive wheel event listener for smooth zoom without Chrome console warnings
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    const handleWheel = (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+      const oldScale = transformRef.current.scale;
+      const newScale = Math.min(Math.max(oldScale * zoomFactor, 0.35), 2.8);
 
-    const newX = mouseX - (mouseX - transform.x) * (newScale / oldScale);
-    const newY = mouseY - (mouseY - transform.y) * (newScale / oldScale);
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
 
-    const nextTransform = { x: newX, y: newY, scale: newScale };
-    setTransform(nextTransform);
-    if (onViewportChange) onViewportChange(nextTransform);
-  };
+      const newX = mouseX - (mouseX - transformRef.current.x) * (newScale / oldScale);
+      const newY = mouseY - (mouseY - transformRef.current.y) * (newScale / oldScale);
+
+      const nextTransform = { x: newX, y: newY, scale: newScale };
+      setTransform(nextTransform);
+      if (onViewportChange) onViewportChange(nextTransform);
+    };
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      canvas.removeEventListener('wheel', handleWheel);
+    };
+  }, [onViewportChange]);
 
   const handlePointerDown = (e) => {
     clickStartPosRef.current = { x: e.clientX, y: e.clientY };
@@ -280,7 +291,6 @@ export default function MeadowCanvas({
   return (
     <canvas
       ref={canvasRef}
-      onWheel={handleWheel}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
