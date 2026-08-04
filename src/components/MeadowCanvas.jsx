@@ -486,6 +486,10 @@ export default function MeadowCanvas({
   const handlePointerDown = (e) => {
     clickStartPosRef.current = { x: e.clientX, y: e.clientY };
 
+    try {
+      e.target.setPointerCapture?.(e.pointerId);
+    } catch (err) {}
+
     const rect = canvasRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
@@ -504,9 +508,11 @@ export default function MeadowCanvas({
           y: selectedObj.y + lx * Math.sin(rotRad) + ly * Math.cos(rotRad)
         });
 
+        const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
+
         // Top Rotation Handle (0, -h/2 - 28)
         const rotHandleWorld = toWorld(0, -h / 2 - 28);
-        if (Math.hypot(worldX - rotHandleWorld.x, worldY - rotHandleWorld.y) < 32 / transformRef.current.scale) {
+        if (Math.hypot(worldX - rotHandleWorld.x, worldY - rotHandleWorld.y) < handleHitRadius) {
           isRotatingObjRef.current = true;
           handleDragObjRef.current = selectedObj;
           isDraggingRef.current = false;
@@ -521,7 +527,7 @@ export default function MeadowCanvas({
           toWorld(w / 2 + 6, h / 2 + 6)
         ];
 
-        const hitCorner = corners.find((c) => Math.hypot(worldX - c.x, worldY - c.y) < 28 / transformRef.current.scale);
+        const hitCorner = corners.find((c) => Math.hypot(worldX - c.x, worldY - c.y) < handleHitRadius);
         if (hitCorner) {
           isResizingObjRef.current = true;
           handleDragObjRef.current = selectedObj;
@@ -608,6 +614,48 @@ export default function MeadowCanvas({
     const clickY = e.clientY - rect.top;
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
+
+    // Interactive Hover Cursor Feedback
+    if (canvasRef.current && !isDraggingRef.current && !isResizingObjRef.current && !isRotatingObjRef.current && !isDraggingMeadowObjRef.current) {
+      if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects) {
+        const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
+        if (selectedObj) {
+          const { w, h } = getMeadowObjDimensions(selectedObj);
+          const rotRad = ((selectedObj.rotation || 0) * Math.PI) / 180;
+          const toWorld = (lx, ly) => ({
+            x: selectedObj.x + lx * Math.cos(rotRad) - ly * Math.sin(rotRad),
+            y: selectedObj.y + lx * Math.sin(rotRad) + ly * Math.cos(rotRad)
+          });
+          const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
+
+          // Top Rotation Handle
+          const rotHandleWorld = toWorld(0, -h / 2 - 28);
+          if (Math.hypot(worldX - rotHandleWorld.x, worldY - rotHandleWorld.y) < handleHitRadius) {
+            canvasRef.current.style.cursor = 'grab';
+            return;
+          }
+
+          // 4 Corner Handles
+          const corners = [
+            toWorld(-w / 2 - 6, -h / 2 - 6),
+            toWorld(w / 2 + 6, -h / 2 - 6),
+            toWorld(-w / 2 - 6, h / 2 + 6),
+            toWorld(w / 2 + 6, h / 2 + 6)
+          ];
+          if (corners.some((c) => Math.hypot(worldX - c.x, worldY - c.y) < handleHitRadius)) {
+            canvasRef.current.style.cursor = 'nwse-resize';
+            return;
+          }
+        }
+      }
+      if (adminTool === 'draw') {
+        canvasRef.current.style.cursor = 'crosshair';
+      } else if (adminTool === 'move_flower') {
+        canvasRef.current.style.cursor = 'move';
+      } else {
+        canvasRef.current.style.cursor = 'default';
+      }
+    }
 
     // Handle Object Rotation Drag
     if (isRotatingObjRef.current && handleDragObjRef.current) {
