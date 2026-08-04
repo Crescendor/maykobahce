@@ -69,7 +69,8 @@ export default function MeadowCanvas({
   adminTool,
   onUpdateFlowerLocalPos,
   onUpdateFlowerPosition,
-  onDeleteFlower
+  onDeleteFlower,
+  customBg
 }) {
   const canvasRef = useRef(null);
 
@@ -92,6 +93,24 @@ export default function MeadowCanvas({
   const isDraggingFlowerRef = useRef(false);
   const draggedFlowerIdRef = useRef(null);
   const draggedFlowerOffsetRef = useRef({ x: 0, y: 0 });
+
+  const bgImgRef = useRef(null);
+  const bgImgLoadedRef = useRef(false);
+
+  useEffect(() => {
+    if (customBg && customBg.url) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = customBg.url;
+      img.onload = () => {
+        bgImgRef.current = img;
+        bgImgLoadedRef.current = true;
+      };
+    } else {
+      bgImgRef.current = null;
+      bgImgLoadedRef.current = false;
+    }
+  }, [customBg]);
 
   useEffect(() => {
     if (!viewportTarget) return;
@@ -168,14 +187,14 @@ export default function MeadowCanvas({
       ctx.restore();
     }
 
-    // 2. Render Infinite Grass Blade Tufts & Clovers
-    drawLawnDetails(ctx);
-
-    // 3. Render Constant Garden Lawn Base Inside Wooden Fences (Always Green & Constant!)
+    // 2. Render Constant Garden Lawn Base Inside Wooden Fences (Always Green & Constant!)
     const p = FENCE_PADDING;
     const innerSize = GARDEN_SIZE - p * 2;
     ctx.fillStyle = '#2d6a4f';
     ctx.fillRect(p, p, innerSize, innerSize);
+
+    // 3. Render Grass Blade Tufts & Clovers strictly inside the fence
+    drawLawnDetails(ctx);
 
     // 4. Render Wooden Fence Outer Boundary
     drawGardenFences(ctx);
@@ -193,7 +212,7 @@ export default function MeadowCanvas({
     }
 
     ctx.restore();
-  }, [flowers, selectedFlower, pendingPlantPosition]);
+  }, [flowers, selectedFlower, pendingPlantPosition, customBg]);
 
   useEffect(() => {
     const loop = (time) => {
@@ -392,13 +411,16 @@ export default function MeadowCanvas({
 }
 
 function drawLawnDetails(ctx) {
-  // 1. Organic Grass Blade Tufts (Drawn infinitely across canvas)
+  // Organic Grass Blade Tufts (Drawn strictly inside the wooden fence area)
   const grassColors = ['#52b788', '#74c69d', '#38b000', '#95d5b2', '#2d6a4f'];
   
   ctx.lineCap = 'round';
+
+  const start = FENCE_PADDING + 25;
+  const end = GARDEN_SIZE - FENCE_PADDING - 25;
   
-  for (let x = -3000; x < GARDEN_SIZE + 3000; x += 110) {
-    for (let y = -3000; y < GARDEN_SIZE + 3000; y += 110) {
+  for (let x = start; x < end; x += 110) {
+    for (let y = start; y < end; y += 110) {
       const offsetX = (Math.sin(x * 0.05 + y * 0.03) * 40);
       const offsetY = (Math.cos(x * 0.03 - y * 0.05) * 40);
       const gx = x + offsetX;
