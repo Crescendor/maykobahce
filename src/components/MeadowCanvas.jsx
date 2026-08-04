@@ -203,12 +203,11 @@ export default function MeadowCanvas({
     }
 
     if (isDraggingRef.current) {
-      const unclamped = {
+      const nextTransform = {
         ...transformRef.current,
         x: e.clientX - dragStartRef.current.x,
         y: e.clientY - dragStartRef.current.y
       };
-      const nextTransform = clampTransform(unclamped);
 
       setTransform(nextTransform);
       if (onViewportChange) onViewportChange(nextTransform);
@@ -277,8 +276,7 @@ export default function MeadowCanvas({
         const newX = midX - (midX - transformRef.current.x) * (newScale / oldScale);
         const newY = midY - (midY - transformRef.current.y) * (newScale / oldScale);
 
-        const unclamped = { x: newX, y: newY, scale: newScale };
-        const nextTransform = clampTransform(unclamped);
+        const nextTransform = { x: newX, y: newY, scale: newScale };
 
         setTransform(nextTransform);
         if (onViewportChange) onViewportChange(nextTransform);
