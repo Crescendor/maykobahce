@@ -84,40 +84,40 @@ function drawBoundingBoxWithHandles(ctx, x, y, w, h, rotation = 0) {
   ctx.strokeStyle = '#38bdf8';
   ctx.lineWidth = 2.5;
   ctx.setLineDash([6, 6]);
-  ctx.strokeRect(-w / 2 - 4, -h / 2 - 4, w + 8, h + 8);
+  ctx.strokeRect(-w / 2, -h / 2, w, h);
   ctx.setLineDash([]);
 
   // 4 Corner Resize Handles
   const corners = [
-    { x: -w / 2 - 4, y: -h / 2 - 4 },
-    { x: w / 2 + 4, y: -h / 2 - 4 },
-    { x: -w / 2 - 4, y: h / 2 + 4 },
-    { x: w / 2 + 4, y: h / 2 + 4 }
+    { x: -w / 2, y: -h / 2 },
+    { x: w / 2, y: -h / 2 },
+    { x: -w / 2, y: h / 2 },
+    { x: w / 2, y: h / 2 }
   ];
 
   corners.forEach((c) => {
     ctx.fillStyle = '#ffffff';
     ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(c.x, c.y, 6, 0, Math.PI * 2);
+    ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   });
 
   // Top Rotation Handle Stem & Icon Dot
   ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.moveTo(0, -h / 2 - 4);
-  ctx.lineTo(0, -h / 2 - 24);
+  ctx.moveTo(0, -h / 2);
+  ctx.lineTo(0, -h / 2 - 26);
   ctx.stroke();
 
   ctx.fillStyle = '#f59e0b';
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.arc(0, -h / 2 - 24, 7, 0, Math.PI * 2);
+  ctx.arc(0, -h / 2 - 26, 9, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
@@ -131,9 +131,8 @@ export default function MeadowCanvas({
   isPlantingMode,
   pendingPlantPosition,
   onPlantAtPosition,
-  viewportTarget, // { x, y, scale } target coordinate to animate camera to
+  viewportTarget,
   onViewportChange,
-  // Admin Mode Props
   isAdminAuthenticated,
   adminTool,
   adminColor,
@@ -147,73 +146,40 @@ export default function MeadowCanvas({
   onDeleteFlower,
   selectedMeadowObjId,
   onSelectMeadowObj,
-  onUpdateMeadowObjPos
+  onUpdateMeadowObjPos,
+  onUpdateMeadowObj
 }) {
   const canvasRef = useRef(null);
-  const imageCacheRef = useRef(new Map());
 
-  // Image caching helper
-  const getCachedImage = (src) => {
-    if (!src) return null;
-    if (imageCacheRef.current.has(src)) {
-      return imageCacheRef.current.get(src);
-    }
-    const img = new Image();
-    img.src = src;
-    imageCacheRef.current.set(src, img);
-    return img;
-  };
-
-  // Viewport transform state
   const [transform, setTransform] = useState({
     x: -GARDEN_SIZE / 2 + window.innerWidth / 2,
     y: -GARDEN_SIZE / 2 + window.innerHeight / 2,
-    scale: 0.85
+    scale: 1
   });
 
   const transformRef = useRef(transform);
   transformRef.current = transform;
 
-  // Interaction tracking state
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
-  const touchPinchDistRef = useRef(null);
   const clickStartPosRef = useRef({ x: 0, y: 0 });
+  const touchPinchDistRef = useRef(null);
 
-  // Admin Drag & Drop / Drawing refs
   const isDraggingFlowerRef = useRef(false);
   const draggedFlowerIdRef = useRef(null);
   const draggedFlowerOffsetRef = useRef({ x: 0, y: 0 });
+
+  const isDrawingMeadowRef = useRef(false);
+  const currentMeadowStrokeRef = useRef(null);
 
   const isDraggingMeadowObjRef = useRef(false);
   const draggedMeadowObjIdRef = useRef(null);
   const draggedMeadowObjOffsetRef = useRef({ x: 0, y: 0 });
 
-  const isResizingObjRef = useRef(false);
-  const isRotatingObjRef = useRef(false);
+  const activeHandleRef = useRef(null); 
   const handleDragObjRef = useRef(null);
-  const handleDragStartRef = useRef({ startDist: 1, startWidth: 160, startHeight: 160, startRadius: 65, startFontSize: 26 });
+  const handleDragStartRef = useRef({});
 
-  const isDrawingMeadowRef = useRef(false);
-  const currentMeadowStrokeRef = useRef(null);
-
-  // Camera animation frame
-  const animFrameRef = useRef(null);
-
-  // Handle Window Resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (canvasRef.current) {
-        canvasRef.current.width = window.innerWidth;
-        canvasRef.current.height = window.innerHeight;
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Smoothly animate camera to viewportTarget when requested
   useEffect(() => {
     if (!viewportTarget) return;
 
@@ -221,522 +187,307 @@ export default function MeadowCanvas({
     const startY = transformRef.current.y;
     const startScale = transformRef.current.scale;
 
-    const targetScale = viewportTarget.scale || 1.4;
-    // Calculate transform to center (viewportTarget.x, viewportTarget.y) in screen center
-    const targetX = window.innerWidth / 2 - viewportTarget.x * targetScale;
-    const targetY = window.innerHeight / 2 - viewportTarget.y * targetScale;
+    const targetScale = viewportTarget.scale || startScale;
+    const targetX = -viewportTarget.x * targetScale + window.innerWidth / 2;
+    const targetY = -viewportTarget.y * targetScale + window.innerHeight / 2;
 
     const startTime = performance.now();
-    const duration = 600; // ms
+    const duration = 650;
 
-    const animateCamera = (now) => {
+    const animate = (now) => {
       const elapsed = now - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      // Smooth easeOutCubic
-      const ease = 1 - Math.pow(1 - progress, 3);
+      const progress = Math.min(elapsed / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
 
-      const currentX = startX + (targetX - startX) * ease;
-      const currentY = startY + (targetY - startY) * ease;
-      const currentScale = startScale + (targetScale - startScale) * ease;
+      const nextTransform = {
+        x: startX + (targetX - startX) * easeProgress,
+        y: startY + (targetY - startY) * easeProgress,
+        scale: startScale + (targetScale - startScale) * easeProgress
+      };
 
-      const nextTransform = { x: currentX, y: currentY, scale: currentScale };
       setTransform(nextTransform);
       if (onViewportChange) onViewportChange(nextTransform);
 
       if (progress < 1) {
-        animFrameRef.current = requestAnimationFrame(animateCamera);
+        requestAnimationFrame(animate);
       }
     };
 
-    animFrameRef.current = requestAnimationFrame(animateCamera);
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
+    requestAnimationFrame(animate);
   }, [viewportTarget]);
 
-  // Main Canvas Render Loop
-  const render = useCallback((time = Date.now() / 1000) => {
+  const render = useCallback((time = 0) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-    const { x: offsetX, y: offsetY, scale } = transformRef.current;
+    if (!ctx) return;
 
-    // Clear Screen
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = '#1b4332'; // Deep grass background
-    ctx.fillRect(0, 0, width, height);
 
     ctx.save();
-    ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
+    ctx.translate(transformRef.current.x, transformRef.current.y);
+    ctx.scale(transformRef.current.scale, transformRef.current.scale);
 
-    // 1. Render Meadow Base Grass
     ctx.fillStyle = '#2d6a4f';
     ctx.fillRect(0, 0, GARDEN_SIZE, GARDEN_SIZE);
 
-    // Inner Meadow Active Planting Area
-    ctx.fillStyle = '#358f66';
-    ctx.fillRect(
-      FENCE_PADDING,
-      FENCE_PADDING,
-      GARDEN_SIZE - FENCE_PADDING * 2,
-      GARDEN_SIZE - FENCE_PADDING * 2
-    );
-
-    // Render Soil Patches / Texture Details
     drawLawnDetails(ctx);
 
-    // 2. Render Wooden Fence Perimeter
-    drawGardenFences(ctx);
+    ctx.strokeStyle = '#1b4332';
+    ctx.lineWidth = 14;
+    ctx.strokeRect(FENCE_PADDING, FENCE_PADDING, GARDEN_SIZE - 2 * FENCE_PADDING, GARDEN_SIZE - 2 * FENCE_PADDING);
 
-    // 3. Render Custom Admin Meadow Objects (Strokes, Text, Shapes, Bubbles & PNGs)
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([12, 8]);
+    ctx.strokeRect(FENCE_PADDING + 8, FENCE_PADDING + 8, GARDEN_SIZE - 2 * FENCE_PADDING - 16, GARDEN_SIZE - 2 * FENCE_PADDING - 16);
+    ctx.setLineDash([]);
+
     if (meadowObjects && meadowObjects.length > 0) {
       meadowObjects.forEach((obj) => {
-        if (obj.type === 'stroke') {
-          drawSmoothStroke(ctx, { color: obj.color, size: obj.size, points: obj.points });
+        if (obj.type === 'image' && obj.imageUrl) {
+          ctx.save();
+          ctx.translate(obj.x, obj.y);
+          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
+          const w = (obj.width || 160) * (obj.scale || 1);
+          const h = (obj.height || 160) * (obj.scale || 1);
+
+          let img = window[`__img_cache_${obj.imageUrl}`];
+          if (!img) {
+            img = new Image();
+            img.src = obj.imageUrl;
+            window[`__img_cache_${obj.imageUrl}`] = img;
+          }
+
+          if (img.complete && img.naturalWidth > 0) {
+            ctx.drawImage(img, -w / 2, -h / 2, w, h);
+          } else {
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+            ctx.fillRect(-w / 2, -h / 2, w, h);
+          }
+
+          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
+            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
+          }
+          ctx.restore();
         } else if (obj.type === 'text') {
           ctx.save();
           ctx.translate(obj.x, obj.y);
           if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          ctx.font = `bold ${obj.fontSize || 26}px ${obj.fontFamily || 'sans-serif'}`;
           ctx.fillStyle = obj.color || '#ffffff';
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-          ctx.shadowBlur = 8;
+          ctx.font = `bold ${obj.fontSize || 26}px ${obj.fontFamily || 'sans-serif'}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(obj.text, 0, 0);
 
           if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            const metrics = ctx.measureText(obj.text);
-            const w = Math.max(80, metrics.width + 20);
-            const h = (obj.fontSize || 26) + 16;
-            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'circle') {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const r = (obj.radius || 65) * (obj.scale || 1);
-          ctx.beginPath();
-          ctx.arc(0, 0, r, 0, Math.PI * 2);
-          if (obj.isFilled !== false) {
-            ctx.fillStyle = obj.color || '#38bdf8';
-            ctx.fill();
-          }
-          ctx.strokeStyle = obj.color || '#38bdf8';
-          ctx.lineWidth = 4;
-          ctx.stroke();
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            drawBoundingBoxWithHandles(ctx, 0, 0, r * 2, r * 2, 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'rect') {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const w = (obj.width || 130) * (obj.scale || 1);
-          const h = (obj.height || 130) * (obj.scale || 1);
-          if (obj.isFilled !== false) {
-            ctx.fillStyle = obj.color || '#38bdf8';
-            ctx.fillRect(-w / 2, -h / 2, w, h);
-          }
-          ctx.strokeStyle = obj.color || '#38bdf8';
-          ctx.lineWidth = 4;
-          ctx.strokeRect(-w / 2, -h / 2, w, h);
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
-          }
-          ctx.restore();
-        } else if (obj.type === 'line') {
-          ctx.save();
-          ctx.translate(obj.x, obj.y);
-          if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const w = (obj.width || 240) * (obj.scale || 1);
-          const sw = obj.strokeWidth || obj.size || 12;
-
-          ctx.strokeStyle = obj.color || '#38bdf8';
-          ctx.lineWidth = sw;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(-w / 2, 0);
-          ctx.lineTo(w / 2, 0);
-          ctx.stroke();
-
-          if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-            drawBoundingBoxWithHandles(ctx, 0, 0, w, Math.max(30, sw + 14), 0);
+             const metrics = ctx.measureText(obj.text);
+             drawBoundingBoxWithHandles(ctx, 0, 0, metrics.width + 20, obj.fontSize + 16, 0);
           }
           ctx.restore();
         } else if (obj.type === 'bubble') {
           ctx.save();
           ctx.translate(obj.x, obj.y);
           if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-          const w = (obj.width || 200) * (obj.scale || 1);
-          const h = (obj.height || 95) * (obj.scale || 1);
-          const r = 16;
-
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-          ctx.shadowBlur = 10;
-
-          ctx.beginPath();
-          ctx.moveTo(-w / 2 + r, -h / 2);
-          ctx.lineTo(w / 2 - r, -h / 2);
-          ctx.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
-          ctx.lineTo(w / 2, h / 2 - r);
-          ctx.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
-          ctx.lineTo(15, h / 2);
-          ctx.lineTo(0, h / 2 + 18);
-          ctx.lineTo(-10, h / 2);
-          ctx.lineTo(-w / 2 + r, h / 2);
-          ctx.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
-          ctx.lineTo(-w / 2, -h / 2 + r);
-          ctx.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
-          ctx.closePath();
-
-          ctx.fillStyle = obj.bgColor || 'rgba(255, 255, 255, 0.95)';
-          ctx.fill();
-          ctx.strokeStyle = obj.color || '#38bdf8';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-
-          ctx.shadowColor = 'transparent';
-          ctx.fillStyle = obj.textColor || '#0f172a';
-          ctx.font = `bold ${obj.fontSize || 18}px ${obj.fontFamily || 'sans-serif'}`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(obj.text || 'Sohbet Balonu', 0, -2);
-
+          const w = (obj.width || 200);
+          const h = (obj.height || 95);
+          ctx.fillStyle = 'white';
+          ctx.fillRect(-w / 2, -h / 2, w, h);
           if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
             drawBoundingBoxWithHandles(ctx, 0, 0, w, h + 18, 0);
           }
           ctx.restore();
-        } else if (obj.type === 'image') {
-          const img = getCachedImage(obj.imageUrl);
-          if (img && img.complete && img.naturalWidth > 0) {
-            ctx.save();
-            ctx.translate(obj.x, obj.y);
-            if (obj.rotation) ctx.rotate((obj.rotation * Math.PI) / 180);
-            const w = (obj.width || 160) * (obj.scale || 1);
-            const h = (obj.height || (w * (img.naturalHeight / img.naturalWidth))) * (obj.scale || 1);
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-            ctx.shadowBlur = 10;
-            ctx.drawImage(img, -w / 2, -h / 2, w, h);
-
-            if (isAdminAuthenticated && selectedMeadowObjId === obj.id) {
-              drawBoundingBoxWithHandles(ctx, 0, 0, w, h, 0);
-            }
-            ctx.restore();
-          }
+        } else if (obj.type === 'stroke' && obj.points && obj.points.length > 0) {
+          ctx.save();
+          ctx.strokeStyle = obj.color || '#ffffff';
+          ctx.lineWidth = obj.size || 10;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          drawSmoothStroke(ctx, obj.points);
+          ctx.restore();
         }
       });
     }
 
-    // Render active in-progress meadow stroke
-    if (currentMeadowStrokeRef.current) {
-      drawSmoothStroke(ctx, {
-        color: currentMeadowStrokeRef.current.color,
-        size: currentMeadowStrokeRef.current.size,
-        points: currentMeadowStrokeRef.current.points
-      });
-    }
-
-    // 4. Render Flowers (with wind sway & active animations)
-    flowers.forEach((flower) => {
-      const isSelected = selectedFlower && selectedFlower.id === flower.id;
-      drawFlower(ctx, flower, isSelected, scale, time);
-    });
-
-    // 5. Render Pending Planting Flag Pin
-    if (pendingPlantPosition) {
-      drawPlantingFlag(ctx, pendingPlantPosition.x, pendingPlantPosition.y, scale);
+    if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
+      ctx.save();
+      ctx.strokeStyle = currentMeadowStrokeRef.current.color;
+      ctx.lineWidth = currentMeadowStrokeRef.current.size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      drawSmoothStroke(ctx, currentMeadowStrokeRef.current.points);
+      ctx.restore();
     }
 
     ctx.restore();
-  }, [flowers, selectedFlower, pendingPlantPosition, meadowObjects, selectedMeadowObjId, isAdminAuthenticated]);
+  }, [flowers, selectedFlower, meadowObjects, selectedMeadowObjId, isAdminAuthenticated]);
 
-  // Continuous animation frame loop for smooth wind sway & animations
   useEffect(() => {
-    let animId;
-    const loop = () => {
-      const time = Date.now() / 1000;
-      render(time);
-      animId = requestAnimationFrame(loop);
+    const loop = (time) => {
+      render(time / 1000);
+      requestAnimationFrame(loop);
     };
-    loop();
-
-    return () => {
-      if (animId) cancelAnimationFrame(animId);
-    };
+    const id = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(id);
   }, [render]);
 
-  // Handle Wheel Zoom
   const handleWheel = (e) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
-    const oldScale = transform.scale;
-    let newScale = Math.min(Math.max(oldScale * zoomFactor, 0.35), 2.8);
-
-    // Zoom towards mouse pointer
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
-
-    const newX = mouseX - (mouseX - transform.x) * (newScale / oldScale);
-    const newY = mouseY - (mouseY - transform.y) * (newScale / oldScale);
-
-    const nextTransform = { x: newX, y: newY, scale: newScale };
-    setTransform(nextTransform);
-    if (onViewportChange) onViewportChange(nextTransform);
+    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+    const newScale = Math.min(Math.max(transform.scale * zoomFactor, 0.3), 3);
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const newX = mouseX - (mouseX - transform.x) * (newScale / transform.scale);
+    const newY = mouseY - (mouseY - transform.y) * (newScale / transform.scale);
+    const next = { x: newX, y: newY, scale: newScale };
+    setTransform(next);
+    if (onViewportChange) onViewportChange(next);
   };
 
-  // Pointer Down (Mouse or Touch)
   const handlePointerDown = (e) => {
     clickStartPosRef.current = { x: e.clientX, y: e.clientY };
-
-    try {
-      e.target.setPointerCapture?.(e.pointerId);
-    } catch (err) {}
-
     const rect = canvasRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-    const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
-    const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
+    const worldX = (e.clientX - rect.left - transformRef.current.x) / transformRef.current.scale;
+    const worldY = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
 
-    // Check hit on handle of currently selected object (Corner resize or Top rotation)
-    if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects && meadowObjects.length > 0) {
+    if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects) {
       const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
       if (selectedObj) {
         const { w, h } = getMeadowObjDimensions(selectedObj);
         const local = getLocalPointerPos(selectedObj, worldX, worldY);
         const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
 
-        // Top Rotation Handle (0, -h/2 - 28)
-        if (Math.hypot(local.x - 0, local.y - (-h / 2 - 28)) < handleHitRadius) {
-          isRotatingObjRef.current = true;
+        if (Math.hypot(local.x - 0, local.y - (-h / 2 - 26)) < handleHitRadius) {
+          activeHandleRef.current = 'ROT';
           handleDragObjRef.current = selectedObj;
-          isDraggingRef.current = false;
+          handleDragStartRef.current = { startWorldX: worldX, startWorldY: worldY, startRotation: selectedObj.rotation || 0 };
           return;
         }
 
-        // 4 Corner Handles in local space
         const localCorners = [
-          { x: -w / 2 - 6, y: -h / 2 - 6 },
-          { x: w / 2 + 6, y: -h / 2 - 6 },
-          { x: -w / 2 - 6, y: h / 2 + 6 },
-          { x: w / 2 + 6, y: h / 2 + 6 }
+          { name: 'TL', x: -w / 2, y: -h / 2 },
+          { name: 'TR', x: w / 2, y: -h / 2 },
+          { name: 'BL', x: -w / 2, y: h / 2 },
+          { name: 'BR', x: w / 2, y: h / 2 }
         ];
 
         const hitCorner = localCorners.find((c) => Math.hypot(local.x - c.x, local.y - c.y) < handleHitRadius);
         if (hitCorner) {
-          isResizingObjRef.current = true;
+          activeHandleRef.current = hitCorner.name;
           handleDragObjRef.current = selectedObj;
           handleDragStartRef.current = {
+            startWorldX: worldX,
+            startWorldY: worldY,
             startWidth: selectedObj.width || 160,
             startHeight: selectedObj.height || 160,
             startRadius: selectedObj.radius || 65,
             startFontSize: selectedObj.fontSize || 26
           };
-          isDraggingRef.current = false;
           return;
         }
       }
     }
 
-    // Check hit on PNG sticker, shape, bubble, text, or stroke object first
-    let hitMeadowObj = null;
-    if (isAdminAuthenticated && meadowObjects && meadowObjects.length > 0) {
-      hitMeadowObj = meadowObjects.slice().reverse().find((o) => isPointInsideObject(o, worldX, worldY));
-    }
-
+    let hitMeadowObj = meadowObjects?.slice().reverse().find((o) => isPointInsideObject(o, worldX, worldY));
     if (isAdminAuthenticated && hitMeadowObj) {
       if (onSelectMeadowObj) onSelectMeadowObj(hitMeadowObj);
-      // ONLY start position dragging if adminTool === 'move_flower'!
       if (adminTool === 'move_flower') {
         isDraggingMeadowObjRef.current = true;
         draggedMeadowObjIdRef.current = hitMeadowObj.id;
-        draggedMeadowObjOffsetRef.current = {
-          x: hitMeadowObj.x - worldX,
-          y: hitMeadowObj.y - worldY
-        };
+        draggedMeadowObjOffsetRef.current = { x: hitMeadowObj.x - worldX, y: hitMeadowObj.y - worldY };
       }
-      isDraggingRef.current = false;
       return;
     }
 
-    // Check hit on any flower
-    let hitFlower = null;
-    for (const flower of flowers) {
-      const dist = Math.hypot(flower.x - worldX, flower.y - worldY);
-      if (dist < 45) {
-        hitFlower = flower;
-        break;
-      }
-    }
-
-    // 1. Admin Flower Drag & Drop Mode
-    if (isAdminAuthenticated && adminTool === 'move_flower' && hitFlower) {
-      isDraggingFlowerRef.current = true;
-      draggedFlowerIdRef.current = hitFlower.id;
-      draggedFlowerOffsetRef.current = {
-        x: hitFlower.x - worldX,
-        y: hitFlower.y - worldY
-      };
-      isDraggingRef.current = false;
-      return;
-    }
-
-    // 2. Admin Freehand Meadow Drawing Mode
     if (isAdminAuthenticated && adminTool === 'draw') {
       isDrawingMeadowRef.current = true;
-      const newStroke = {
-        id: `obj-${Date.now()}`,
-        type: 'stroke',
-        color: adminColor || '#ffffff',
-        size: adminBrushSize || 10,
-        points: [{ x: worldX, y: worldY }]
-      };
-      currentMeadowStrokeRef.current = newStroke;
-      isDraggingRef.current = false;
+      currentMeadowStrokeRef.current = { id: `obj-${Date.now()}`, type: 'stroke', color: adminColor, size: adminBrushSize, points: [{ x: worldX, y: worldY }] };
       return;
     }
 
-    // Default Camera Panning Drag
     isDraggingRef.current = true;
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    dragStartRef.current = { x: e.clientX - transformRef.current.x, y: e.clientY - transformRef.current.y };
   };
 
-  // Pointer Move (Mouse or Touch Drag)
   const handlePointerMove = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-    const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
-    const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
+    const worldX = (e.clientX - rect.left - transformRef.current.x) / transformRef.current.scale;
+    const worldY = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
 
-    // Interactive Hover Cursor Feedback
-    if (canvasRef.current && !isDraggingRef.current && !isResizingObjRef.current && !isRotatingObjRef.current && !isDraggingMeadowObjRef.current) {
-      if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects) {
-        const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
-        if (selectedObj) {
-          const { w, h } = getMeadowObjDimensions(selectedObj);
-          const local = getLocalPointerPos(selectedObj, worldX, worldY);
-          const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
-
-          // Top Rotation Handle
-          if (Math.hypot(local.x - 0, local.y - (-h / 2 - 28)) < handleHitRadius) {
-            canvasRef.current.style.cursor = 'grab';
-          } else if ([
-            { x: -w / 2 - 6, y: -h / 2 - 6 },
-            { x: w / 2 + 6, y: -h / 2 - 6 },
-            { x: -w / 2 - 6, y: h / 2 + 6 },
-            { x: w / 2 + 6, y: h / 2 + 6 }
-          ].some((c) => Math.hypot(local.x - c.x, local.y - c.y) < handleHitRadius)) {
-            canvasRef.current.style.cursor = 'nwse-resize';
-          } else if (adminTool === 'draw') {
-            canvasRef.current.style.cursor = 'crosshair';
-          } else if (adminTool === 'move_flower') {
-            canvasRef.current.style.cursor = 'move';
-          } else {
-            canvasRef.current.style.cursor = 'default';
-          }
+    if (canvasRef.current && !isDraggingRef.current && !activeHandleRef.current && !isDraggingMeadowObjRef.current) {
+        if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects) {
+            const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
+            if (selectedObj) {
+                const { w, h } = getMeadowObjDimensions(selectedObj);
+                const local = getLocalPointerPos(selectedObj, worldX, worldY);
+                const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
+                if (Math.hypot(local.x - 0, local.y - (-h / 2 - 26)) < handleHitRadius) {
+                    canvasRef.current.style.cursor = 'grab';
+                } else if ([{x: -w/2, y: -h/2}, {x: w/2, y: -h/2}, {x: -w/2, y: h/2}, {x: w/2, y: h/2}].some((c) => Math.hypot(local.x - c.x, local.y - c.y) < handleHitRadius)) {
+                    canvasRef.current.style.cursor = 'nwse-resize';
+                } else {
+                    canvasRef.current.style.cursor = 'default';
+                }
+            }
         }
-      } else {
-        if (adminTool === 'draw') {
-          canvasRef.current.style.cursor = 'crosshair';
-        } else if (adminTool === 'move_flower') {
-          canvasRef.current.style.cursor = 'move';
-        } else {
-          canvasRef.current.style.cursor = 'default';
-        }
-      }
     }
 
-    // Handle Object Rotation Drag
-    if (isRotatingObjRef.current && handleDragObjRef.current) {
+    if (activeHandleRef.current && handleDragObjRef.current) {
       const obj = handleDragObjRef.current;
-      const rad = Math.atan2(worldY - obj.y, worldX - obj.x);
-      let deg = Math.round(rad * (180 / Math.PI) + 90);
-      deg = (deg % 360 + 360) % 360;
+      const deltaX = worldX - handleDragStartRef.current.startWorldX;
+      const deltaY = worldY - handleDragStartRef.current.startWorldY;
+
+      if (activeHandleRef.current === 'ROT') {
+        const rad = Math.atan2(worldY - obj.y, worldX - obj.x);
+        let deg = Math.round(rad * (180 / Math.PI) + 90);
+        deg = (deg % 360 + 360) % 360;
+        if (onUpdateMeadowObj) onUpdateMeadowObj(obj.id, { rotation: deg });
+        return;
+      }
+
+      let wChange = 0, hChange = 0;
+      if (activeHandleRef.current === 'BR') { wChange = deltaX; hChange = deltaY; }
+      else if (activeHandleRef.current === 'TR') { wChange = deltaX; hChange = -deltaY; }
+      else if (activeHandleRef.current === 'BL') { wChange = -deltaX; hChange = deltaY; }
+      else if (activeHandleRef.current === 'TL') { wChange = -deltaX; hChange = -deltaY; }
+
       if (onUpdateMeadowObj) {
-        onUpdateMeadowObj(obj.id, { rotation: deg });
+        if (obj.type === 'circle') onUpdateMeadowObj(obj.id, { radius: Math.max(15, Math.round(handleDragStartRef.current.startRadius + wChange / 2)) });
+        else if (obj.type === 'text') onUpdateMeadowObj(obj.id, { fontSize: Math.max(12, Math.round(handleDragStartRef.current.startFontSize + hChange / 2)) });
+        else if (obj.type === 'line') onUpdateMeadowObj(obj.id, { width: Math.max(30, Math.round(handleDragStartRef.current.startWidth + wChange)) });
+        else onUpdateMeadowObj(obj.id, { width: Math.max(30, Math.round(handleDragStartRef.current.startWidth + wChange)), height: Math.max(30, Math.round(handleDragStartRef.current.startHeight + hChange)) });
       }
       return;
     }
 
-    // Handle Object Resize Corner Drag
-    if (isResizingObjRef.current && handleDragObjRef.current) {
-      const obj = handleDragObjRef.current;
-      const local = getLocalPointerPos(obj, worldX, worldY);
-      const newW = Math.max(30, Math.round(Math.abs(local.x) * 2));
-      const newH = Math.max(30, Math.round(Math.abs(local.y) * 2));
-
-      if (onUpdateMeadowObj) {
-        if (obj.type === 'circle') {
-          const newR = Math.max(15, Math.round(Math.hypot(local.x, local.y)));
-          onUpdateMeadowObj(obj.id, { radius: newR });
-        } else if (obj.type === 'text') {
-          const newFont = Math.max(12, Math.round(Math.abs(local.y) * 1.4));
-          onUpdateMeadowObj(obj.id, { fontSize: newFont });
-        } else if (obj.type === 'line') {
-          onUpdateMeadowObj(obj.id, { width: newW });
-        } else {
-          onUpdateMeadowObj(obj.id, { width: newW, height: newH });
-        }
-      }
-      return;
-    }
-
-    // 1. Dragging PNG Image or Text Meadow Object Position
     if (isDraggingMeadowObjRef.current && draggedMeadowObjIdRef.current) {
-      const newX = Math.round(worldX + draggedMeadowObjOffsetRef.current.x);
-      const newY = Math.round(worldY + draggedMeadowObjOffsetRef.current.y);
-      if (onUpdateMeadowObjPos) {
-        onUpdateMeadowObjPos(draggedMeadowObjIdRef.current, newX, newY);
-      }
+      onUpdateMeadowObjPos(draggedMeadowObjIdRef.current, Math.round(worldX + draggedMeadowObjOffsetRef.current.x), Math.round(worldY + draggedMeadowObjOffsetRef.current.y));
       return;
     }
 
-    // 2. Dragging Flower Position
-    if (isDraggingFlowerRef.current && draggedFlowerIdRef.current) {
-      const newX = Math.round(worldX + draggedFlowerOffsetRef.current.x);
-      const newY = Math.round(worldY + draggedFlowerOffsetRef.current.y);
-      if (onUpdateFlowerLocalPos) {
-        onUpdateFlowerLocalPos(draggedFlowerIdRef.current, newX, newY);
-      }
-      return;
-    }
-
-    // 3. Drawing on Meadow Canvas
     if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
       currentMeadowStrokeRef.current.points.push({ x: worldX, y: worldY });
       return;
     }
 
-    // 4. Camera Panning
-    if (!isDraggingRef.current) return;
-
-    const dx = e.clientX - dragStartRef.current.x;
-    const dy = e.clientY - dragStartRef.current.y;
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
-
-    const nextTransform = {
-      ...transformRef.current,
-      x: transformRef.current.x + dx,
-      y: transformRef.current.y + dy
-    };
-    setTransform(nextTransform);
-    if (onViewportChange) onViewportChange(nextTransform);
+    if (isDraggingRef.current) {
+      setTransform(t => ({ ...t, x: e.clientX - dragStartRef.current.x, y: e.clientY - dragStartRef.current.y }));
+    }
   };
 
   // Pointer Up / Tap Detection
   const handlePointerUp = (e) => {
-    isResizingObjRef.current = false;
-    isRotatingObjRef.current = false;
-    handleDragObjRef.current = null;
+    activeHandleRef.current = null;
+    isDraggingMeadowObjRef.current = false;
+    draggedMeadowObjIdRef.current = null;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -744,14 +495,7 @@ export default function MeadowCanvas({
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
 
-    // 1. Finish Dragging Meadow Object (PNG / Text)
-    if (isDraggingMeadowObjRef.current && draggedMeadowObjIdRef.current) {
-      isDraggingMeadowObjRef.current = false;
-      draggedMeadowObjIdRef.current = null;
-      return;
-    }
-
-    // 2. Finish Dragging Flower
+    // 1. Finish Dragging Flower
     if (isDraggingFlowerRef.current && draggedFlowerIdRef.current) {
       isDraggingFlowerRef.current = false;
       const finalX = Math.round(worldX + draggedFlowerOffsetRef.current.x);
@@ -763,7 +507,7 @@ export default function MeadowCanvas({
       return;
     }
 
-    // 3. Finish Meadow Freehand Drawing
+    // 2. Finish Meadow Freehand Drawing
     if (isDrawingMeadowRef.current && currentMeadowStrokeRef.current) {
       isDrawingMeadowRef.current = false;
       if (onAddMeadowObject) {
@@ -783,7 +527,7 @@ export default function MeadowCanvas({
     );
 
     if (moveDist < 8) {
-      // 3. Admin Text Placement Tool
+      // Admin Text Placement Tool
       if (isAdminAuthenticated && adminTool === 'text') {
         const textInput = prompt('Harita Üzerine Eklemek İstediğiniz Yazı:');
         if (textInput && textInput.trim()) {
@@ -802,26 +546,16 @@ export default function MeadowCanvas({
         return;
       }
 
-      // 4. Admin Delete Tool (click flower or meadow object)
+      // Admin Delete Tool
       if (isAdminAuthenticated && adminTool === 'delete') {
-        // Check hit on meadow objects first
         if (meadowObjects && meadowObjects.length > 0) {
-          const hitObj = meadowObjects.find((o) => {
-            if (o.type === 'text') {
-              return Math.hypot(o.x - worldX, o.y - worldY) < 40;
-            }
-            if (o.type === 'stroke' && o.points) {
-              return o.points.some((p) => Math.hypot(p.x - worldX, p.y - worldY) < 30);
-            }
-            return false;
-          });
+          const hitObj = meadowObjects.find((o) => isPointInsideObject(o, worldX, worldY));
           if (hitObj) {
             if (onDeleteMeadowObject) onDeleteMeadowObject(hitObj.id);
             return;
           }
         }
 
-        // Check hit on flower
         const hitFlower = flowers.find((f) => Math.hypot(f.x - worldX, f.y - worldY) < 40);
         if (hitFlower) {
           if (window.confirm(`"${hitFlower.name || 'Anonim'}" çiçeğini haritadan silmek istediğinize emin misiniz?`)) {
@@ -831,7 +565,7 @@ export default function MeadowCanvas({
         }
       }
 
-      // 5. Default flower selection or planting
+      // Default flower selection or planting
       let hitFlower = null;
       for (const flower of flowers) {
         const dist = Math.hypot(flower.x - worldX, flower.y - worldY);
