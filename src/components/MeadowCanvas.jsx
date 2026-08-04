@@ -65,6 +65,16 @@ export function getMeadowObjDimensions(obj) {
   return { w, h };
 }
 
+export function getLocalPointerPos(selectedObj, worldX, worldY) {
+  const dx = worldX - selectedObj.x;
+  const dy = worldY - selectedObj.y;
+  const rad = (-(selectedObj.rotation || 0) * Math.PI) / 180;
+  return {
+    x: dx * Math.cos(rad) - dy * Math.sin(rad),
+    y: dx * Math.sin(rad) + dy * Math.cos(rad)
+  };
+}
+
 function drawBoundingBoxWithHandles(ctx, x, y, w, h, rotation = 0) {
   ctx.save();
   ctx.translate(x, y);
@@ -501,38 +511,30 @@ export default function MeadowCanvas({
       const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
       if (selectedObj) {
         const { w, h } = getMeadowObjDimensions(selectedObj);
-
-        const rotRad = ((selectedObj.rotation || 0) * Math.PI) / 180;
-        const toWorld = (lx, ly) => ({
-          x: selectedObj.x + lx * Math.cos(rotRad) - ly * Math.sin(rotRad),
-          y: selectedObj.y + lx * Math.sin(rotRad) + ly * Math.cos(rotRad)
-        });
-
+        const local = getLocalPointerPos(selectedObj, worldX, worldY);
         const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
 
         // Top Rotation Handle (0, -h/2 - 28)
-        const rotHandleWorld = toWorld(0, -h / 2 - 28);
-        if (Math.hypot(worldX - rotHandleWorld.x, worldY - rotHandleWorld.y) < handleHitRadius) {
+        if (Math.hypot(local.x - 0, local.y - (-h / 2 - 28)) < handleHitRadius) {
           isRotatingObjRef.current = true;
           handleDragObjRef.current = selectedObj;
           isDraggingRef.current = false;
           return;
         }
 
-        // 4 Corner Handles
-        const corners = [
-          toWorld(-w / 2 - 6, -h / 2 - 6),
-          toWorld(w / 2 + 6, -h / 2 - 6),
-          toWorld(-w / 2 - 6, h / 2 + 6),
-          toWorld(w / 2 + 6, h / 2 + 6)
+        // 4 Corner Handles in local space
+        const localCorners = [
+          { x: -w / 2 - 6, y: -h / 2 - 6 },
+          { x: w / 2 + 6, y: -h / 2 - 6 },
+          { x: -w / 2 - 6, y: h / 2 + 6 },
+          { x: w / 2 + 6, y: h / 2 + 6 }
         ];
 
-        const hitCorner = corners.find((c) => Math.hypot(worldX - c.x, worldY - c.y) < handleHitRadius);
+        const hitCorner = localCorners.find((c) => Math.hypot(local.x - c.x, local.y - c.y) < handleHitRadius);
         if (hitCorner) {
           isResizingObjRef.current = true;
           handleDragObjRef.current = selectedObj;
           handleDragStartRef.current = {
-            startDist: Math.max(10, Math.hypot(worldX - selectedObj.x, worldY - selectedObj.y)),
             startWidth: selectedObj.width || 160,
             startHeight: selectedObj.height || 160,
             startRadius: selectedObj.radius || 65,
@@ -621,39 +623,35 @@ export default function MeadowCanvas({
         const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
         if (selectedObj) {
           const { w, h } = getMeadowObjDimensions(selectedObj);
-          const rotRad = ((selectedObj.rotation || 0) * Math.PI) / 180;
-          const toWorld = (lx, ly) => ({
-            x: selectedObj.x + lx * Math.cos(rotRad) - ly * Math.sin(rotRad),
-            y: selectedObj.y + lx * Math.sin(rotRad) + ly * Math.cos(rotRad)
-          });
+          const local = getLocalPointerPos(selectedObj, worldX, worldY);
           const handleHitRadius = Math.max(30, 45 / transformRef.current.scale);
 
           // Top Rotation Handle
-          const rotHandleWorld = toWorld(0, -h / 2 - 28);
-          if (Math.hypot(worldX - rotHandleWorld.x, worldY - rotHandleWorld.y) < handleHitRadius) {
+          if (Math.hypot(local.x - 0, local.y - (-h / 2 - 28)) < handleHitRadius) {
             canvasRef.current.style.cursor = 'grab';
-            return;
-          }
-
-          // 4 Corner Handles
-          const corners = [
-            toWorld(-w / 2 - 6, -h / 2 - 6),
-            toWorld(w / 2 + 6, -h / 2 - 6),
-            toWorld(-w / 2 - 6, h / 2 + 6),
-            toWorld(w / 2 + 6, h / 2 + 6)
-          ];
-          if (corners.some((c) => Math.hypot(worldX - c.x, worldY - c.y) < handleHitRadius)) {
+          } else if ([
+            { x: -w / 2 - 6, y: -h / 2 - 6 },
+            { x: w / 2 + 6, y: -h / 2 - 6 },
+            { x: -w / 2 - 6, y: h / 2 + 6 },
+            { x: w / 2 + 6, y: h / 2 + 6 }
+          ].some((c) => Math.hypot(local.x - c.x, local.y - c.y) < handleHitRadius)) {
             canvasRef.current.style.cursor = 'nwse-resize';
-            return;
+          } else if (adminTool === 'draw') {
+            canvasRef.current.style.cursor = 'crosshair';
+          } else if (adminTool === 'move_flower') {
+            canvasRef.current.style.cursor = 'move';
+          } else {
+            canvasRef.current.style.cursor = 'default';
           }
         }
-      }
-      if (adminTool === 'draw') {
-        canvasRef.current.style.cursor = 'crosshair';
-      } else if (adminTool === 'move_flower') {
-        canvasRef.current.style.cursor = 'move';
       } else {
-        canvasRef.current.style.cursor = 'default';
+        if (adminTool === 'draw') {
+          canvasRef.current.style.cursor = 'crosshair';
+        } else if (adminTool === 'move_flower') {
+          canvasRef.current.style.cursor = 'move';
+        } else {
+          canvasRef.current.style.cursor = 'default';
+        }
       }
     }
 
@@ -672,21 +670,20 @@ export default function MeadowCanvas({
     // Handle Object Resize Corner Drag
     if (isResizingObjRef.current && handleDragObjRef.current) {
       const obj = handleDragObjRef.current;
-      const currentDist = Math.hypot(worldX - obj.x, worldY - obj.y);
-      const factor = Math.max(0.15, currentDist / (handleDragStartRef.current.startDist || 1));
+      const local = getLocalPointerPos(obj, worldX, worldY);
+      const newW = Math.max(30, Math.round(Math.abs(local.x) * 2));
+      const newH = Math.max(30, Math.round(Math.abs(local.y) * 2));
+
       if (onUpdateMeadowObj) {
         if (obj.type === 'circle') {
-          const newR = Math.max(15, Math.round(handleDragStartRef.current.startRadius * factor));
+          const newR = Math.max(15, Math.round(Math.hypot(local.x, local.y)));
           onUpdateMeadowObj(obj.id, { radius: newR });
         } else if (obj.type === 'text') {
-          const newFont = Math.max(12, Math.round(handleDragStartRef.current.startFontSize * factor));
+          const newFont = Math.max(12, Math.round(Math.abs(local.y) * 1.4));
           onUpdateMeadowObj(obj.id, { fontSize: newFont });
         } else if (obj.type === 'line') {
-          const newW = Math.max(40, Math.round(handleDragStartRef.current.startWidth * factor));
           onUpdateMeadowObj(obj.id, { width: newW });
         } else {
-          const newW = Math.max(40, Math.round(handleDragStartRef.current.startWidth * factor));
-          const newH = Math.max(30, Math.round(handleDragStartRef.current.startHeight * factor));
           onUpdateMeadowObj(obj.id, { width: newW, height: newH });
         }
       }
