@@ -11,6 +11,7 @@ import {
   Key,
   Calendar,
   CheckCircle,
+  XCircle,
   Clock,
   Heart,
   Star,
@@ -539,17 +540,46 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                             </div>
                           </td>
 
-                          {/* Compact Action Dropdown & Approval Button */}
+                          {/* Moderation Actions Column */}
                           <td style={styles.td}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              {flower.approved === 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 140 }}>
+                              {flower.approved === 0 ? (
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  <button
+                                    type="button"
+                                    style={styles.approveBtn}
+                                    onClick={() => patchFlower(flower.id, { approved: 1 })}
+                                    title="Onayla ve Canlı Haritada Göster"
+                                  >
+                                    <CheckCircle size={13} /> Onayla
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    style={styles.rejectBtn}
+                                    onClick={() => {
+                                      if (window.confirm(`"${flower.name || 'Anonim'}" çiçeğini reddedip silmek istediğinize emin misiniz?`)) {
+                                        setLocalPatches((prev) => {
+                                          const next = { ...prev };
+                                          delete next[flower.id];
+                                          return next;
+                                        });
+                                        onDeleteFlower(flower.id, flower.deleteCode);
+                                      }
+                                    }}
+                                    title="Reddet / Çiçeği Sil"
+                                  >
+                                    <XCircle size={13} /> Reddet
+                                  </button>
+                                </div>
+                              ) : (
                                 <button
                                   type="button"
-                                  style={styles.approveBtn}
-                                  onClick={() => patchFlower(flower.id, { approved: 1 })}
-                                  title="Onayla"
+                                  style={styles.unapproveBtn}
+                                  onClick={() => patchFlower(flower.id, { approved: 0 })}
+                                  title="Onayı Geri Al (Onay Bekliyor Durumuna Getir)"
                                 >
-                                  <CheckCircle size={13} /> Onayla
+                                  <Clock size={12} /> Onayı Geri Al
                                 </button>
                               )}
 
@@ -559,13 +589,22 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                                   const val = e.target.value;
                                   if (val === 'edit') handleStartEdit(flower);
                                   if (val === 'focus') { onFocusFlower(flower); onClose(); }
-                                  if (val === 'delete') onDeleteFlower(flower.id, flower.deleteCode);
+                                  if (val === 'delete') {
+                                    if (window.confirm(`"${flower.name || 'Anonim'}" çiçeğini silmek istediğinize emin misiniz?`)) {
+                                      setLocalPatches((prev) => {
+                                        const next = { ...prev };
+                                        delete next[flower.id];
+                                        return next;
+                                      });
+                                      onDeleteFlower(flower.id, flower.deleteCode);
+                                    }
+                                  }
                                   if (val === 'note') setViewNoteFlower(flower);
                                   e.target.value = '';
                                 }}
                                 style={styles.actionsSelect}
                               >
-                                <option value="">⚙️ İşlemler...</option>
+                                <option value="">⚙️ Diğer İşlemler...</option>
                                 <option value="edit">✏️ İsim & Not Düzenle</option>
                                 <option value="note">👁️ Notu Tam Göster</option>
                                 <option value="focus">📍 Haritada Göster</option>
@@ -942,12 +981,39 @@ const styles = {
     gap: 4
   },
   approveBtn: {
-    background: 'rgba(34, 197, 94, 0.2)',
-    color: '#4ade80',
-    border: '1px solid rgba(34, 197, 94, 0.4)',
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    color: '#ffffff',
+    border: '1px solid #34d399',
     borderRadius: 10,
     padding: '6px 12px',
     fontSize: '0.8rem',
+    fontWeight: 800,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
+  },
+  rejectBtn: {
+    padding: '6px 10px',
+    borderRadius: 10,
+    background: 'rgba(239, 68, 68, 0.2)',
+    border: '1px solid rgba(239, 68, 68, 0.5)',
+    color: '#f87171',
+    fontSize: '0.8rem',
+    fontWeight: 800,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4
+  },
+  unapproveBtn: {
+    padding: '5px 10px',
+    borderRadius: 10,
+    background: 'rgba(245, 158, 11, 0.18)',
+    border: '1px solid rgba(245, 158, 11, 0.4)',
+    color: '#fbbf24',
+    fontSize: '0.76rem',
     fontWeight: 700,
     cursor: 'pointer',
     display: 'flex',
