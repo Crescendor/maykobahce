@@ -110,9 +110,7 @@ const styles = {
     border: '1.5px solid rgba(245, 158, 11, 0.5)',
     boxShadow: '0 14px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(245, 158, 11, 0.2)',
     backdropFilter: 'blur(16px)',
-    width: 175,
-    maxHeight: '85vh',
-    overflowY: 'auto'
+    width: 175
   },
   headerRow: {
     display: 'flex',
@@ -146,23 +144,17 @@ const styles = {
   toolsColumn: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 6,
-    width: '100%'
-  },
-  shapesGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 5,
+    gap: 8,
     width: '100%'
   },
   toolBtn: {
     width: '100%',
-    padding: '7px 10px',
+    padding: '8px 10px',
     borderRadius: 14,
     border: '1px solid rgba(255, 255, 255, 0.12)',
     background: 'rgba(30, 41, 59, 0.75)',
     color: '#cbd5e1',
-    fontSize: '0.78rem',
+    fontSize: '0.8rem',
     fontWeight: 700,
     cursor: 'pointer',
     display: 'flex',
@@ -171,113 +163,25 @@ const styles = {
     gap: 6,
     transition: 'all 0.15s ease'
   },
-  toolBtnSmall: {
-    padding: '6px 4px',
-    borderRadius: 12,
-    border: '1px solid rgba(255, 255, 255, 0.12)',
-    background: 'rgba(30, 41, 59, 0.75)',
-    color: '#cbd5e1',
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    textAlign: 'center'
-  },
   activeToolBtn: {
     background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
     color: '#ffffff',
     borderColor: '#f59e0b',
     boxShadow: '0 3px 12px rgba(245, 158, 11, 0.4)'
   },
-  fontSelect: {
-    width: '100%',
-    padding: '5px 6px',
-    borderRadius: 10,
-    background: '#0f172a',
-    color: '#f8fafc',
-    border: '1px solid rgba(255,255,255,0.2)',
-    fontSize: '0.74rem',
-    fontWeight: 700
-  },
-  colorWrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-    background: 'rgba(255, 255, 255, 0.06)',
-    padding: '6px 8px',
-    borderRadius: 12,
-    width: '100%'
-  },
-  colorInput: {
-    width: '100%',
-    height: 28,
-    borderRadius: 8,
-    border: 'none',
-    cursor: 'pointer',
-    background: 'transparent'
-  },
-  sizeSliderWrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-    background: 'rgba(56, 189, 248, 0.12)',
-    border: '1px solid rgba(56, 189, 248, 0.3)',
-    padding: '6px 8px',
-    borderRadius: 12,
-    width: '100%'
-  },
-  clearBtn: {
-    width: '100%',
-    padding: '6px 8px',
-    borderRadius: 12,
-    background: 'rgba(239, 68, 68, 0.2)',
-    border: '1px solid rgba(239, 68, 68, 0.4)',
-    color: '#f87171',
-    fontSize: '0.74rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4
-  },
-  actionsColumn: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-    width: '100%'
-  },
-  publishBtn: {
-    width: '100%',
-    padding: '8px 10px',
-    borderRadius: 14,
-    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-    border: '1px solid #34d399',
-    color: '#ffffff',
-    fontSize: '0.8rem',
-    fontWeight: 900,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    boxShadow: '0 3px 12px rgba(16, 185, 129, 0.4)'
-  },
   dashboardBtn: {
     width: '100%',
-    padding: '7px 8px',
+    padding: '8px 10px',
     borderRadius: 14,
     background: 'rgba(30, 41, 59, 0.8)',
     border: '1px solid rgba(255, 255, 255, 0.15)',
     color: '#cbd5e1',
-    fontSize: '0.76rem',
+    fontSize: '0.8rem',
     fontWeight: 700,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5
+    gap: 6
   }
 };
