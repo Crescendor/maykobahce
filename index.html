@@ -8,6 +8,30 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href="https://maykobahce.art/" />
 
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- Automatic Stale Bundle Auto-Reload Guard (Fixes "Unexpected token '<'" on new deployments) -->
+    <script>
+      (function() {
+        var reloadKey = 'mayko_auto_reload_ts';
+        window.addEventListener('error', function(e) {
+          var msg = (e && e.message) ? e.message : '';
+          var targetTag = (e && e.target && e.target.tagName) ? e.target.tagName : '';
+          var isChunkError = msg.indexOf('Unexpected token') !== -1 || msg.indexOf('SyntaxError') !== -1 || targetTag === 'SCRIPT';
+          if (isChunkError) {
+            var lastReload = sessionStorage.getItem(reloadKey);
+            var now = Date.now();
+            if (!lastReload || now - parseInt(lastReload, 10) > 8000) {
+              sessionStorage.setItem(reloadKey, now.toString());
+              window.location.reload(true);
+            }
+          }
+        }, true);
+      })();
+    </script>
+
     <!-- Open Graph / Social Sharing Meta Tags -->
     <meta property="og:title" content="MaykoBahce | &quot;Ben sana bir bahçe verdim..&quot;" />
     <meta property="og:description" content="Sen de bir çiçek bırak. Bu bahçenin bol miktarda çiçeğe ihtiyacı var." />
