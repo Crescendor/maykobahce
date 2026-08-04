@@ -172,6 +172,17 @@ export default function App() {
     });
   };
 
+  const handleUpdateMeadowObj = (objId, patch) => {
+    setMeadowObjects((prev) => {
+      const updated = prev.map((o) => (o.id === objId ? { ...o, ...patch } : o));
+      try {
+        localStorage.setItem('mayko_meadow_objects_v1', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    setSelectedMeadowObj((prev) => (prev && prev.id === objId ? { ...prev, ...patch } : prev));
+  };
+
   const handleUpdateSelectedImageSize = (newWidth) => {
     if (!selectedMeadowObj) return;
     setMeadowObjects((prev) => {
@@ -448,6 +459,7 @@ export default function App() {
         selectedMeadowObjId={selectedMeadowObj ? selectedMeadowObj.id : null}
         onSelectMeadowObj={setSelectedMeadowObj}
         onUpdateMeadowObjPos={handleUpdateMeadowObjPos}
+        onUpdateMeadowObj={handleUpdateMeadowObj}
       />
 
       {/* Floating HUD Controls */}

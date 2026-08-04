@@ -183,6 +183,21 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
   // Merge local patches into flower list for live UI
   const mergedFlowers = flowers.map((f) => ({ ...f, ...(localPatches[f.id] || {}) }));
 
+  const handleClearAllAnimations = async () => {
+    if (!window.confirm('Haritadaki tüm çiçeklerin özel animasyonlarını (kalp, yıldız, duman, yarasa vb.) kaldırmak istediğinize emin misiniz?')) {
+      return;
+    }
+    const animatedFlowers = flowers.filter((f) => f.animation);
+    if (animatedFlowers.length === 0) {
+      alert('Haritada zaten aktif özel animasyonu olan çiçek bulunmuyor.');
+      return;
+    }
+    animatedFlowers.forEach((f) => {
+      patchFlower(f.id, { animation: null, animationColor: null });
+    });
+    alert(`${animatedFlowers.length} adet çiçeğin özel animasyonları başarıyla kaldırıldı! ✨`);
+  };
+
   // Filter Flowers
   const filteredFlowers = mergedFlowers.filter((f) => {
     const q = searchQuery.toLowerCase();
@@ -311,16 +326,40 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                 </div>
               </div>
 
-              {/* Search Bar */}
-              <div style={styles.searchWrapper}>
-                <Search size={18} color="#94a3b8" />
-                <input
-                  type="text"
-                  placeholder="İsim, Not, Instagram, Şifre veya Silme Koduna Göre Ara..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={styles.searchInput}
-                />
+              {/* Search Bar & Bulk Actions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', marginBottom: 16 }}>
+                <div style={{ ...styles.searchWrapper, flex: 1, marginBottom: 0 }}>
+                  <Search size={18} color="#94a3b8" />
+                  <input
+                    type="text"
+                    placeholder="İsim, Not, Instagram, Şifre veya Silme Koduna Göre Ara..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={styles.searchInput}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleClearAllAnimations}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 14,
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                    color: '#f87171',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    whiteSpace: 'nowrap'
+                  }}
+                  title="Tüm Çiçeklerin Özel Animasyonlarını Sıfırla / Kaldır"
+                >
+                  <Sparkles size={15} /> Tüm Animasyonları Kaldır
+                </button>
               </div>
             </div>
 

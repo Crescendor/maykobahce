@@ -115,6 +115,11 @@ export default function MeadowCanvas({
   const draggedMeadowObjIdRef = useRef(null);
   const draggedMeadowObjOffsetRef = useRef({ x: 0, y: 0 });
 
+  const isResizingObjRef = useRef(false);
+  const isRotatingObjRef = useRef(false);
+  const handleDragObjRef = useRef(null);
+  const handleDragStartRef = useRef({ startDist: 1, startWidth: 160, startHeight: 160, startRadius: 65, startFontSize: 26 });
+
   const isDrawingMeadowRef = useRef(false);
   const currentMeadowStrokeRef = useRef(null);
 
@@ -404,6 +409,66 @@ export default function MeadowCanvas({
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
 
+    // Check hit on handle of currently selected object (Corner resize or Top rotation)
+    if (isAdminAuthenticated && selectedMeadowObjId && meadowObjects && meadowObjects.length > 0) {
+      const selectedObj = meadowObjects.find((o) => o.id === selectedMeadowObjId);
+      if (selectedObj) {
+        let w = 160;
+        let h = 160;
+        if (selectedObj.type === 'circle') {
+          w = (selectedObj.radius || 65) * 2;
+          h = w;
+        } else if (selectedObj.type === 'rect' || selectedObj.type === 'image') {
+          w = selectedObj.width || 160;
+          h = selectedObj.height || 160;
+        } else if (selectedObj.type === 'bubble') {
+          w = selectedObj.width || 200;
+          h = (selectedObj.height || 95) + 18;
+        } else if (selectedObj.type === 'text') {
+          w = 140;
+          h = (selectedObj.fontSize || 26) + 16;
+        }
+
+        const rotRad = ((selectedObj.rotation || 0) * Math.PI) / 180;
+        const toWorld = (lx, ly) => ({
+          x: selectedObj.x + lx * Math.cos(rotRad) - ly * Math.sin(rotRad),
+          y: selectedObj.y + lx * Math.sin(rotRad) + ly * Math.cos(rotRad)
+        });
+
+        // Top Rotation Handle (0, -h/2 - 24)
+        const rotHandleWorld = toWorld(0, -h / 2 - 24);
+        if (Math.hypot(worldX - rotHandleWorld.x, worldY - rotHandleWorld.y) < 30 / transformRef.current.scale) {
+          isRotatingObjRef.current = true;
+          handleDragObjRef.current = selectedObj;
+          isDraggingRef.current = false;
+          return;
+        }
+
+        // 4 Corner Handles
+        const corners = [
+          toWorld(-w / 2 - 4, -h / 2 - 4),
+          toWorld(w / 2 + 4, -h / 2 - 4),
+          toWorld(-w / 2 - 4, h / 2 + 4),
+          toWorld(w / 2 + 4, h / 2 + 4)
+        ];
+
+        const hitCorner = corners.find((c) => Math.hypot(worldX - c.x, worldY - c.y) < 25 / transformRef.current.scale);
+        if (hitCorner) {
+          isResizingObjRef.current = true;
+          handleDragObjRef.current = selectedObj;
+          handleDragStartRef.current = {
+            startDist: Math.max(10, Math.hypot(worldX - selectedObj.x, worldY - selectedObj.y)),
+            startWidth: selectedObj.width || 160,
+            startHeight: selectedObj.height || 160,
+            startRadius: selectedObj.radius || 65,
+            startFontSize: selectedObj.fontSize || 26
+          };
+          isDraggingRef.current = false;
+          return;
+        }
+      }
+    }
+
     // Check hit on PNG sticker, shape, bubble, or text object first
     let hitMeadowObj = null;
     if (isAdminAuthenticated && meadowObjects && meadowObjects.length > 0) {
@@ -424,7 +489,7 @@ export default function MeadowCanvas({
       });
     }
 
-    if (isAdminAuthenticated && adminTool === 'move_flower' && hitMeadowObj) {
+    if (isAdminAuthenticated && hitMeadowObj) {
       isDraggingMeadowObjRef.current = true;
       draggedMeadowObjIdRef.current = hitMeadowObj.id;
       draggedMeadowObjOffsetRef.current = {
@@ -486,6 +551,39 @@ export default function MeadowCanvas({
     const worldX = (clickX - transformRef.current.x) / transformRef.current.scale;
     const worldY = (clickY - transformRef.current.y) / transformRef.current.scale;
 
+    // Handle Object Rotation Drag
+    if (isRotatingObjRef.current && handleDragObjRef.current) {
+      const obj = handleDragObjRef.current;
+      const rad = Math.atan2(worldY - obj.y, worldX - obj.x);
+      let deg = Math.round(rad * (180 / Math.PI) + 90);
+      deg = (deg % 360 + 360) % 360;
+      if (onUpdateMeadowObj) {
+        onUpdateMeadowObj(obj.id, { rotation: deg });
+      }
+      return;
+    }
+
+    // Handle Object Resize Corner Drag
+    if (isResizingObjRef.current && handleDragObjRef.current) {
+      const obj = handleDragObjRef.current;
+      const currentDist = Math.hypot(worldX - obj.x, worldY - obj.y);
+      const factor = Math.max(0.15, currentDist / (handleDragStartRef.current.startDist || 1));
+      if (onUpdateMeadowObj) {
+        if (obj.type === 'circle') {
+          const newR = Math.max(15, Math.round(handleDragStartRef.current.startRadius * factor));
+          onUpdateMeadowObj(obj.id, { radius: newR });
+        } else if (obj.type === 'text') {
+          const newFont = Math.max(12, Math.round(handleDragStartRef.current.startFontSize * factor));
+          onUpdateMeadowObj(obj.id, { fontSize: newFont });
+        } else {
+          const newW = Math.max(40, Math.round(handleDragStartRef.current.startWidth * factor));
+          const newH = Math.max(30, Math.round(handleDragStartRef.current.startHeight * factor));
+          onUpdateMeadowObj(obj.id, { width: newW, height: newH });
+        }
+      }
+      return;
+    }
+
     // 1. Dragging PNG Image or Text Meadow Object Position
     if (isDraggingMeadowObjRef.current && draggedMeadowObjIdRef.current) {
       const newX = Math.round(worldX + draggedMeadowObjOffsetRef.current.x);
@@ -530,6 +628,10 @@ export default function MeadowCanvas({
 
   // Pointer Up / Tap Detection
   const handlePointerUp = (e) => {
+    isResizingObjRef.current = false;
+    isRotatingObjRef.current = false;
+    handleDragObjRef.current = null;
+
     const rect = canvasRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;

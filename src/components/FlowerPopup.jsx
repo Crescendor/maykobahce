@@ -116,25 +116,25 @@ export default function FlowerPopup({ flower, onClose, onDeleteFlower }) {
   };
 
 const CARD_THEMES = {
-  gold: { background: 'linear-gradient(135deg, #451a03 0%, #78350f 50%, #b45309 100%)', border: '2px solid #f59e0b', color: '#fffbeb' },
-  dark_gothic: { background: 'linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%)', border: '2px solid #a855f7', color: '#f4f4f5' },
-  love_romance: { background: 'linear-gradient(135deg, #831843 0%, #be185d 100%)', border: '2px solid #f43f5e', color: '#fff1f2' },
-  starry_galaxy: { background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', border: '2px solid #38bdf8', color: '#f0f9ff' },
-  neon_cyber: { background: 'linear-gradient(135deg, #022c22 0%, #064e3b 100%)', border: '2px solid #34d399', color: '#ecfdf5' },
-  sakura_bloom: { background: 'linear-gradient(135deg, #500724 0%, #9d174d 100%)', border: '2px solid #f472b6', color: '#fdf2f8' },
-  ocean_breeze: { background: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%)', border: '2px solid #38bdf8', color: '#f0f9ff' },
-  sunset_glow: { background: 'linear-gradient(135deg, #7c2d12 0%, #c2410c 100%)', border: '2px solid #fb923c', color: '#fff7ed' },
-  emerald_forest: { background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', border: '2px solid #10b981', color: '#ecfdf5' },
-  royal_purple: { background: 'linear-gradient(135deg, #3b0764 0%, #6b21a8 100%)', border: '2px solid #c084fc', color: '#faf5ff' },
-  vintage_sepia: { background: 'linear-gradient(135deg, #451a03 0%, #78350f 100%)', border: '2px solid #d97706', color: '#fffbeb' },
-  fire_blaze: { background: 'linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%)', border: '2px solid #ef4444', color: '#fef2f2' },
-  ice_frost: { background: 'linear-gradient(135deg, #164e63 0%, #0891b2 100%)', border: '2px solid #22d3ee', color: '#ecfeff' },
-  fairy_magic: { background: 'linear-gradient(135deg, #701a75 0%, #a21caf 100%)', border: '2px solid #e879f9', color: '#fdf4ff' },
-  cosmic_aurora: { background: 'linear-gradient(135deg, #064e3b 0%, #1e1b4b 100%)', border: '2px solid #a7f3d0', color: '#ecfdf5' },
-  sunflower_summer: { background: 'linear-gradient(135deg, #713f12 0%, #ca8a04 100%)', border: '2px solid #facc15', color: '#fefce8' },
-  midnight_shadow: { background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)', border: '2px solid #64748b', color: '#f8fafc' },
-  diamond_crystal: { background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '2px solid #e2e8f0', color: '#f8fafc' },
-  rainbow_dream: { background: 'linear-gradient(135deg, #831843 0%, #1e1b4b 50%, #064e3b 100%)', border: '2px solid #f472b6', color: '#ffffff' }
+  gold: { background: 'linear-gradient(135deg, #1e1b4b 0%, #31103f 50%, #451a03 100%)', border: '2px solid #f59e0b', color: '#fbbf24', noteBoxBg: 'rgba(245, 158, 11, 0.16)', noteTextColor: '#fffbeb' },
+  dark_gothic: { background: 'linear-gradient(135deg, #09090b 0%, #18181b 50%, #2e1065 100%)', border: '2px solid #c084fc', color: '#f3e8ff', noteBoxBg: 'rgba(168, 85, 247, 0.2)', noteTextColor: '#faf5ff' },
+  love_romance: { background: 'linear-gradient(135deg, #4c0519 0%, #831843 50%, #be185d 100%)', border: '2px solid #fb7185', color: '#ffe4e6', noteBoxBg: 'rgba(251, 113, 133, 0.22)', noteTextColor: '#ffffff' },
+  starry_galaxy: { background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%)', border: '2px solid #38bdf8', color: '#e0f2fe', noteBoxBg: 'rgba(56, 189, 248, 0.18)', noteTextColor: '#f0f9ff' },
+  neon_cyber: { background: 'linear-gradient(135deg, #051923 0%, #003554 50%, #006494 100%)', border: '2px solid #22d3ee', color: '#cffaff', noteBoxBg: 'rgba(34, 211, 238, 0.2)', noteTextColor: '#ffffff' },
+  sakura_bloom: { background: 'linear-gradient(135deg, #2a0818 0%, #500724 50%, #831843 100%)', border: '2px solid #f472b6', color: '#fdf2f8', noteBoxBg: 'rgba(244, 114, 182, 0.2)', noteTextColor: '#ffffff' },
+  ocean_breeze: { background: 'linear-gradient(135deg, #071e22 0%, #1d2d44 50%, #0d131a 100%)', border: '2px solid #06b6d4', color: '#e0f7fa', noteBoxBg: 'rgba(6, 182, 212, 0.2)', noteTextColor: '#ffffff' },
+  sunset_glow: { background: 'linear-gradient(135deg, #431407 0%, #7c2d12 50%, #9a3412 100%)', border: '2px solid #fb923c', color: '#ffedd5', noteBoxBg: 'rgba(251, 146, 60, 0.2)', noteTextColor: '#ffffff' },
+  emerald_forest: { background: 'linear-gradient(135deg, #022c22 0%, #064e3b 50%, #065f46 100%)', border: '2px solid #34d399', color: '#d1fae5', noteBoxBg: 'rgba(52, 211, 153, 0.2)', noteTextColor: '#ffffff' },
+  royal_purple: { background: 'linear-gradient(135deg, #2e1065 0%, #3b0764 50%, #581c87 100%)', border: '2px solid #c084fc', color: '#f3e8ff', noteBoxBg: 'rgba(192, 132, 252, 0.2)', noteTextColor: '#ffffff' },
+  vintage_sepia: { background: 'linear-gradient(135deg, #271c19 0%, #3d2b1f 50%, #543d2b 100%)', border: '2px solid #d97706', color: '#fef3c7', noteBoxBg: 'rgba(217, 119, 6, 0.2)', noteTextColor: '#fffbeb' },
+  fire_blaze: { background: 'linear-gradient(135deg, #450a0a 0%, #7f1d1d 50%, #991b1b 100%)', border: '2px solid #f87171', color: '#fee2e2', noteBoxBg: 'rgba(248, 113, 113, 0.2)', noteTextColor: '#ffffff' },
+  ice_frost: { background: 'linear-gradient(135deg, #083344 0%, #164e63 50%, #155e75 100%)', border: '2px solid #67e8f9', color: '#cffaff', noteBoxBg: 'rgba(103, 232, 249, 0.2)', noteTextColor: '#ffffff' },
+  fairy_magic: { background: 'linear-gradient(135deg, #4a044e 0%, #701a75 50%, #86198f 100%)', border: '2px solid #f0abfc', color: '#fae8ff', noteBoxBg: 'rgba(240, 171, 252, 0.2)', noteTextColor: '#ffffff' },
+  cosmic_aurora: { background: 'linear-gradient(135deg, #022c22 0%, #03071e 50%, #31103f 100%)', border: '2px solid #6ee7b7', color: '#ecfdf5', noteBoxBg: 'rgba(110, 231, 183, 0.2)', noteTextColor: '#ffffff' },
+  sunflower_summer: { background: 'linear-gradient(135deg, #451a03 0%, #713f12 50%, #854d0e 100%)', border: '2px solid #facc15', color: '#fefce8', noteBoxBg: 'rgba(250, 204, 21, 0.2)', noteTextColor: '#ffffff' },
+  midnight_shadow: { background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)', border: '2px solid #94a3b8', color: '#f8fafc', noteBoxBg: 'rgba(148, 163, 184, 0.2)', noteTextColor: '#ffffff' },
+  diamond_crystal: { background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)', border: '2px solid #38bdf8', color: '#f0f9ff', noteBoxBg: 'rgba(56, 189, 248, 0.2)', noteTextColor: '#ffffff' },
+  rainbow_dream: { background: 'linear-gradient(135deg, #4c0519 0%, #1e1b4b 50%, #022c22 100%)', border: '2px solid #f472b6', color: '#ffffff', noteBoxBg: 'rgba(255, 255, 255, 0.15)', noteTextColor: '#ffffff' }
 };
 
   const themeStyle = flower.theme && CARD_THEMES[flower.theme] ? CARD_THEMES[flower.theme] : null;
@@ -148,13 +148,13 @@ const CARD_THEMES = {
         </button>
 
         {/* Flower Header & Canvas */}
-        <div style={styles.previewContainer}>
+        <div style={{ ...styles.previewContainer, ...(themeStyle ? { background: 'rgba(0,0,0,0.3)', borderColor: themeStyle.border } : {}) }}>
           <canvas ref={previewCanvasRef} width={240} height={200} />
         </div>
 
         {/* Creator Info */}
         <div style={styles.infoSection}>
-          <h3 style={{ ...styles.creatorName, ...(themeStyle ? { color: '#ffffff' } : {}) }}>
+          <h3 style={{ ...styles.creatorName, ...(themeStyle ? { color: themeStyle.color } : {}) }}>
             {flower.name || 'Anonim'}
           </h3>
 
@@ -169,7 +169,7 @@ const CARD_THEMES = {
             </a>
           )}
 
-          <p style={{ ...styles.timestamp, ...(themeStyle ? { color: 'rgba(255,255,255,0.7)' } : {}) }}>
+          <p style={{ ...styles.timestamp, ...(themeStyle ? { color: 'rgba(255,255,255,0.75)' } : {}) }}>
             <Calendar size={14} /> {formattedDate}
           </p>
         </div>
@@ -197,8 +197,8 @@ const CARD_THEMES = {
         <div style={styles.noteSection}>
           {!flower.isPrivate || isUnlocked ? (
             /* Unlocked / Public Note */
-            <div style={styles.unlockedNoteBox}>
-              <p style={{ ...styles.noteText, ...(themeStyle ? { color: '#ffffff' } : {}) }}>
+            <div style={{ ...styles.unlockedNoteBox, ...(themeStyle ? { background: themeStyle.noteBoxBg, borderColor: 'rgba(255,255,255,0.2)' } : {}) }}>
+              <p style={{ ...styles.noteText, ...(themeStyle ? { color: themeStyle.noteTextColor } : {}) }}>
                 {flower.note ? `"${flower.note}"` : 'Bu çiçeğe yazılı bir not iliştirilmemiş.'}
               </p>
               {flower.isPrivate && (
