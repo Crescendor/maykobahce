@@ -1,3 +1,6 @@
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { GARDEN_SIZE, FENCE_PADDING, drawSmoothStroke, drawStem } from '../utils/gardenEngine';
+
 function getEffectiveFlower(flower) {
   if (!flower) return flower;
   let x = flower.x;
