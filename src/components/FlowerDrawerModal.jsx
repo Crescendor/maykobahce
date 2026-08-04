@@ -32,14 +32,20 @@ import {
   drawStem
 } from '../utils/gardenEngine';
 
-const FLORAL_COLORS = [
-  '#FF4D6D', '#FF758F', '#FFB3C6', '#FFB703', '#FB8500',
-  '#9D4EDD', '#7209B7', '#4CC9F0', '#06D6A0', '#FFFFFF', '#000000'
+export const AI_FLOWER_SPECIES = [
+  { key: 'random', label: '🎲 Tüm Türlerden Rastgele (Sürpriz)', icon: '✨' },
+  { key: 'white_lily', label: '🌺 Barış Zambağı / Calla Lily', icon: '🌺' },
+  { key: 'flower_cluster', label: '💐 Rengarenk Çiçek Buketi', icon: '💐' },
+  { key: 'royal_orchid', label: '💜 Kraliyet Orkidesi', icon: '💜' },
+  { key: 'cosmic_spiral', label: '🌌 Kozmik Galaksi Spirali', icon: '🌌' },
+  { key: 'rose_cabbage', label: '🌹 Katmerli Gotik Gül', icon: '🌹' },
+  { key: 'sakura_blossom', label: '🌸 Pembe Sakura Çiçeği', icon: '🌸' },
+  { key: 'sunflower_giant', label: '🌻 Güneş Ayçiçeği / Papatya', icon: '🌻' },
+  { key: 'water_lotus', label: '🪷 Kutsal Nilüfer / Lotus', icon: '🪷' },
+  { key: 'hibiscus_tropical', label: '🌺 Tropikal Hibiskus', icon: '🌺' }
 ];
 
-const AI_API_KEY = ['AQ', 'Ab8RN6IYF9hR_BReOZ2Ds6F02', '123AveNJuTyNfVpd0498W0Bg'].join('.');
-
-function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
+function generateAiFlowerStrokes(targetSpecies = 'random') {
   const cx = 150;
   const cy = 140;
   const strokes = [];
@@ -47,29 +53,203 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const rand = (min, max) => min + Math.random() * (max - min);
 
-  // Palette generator: pick 2-5 distinct vibrant colors for rich rainbow multi-color effect
-  const palette = [];
-  const colorCount = Math.floor(rand(2, 6));
-  while (palette.length < colorCount) {
-    const c = pick(FLORAL_COLORS);
-    if (!palette.includes(c)) palette.push(c);
+  let chosenType = targetSpecies;
+  if (chosenType === 'random') {
+    const list = [
+      'white_lily', 'flower_cluster', 'royal_orchid', 'cosmic_spiral',
+      'rose_cabbage', 'sakura_blossom', 'sunflower_giant', 'water_lotus', 'hibiscus_tropical'
+    ];
+    chosenType = pick(list);
   }
 
-  const archetypes = [
-    'rose_cabbage', 'daisy_sunburst', 'water_lotus', 'dahlia_crystal',
-    'sakura_blossom', 'orchid_exotic', 'peony_fluffy', 'tulip_cup',
-    'starburst_neon', 'pansy_velvet', 'hibiscus_tropical', 'sunflower_giant',
-    'lavender_cluster', 'chrysanthemum', 'marigold_ball', 'poppy_flared',
-    'anemone_meadow', 'hydrangea_cloud', 'dandelion_glow', 'prism_geo'
-  ];
-  const chosenType = pick(archetypes);
+  if (chosenType === 'white_lily') {
+    // 🌺 Barış Zambağı / Calla Lily (White curved spathe, pink inner throat, twin golden stamen spikes & pollen)
+    const spathePoints = [];
+    for (let a = -1.2; a <= 1.2; a += 0.08) {
+      const r = 85 * Math.cos(a * 0.7);
+      const px = cx + Math.sin(a) * r;
+      const py = cy - 20 - Math.cos(a) * r * 1.1;
+      spathePoints.push({ x: px, y: py });
+    }
+    strokes.push({ points: spathePoints, color: '#FFFFFF', width: 14 });
 
-  if (chosenType === 'rose_cabbage') {
+    const throatPoints = [];
+    for (let a = -0.8; a <= 0.8; a += 0.1) {
+      const r = 45 * Math.cos(a);
+      const px = cx + Math.sin(a) * r;
+      const py = cy + 10 - Math.cos(a) * r * 0.8;
+      throatPoints.push({ x: px, y: py });
+    }
+    strokes.push({ points: throatPoints, color: pick(['#FF758F', '#FFB3C6']), width: 12 });
+
+    for (let offset of [-12, 12]) {
+      const spikePoints = [];
+      for (let t = 0; t <= 1; t += 0.1) {
+        const px = cx + offset + Math.sin(t * Math.PI) * 4;
+        const py = cy + 20 - t * 65;
+        spikePoints.push({ x: px, y: py });
+      }
+      strokes.push({ points: spikePoints, color: '#FFB703', width: 10 });
+
+      for (let dotY = cy - 40; dotY <= cy + 10; dotY += 12) {
+        strokes.push({
+          points: [{ x: cx + offset + rand(-3, 3), y: dotY }],
+          color: '#FB8500',
+          width: 10
+        });
+      }
+    }
+
+    strokes.push({
+      points: [{ x: cx - 20, y: cy + 30 }, { x: cx - 35, y: cy + 20 }, { x: cx - 20, y: cy + 10 }],
+      color: '#06D6A0',
+      width: 8
+    });
+
+  } else if (chosenType === 'flower_cluster') {
+    // 💐 Rengarenk Çiçek Buketi (Layered blooms on swirling vine with floating pollen)
+    const vinePoints = [];
+    for (let t = 0; t <= Math.PI * 2; t += 0.15) {
+      const r = 40 + t * 12;
+      const px = cx + Math.cos(t * 1.5) * r;
+      const py = cy + Math.sin(t * 1.5) * r * 0.7;
+      vinePoints.push({ x: px, y: py });
+    }
+    strokes.push({ points: vinePoints, color: '#FFFFFF', width: 8 });
+
+    for (let layer = 3; layer >= 1; layer--) {
+      const petals = 6;
+      for (let p = 0; p < petals; p++) {
+        const angle = (p * 2 * Math.PI) / petals + layer * 0.3;
+        const points = [];
+        const len = layer * 16;
+        for (let t = 0; t <= 1; t += 0.1) {
+          const r = t * len;
+          const w = Math.sin(t * Math.PI) * 10;
+          points.push({
+            x: cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * w,
+            y: cy + 20 + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * w
+          });
+        }
+        strokes.push({ points, color: layer === 3 ? '#FF4D6D' : layer === 2 ? '#FF758F' : '#FFB703', width: 9 });
+      }
+    }
+
+    for (let p = 0; p < 8; p++) {
+      const angle = (p * 2 * Math.PI) / 8;
+      strokes.push({
+        points: [{ x: cx - 25, y: cy - 40 }, { x: cx - 25 + Math.cos(angle) * 22, y: cy - 40 + Math.sin(angle) * 22 }],
+        color: '#FFB703',
+        width: 8
+      });
+    }
+
+    for (let i = 0; i < 18; i++) {
+      const dotAngle = rand(0, Math.PI * 2);
+      const dotDist = rand(30, 85);
+      strokes.push({
+        points: [{ x: cx + Math.cos(dotAngle) * dotDist, y: cy + Math.sin(dotAngle) * dotDist }],
+        color: pick(['#FFB703', '#FFFFFF', '#4CC9F0', '#06D6A0']),
+        width: rand(6, 11)
+      });
+    }
+
+  } else if (chosenType === 'royal_orchid') {
+    // 💜 Kraliyet Orkidesi (Purple wavy petals with crisp white outlines & golden stamen filaments)
+    const petalColors = ['#7209B7', '#9D4EDD'];
+
+    for (let p = 0; p < 5; p++) {
+      const angle = (p * 2 * Math.PI) / 5 - Math.PI / 2;
+      const len = rand(65, 85);
+      const bodyPoints = [];
+      for (let t = 0; t <= 1; t += 0.08) {
+        const r = t * len;
+        const wave = Math.sin(t * Math.PI * 2) * 12;
+        bodyPoints.push({
+          x: cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * wave,
+          y: cy + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * wave
+        });
+      }
+      strokes.push({ points: bodyPoints, color: petalColors[p % 2], width: 16 });
+
+      const whiteBorder = bodyPoints.map((pt) => ({
+        x: pt.x + Math.cos(angle + Math.PI / 2) * 4,
+        y: pt.y + Math.sin(angle + Math.PI / 2) * 4
+      }));
+      strokes.push({ points: whiteBorder, color: '#FFFFFF', width: 6 });
+    }
+
+    for (let s = 0; s < 5; s++) {
+      const sAngle = (s * 2 * Math.PI) / 5 - Math.PI / 2;
+      const sLen = 45;
+      const stamenPoints = [];
+      for (let t = 0; t <= 1; t += 0.1) {
+        const r = t * sLen;
+        const curve = Math.sin(t * Math.PI) * 10;
+        stamenPoints.push({
+          x: cx + Math.cos(sAngle) * r + Math.cos(sAngle + Math.PI / 2) * curve,
+          y: cy + Math.sin(sAngle) * r + Math.sin(sAngle + Math.PI / 2) * curve
+        });
+      }
+      strokes.push({ points: stamenPoints, color: '#FFFFFF', width: 5 });
+      const tipPt = stamenPoints[stamenPoints.length - 1];
+      strokes.push({ points: [tipPt], color: '#FFB703', width: 10 });
+    }
+
+    for (let c = 0; c < 6; c++) {
+      strokes.push({
+        points: [{ x: cx + rand(-8, 8), y: cy + rand(-8, 8) }],
+        color: '#FFB703',
+        width: 9
+      });
+    }
+
+  } else if (chosenType === 'cosmic_spiral') {
+    // 🌌 Kozmik Galaksi Spirali (Pink/purple spiral core with floating swirl rings & dots)
+    const spiralColors = ['#FF4D6D', '#9D4EDD', '#7209B7', '#4CC9F0', '#FFFFFF'];
+    const spiralPoints = [];
+    for (let a = 0; a <= Math.PI * 7; a += 0.2) {
+      const r = (a / (Math.PI * 7)) * 75;
+      spiralPoints.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+    }
+    strokes.push({ points: spiralPoints, color: '#FF4D6D', width: 12 });
+
+    const innerSpiral = [];
+    for (let a = 0; a <= Math.PI * 5; a += 0.25) {
+      const r = (a / (Math.PI * 5)) * 55;
+      innerSpiral.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+    }
+    strokes.push({ points: innerSpiral, color: '#9D4EDD', width: 8 });
+
+    for (let i = 0; i < 4; i++) {
+      const angle = (i * Math.PI) / 2;
+      const ringPoints = [];
+      for (let a = 0; a <= Math.PI * 1.5; a += 0.2) {
+        const r = 25 + a * 8;
+        ringPoints.push({
+          x: cx + Math.cos(angle) * 60 + Math.cos(a) * r,
+          y: cy + Math.sin(angle) * 60 + Math.sin(a) * r
+        });
+      }
+      strokes.push({ points: ringPoints, color: spiralColors[i % spiralColors.length], width: 7 });
+    }
+
+    for (let d = 0; d < 12; d++) {
+      const dAngle = rand(0, Math.PI * 2);
+      const dDist = rand(45, 95);
+      strokes.push({
+        points: [{ x: cx + Math.cos(dAngle) * dDist, y: cy + Math.sin(dAngle) * dDist }],
+        color: pick(['#FFFFFF', '#4CC9F0', '#FFB703']),
+        width: rand(7, 12)
+      });
+    }
+
+  } else if (chosenType === 'rose_cabbage') {
     const layers = Math.floor(rand(5, 8));
     for (let layer = layers; layer >= 1; layer--) {
       const petals = layer * 3 + Math.floor(rand(0, 3));
       const radius = layer * 14 + rand(-2, 4);
-      const color = palette[(layer - 1) % palette.length];
+      const color = pick(['#FF4D6D', '#7209B7', '#FF758F', '#9D4EDD']);
       const strokeW = 8 + layer * 2.5;
 
       for (let p = 0; p < petals; p++) {
@@ -85,121 +265,108 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
         strokes.push({ points, color, width: strokeW });
       }
     }
-  } else if (chosenType === 'daisy_sunburst' || chosenType === 'sunflower_giant') {
-    const numPetals = Math.floor(rand(16, 28));
-    const petalLen = rand(60, 95);
-    const strokeW = Math.floor(rand(8, 14));
-
-    for (let i = 0; i < numPetals; i++) {
-      const angle = (i * 2 * Math.PI) / numPetals;
-      const points = [];
-      const steps = 14;
-      const color = palette[i % palette.length];
-
-      for (let s = 0; s <= steps; s++) {
-        const t = s / steps;
-        const dist = t * petalLen;
-        const bulb = Math.sin(t * Math.PI) * rand(7, 14);
-        const px = cx + Math.cos(angle) * dist + Math.cos(angle + Math.PI / 2) * bulb;
-        const py = cy + Math.sin(angle) * dist + Math.sin(angle + Math.PI / 2) * bulb;
-        points.push({ x: px, y: py });
-      }
-      strokes.push({ points, color, width: strokeW });
-    }
-
-    // Disk
-    const diskPoints = [];
-    for (let a = 0; a <= Math.PI * 6; a += 0.25) {
-      const r = (a / (Math.PI * 6)) * 22;
-      diskPoints.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
-    }
-    strokes.push({ points: diskPoints, color: palette[palette.length - 1], width: 10 });
-  } else if (chosenType === 'chrysanthemum' || chosenType === 'marigold_ball') {
-    const totalPetals = Math.floor(rand(30, 48));
-    for (let i = 0; i < totalPetals; i++) {
-      const angle = (i * 2 * Math.PI) / totalPetals;
-      const len = rand(30, 85);
-      const color = palette[i % palette.length];
-      const points = [];
-      for (let t = 0; t <= 1; t += 0.1) {
-        const r = t * len;
-        const curve = Math.sin(t * Math.PI) * 6;
-        const px = cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * curve;
-        const py = cy + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * curve;
-        points.push({ x: px, y: py });
-      }
-      strokes.push({ points, color, width: rand(6, 11) });
-    }
-  } else if (chosenType === 'dandelion_glow' || chosenType === 'prism_geo') {
-    const rays = Math.floor(rand(20, 36));
-    const maxLen = rand(65, 95);
-    for (let r = 0; r < rays; r++) {
-      const angle = (r * 2 * Math.PI) / rays;
-      const len = (r % 2 === 0) ? maxLen : maxLen * 0.7;
-      const color = palette[r % palette.length];
-      const points = [
-        { x: cx, y: cy },
-        { x: cx + Math.cos(angle) * len, y: cy + Math.sin(angle) * len }
-      ];
-      strokes.push({ points, color, width: rand(5, 10) });
-      strokes.push({
-        points: [{ x: cx + Math.cos(angle) * len, y: cy + Math.sin(angle) * len }],
-        color: palette[(r + 1) % palette.length],
-        width: rand(10, 16)
-      });
-    }
-  } else if (chosenType === 'poppy_flared' || chosenType === 'anemone_meadow') {
-    const petals = Math.floor(rand(6, 9));
+  } else if (chosenType === 'sakura_blossom') {
+    const petals = 5;
     for (let p = 0; p < petals; p++) {
-      const angle = (p * 2 * Math.PI) / petals;
+      const angle = (p * 2 * Math.PI) / petals - Math.PI / 2;
       const points = [];
-      const len = rand(70, 95);
-      const color = palette[p % palette.length];
+      const len = rand(65, 80);
       for (let t = 0; t <= 1; t += 0.08) {
         const r = t * len;
-        const w = Math.sin(t * Math.PI) * rand(18, 28);
+        const w = Math.sin(t * Math.PI) * 22;
         points.push({
           x: cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * w,
           y: cy + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * w
         });
       }
-      strokes.push({ points, color, width: rand(12, 18) });
+      strokes.push({ points, color: p % 2 === 0 ? '#FFB3C6' : '#FF758F', width: 14 });
     }
-    for (let f = 0; f < 10; f++) {
-      const fAngle = (f * 2 * Math.PI) / 10;
-      const fPoints = [{ x: cx, y: cy }, { x: cx + Math.cos(fAngle) * 25, y: cy + Math.sin(fAngle) * 25 }];
-      strokes.push({ points: fPoints, color: '#FFFFFF', width: 4 });
+    for (let f = 0; f < 8; f++) {
+      const fAngle = (f * 2 * Math.PI) / 8;
+      strokes.push({
+        points: [{ x: cx, y: cy }, { x: cx + Math.cos(fAngle) * 25, y: cy + Math.sin(fAngle) * 25 }],
+        color: '#FFFFFF',
+        width: 4
+      });
+      strokes.push({
+        points: [{ x: cx + Math.cos(fAngle) * 25, y: cy + Math.sin(fAngle) * 25 }],
+        color: '#FFB703',
+        width: 8
+      });
+    }
+  } else if (chosenType === 'sunflower_giant') {
+    const numPetals = 22;
+    const petalLen = 85;
+    for (let i = 0; i < numPetals; i++) {
+      const angle = (i * 2 * Math.PI) / numPetals;
+      const points = [];
+      for (let t = 0; t <= 1; t += 0.1) {
+        const dist = t * petalLen;
+        const bulb = Math.sin(t * Math.PI) * 11;
+        points.push({
+          x: cx + Math.cos(angle) * dist + Math.cos(angle + Math.PI / 2) * bulb,
+          y: cy + Math.sin(angle) * dist + Math.sin(angle + Math.PI / 2) * bulb
+        });
+      }
+      strokes.push({ points, color: i % 2 === 0 ? '#FFB703' : '#FB8500', width: 11 });
+    }
+    const diskPoints = [];
+    for (let a = 0; a <= Math.PI * 6; a += 0.25) {
+      const r = (a / (Math.PI * 6)) * 24;
+      diskPoints.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+    }
+    strokes.push({ points: diskPoints, color: '#78350F', width: 10 });
+  } else if (chosenType === 'water_lotus') {
+    for (let layer = 3; layer >= 1; layer--) {
+      const petals = 8;
+      for (let p = 0; p < petals; p++) {
+        const angle = (p * 2 * Math.PI) / petals + layer * 0.3;
+        const points = [];
+        const len = layer * 25;
+        for (let t = 0; t <= 1; t += 0.08) {
+          const r = t * len;
+          const w = Math.sin(t * Math.PI) * 16;
+          points.push({
+            x: cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * w,
+            y: cy + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * w
+          });
+        }
+        strokes.push({ points, color: layer === 3 ? '#FF4D6D' : layer === 2 ? '#FF758F' : '#FFFFFF', width: 12 });
+      }
     }
   } else {
-    // Multi-Layer Lotus / Tulip / Orchid / Sakura / Peony / Hibiscus
-    const petals = Math.floor(rand(6, 12));
+    // 🌺 Tropikal Hibiskus
+    const petals = 5;
     for (let p = 0; p < petals; p++) {
-      const angle = (p * 2 * Math.PI) / petals - Math.PI / 2;
-      const points1 = [];
-      const points2 = [];
-      const len = rand(65, 90);
-      const color1 = palette[p % palette.length];
-      const color2 = palette[(p + 1) % palette.length];
-
+      const angle = (p * 2 * Math.PI) / petals;
+      const points = [];
+      const len = 80;
       for (let t = 0; t <= 1; t += 0.08) {
         const r = t * len;
-        const w = Math.sin(t * Math.PI) * rand(14, 24);
-        points1.push({
+        const w = Math.sin(t * Math.PI) * 24;
+        points.push({
           x: cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * w,
           y: cy + Math.sin(angle) * r + Math.sin(angle + Math.PI / 2) * w
         });
-        points2.push({
-          x: cx + Math.cos(angle) * r - Math.cos(angle + Math.PI / 2) * w,
-          y: cy + Math.sin(angle) * r - Math.sin(angle + Math.PI / 2) * w
-        });
       }
-      strokes.push({ points: points1, color: color1, width: 11 });
-      strokes.push({ points: points2, color: color2, width: 9 });
+      strokes.push({ points, color: pick(['#FF4D6D', '#FB8500', '#FF758F']), width: 16 });
+    }
+    const columnPoints = [];
+    for (let t = 0; t <= 1; t += 0.1) {
+      columnPoints.push({ x: cx + t * 45, y: cy - t * 45 });
+    }
+    strokes.push({ points: columnPoints, color: '#FFB703', width: 7 });
+
+    for (let a = 0; a < 5; a++) {
+      strokes.push({
+        points: [{ x: cx + 45 + rand(-6, 6), y: cy - 45 + rand(-6, 6) }],
+        color: '#FFFFFF',
+        width: 8
+      });
     }
   }
 
-  // --- MATHEMATICAL ALIGNMENT TO SAP REFERANSI (y = 240) ---
-  // Find maximum Y coordinate across all generated stroke points
+  // --- MATHEMATICAL ALIGNMENT TO STEM REFERENCE (y = 240) ---
   let maxY = -Infinity;
   strokes.forEach((s) => {
     s.points.forEach((p) => {
@@ -207,7 +374,6 @@ function generateAiFlowerStrokes(apiKey = AI_API_KEY) {
     });
   });
 
-  // Shift all stroke points so the lowest petal edge touches y = 240 precisely with ZERO gap and ZERO stem line!
   if (Number.isFinite(maxY)) {
     const offsetY = 240 - maxY;
     strokes.forEach((s) => {
@@ -241,10 +407,12 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
   const [currentStroke, setCurrentStroke] = useState(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
 
-  const handleGenerateAiFlower = () => {
+  const [selectedAiSpecies, setSelectedAiSpecies] = useState('random');
+
+  const handleGenerateAiFlower = (targetSpecies = selectedAiSpecies) => {
     setIsAiGenerating(true);
     setTimeout(() => {
-      const generated = generateAiFlowerStrokes(AI_API_KEY);
+      const generated = generateAiFlowerStrokes(targetSpecies);
       setStrokes(generated);
       redrawCanvas(generated);
       setIsAiGenerating(false);
@@ -750,20 +918,38 @@ function b64(str) {
               </label>
             </div>
 
-            {/* AI Flower Generator Button */}
-            <button
-              type="button"
-              onClick={handleGenerateAiFlower}
-              disabled={isAiGenerating}
-              style={styles.aiGenerateBtn}
-            >
-              <Sparkles size={18} color="#ffd700" />
-              {isAiGenerating
-                ? 'Yapay Zeka Çiçeği Çiziliyor...'
-                : strokes.length === 0
-                  ? 'Ben çizimden anlamam, yapay zeka benim için yapsın ✨'
-                  : '✨ Başka Bir Yapay Zeka Çiçeği Üret'}
-            </button>
+            {/* AI Flower Species Selector & Generator Box */}
+            <div style={styles.aiSpeciesBox}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <Sparkles size={16} color="#ffd700" /> Yapay Zeka Çiçek Türü Seçin:
+              </div>
+              <select
+                value={selectedAiSpecies}
+                onChange={(e) => {
+                  setSelectedAiSpecies(e.target.value);
+                  handleGenerateAiFlower(e.target.value);
+                }}
+                style={styles.speciesSelect}
+              >
+                {AI_FLOWER_SPECIES.map((spec) => (
+                  <option key={spec.key} value={spec.key} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                    {spec.icon} {spec.label}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={() => handleGenerateAiFlower(selectedAiSpecies)}
+                disabled={isAiGenerating}
+                style={styles.aiGenerateBtn}
+              >
+                <Sparkles size={18} color="#ffd700" />
+                {isAiGenerating
+                  ? 'Çiçek Çiziliyor...'
+                  : `✨ ${AI_FLOWER_SPECIES.find((s) => s.key === selectedAiSpecies)?.label.split('/')[0] || 'Çiçek'} Üret / Değiştir`}
+              </button>
+            </div>
 
             {/* Action Buttons */}
             <div style={styles.canvasActions}>
@@ -1136,6 +1322,31 @@ const styles = {
     borderRadius: 12,
     border: '1px solid #e2e8f0'
   },
+  aiSpeciesBox: {
+    width: '100%',
+    marginTop: 12,
+    marginBottom: 6,
+    padding: 12,
+    borderRadius: 16,
+    background: 'linear-gradient(135deg, #1e1b4b 0%, #31104b 100%)',
+    border: '1.5px solid #a855f7',
+    boxShadow: '0 4px 18px rgba(147, 51, 234, 0.25)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6
+  },
+  speciesSelect: {
+    width: '100%',
+    padding: '9px 12px',
+    borderRadius: 12,
+    background: '#0f172a',
+    border: '1.5px solid #fbbf24',
+    color: '#fbbf24',
+    fontSize: '0.86rem',
+    fontWeight: 700,
+    outline: 'none',
+    cursor: 'pointer'
+  },
   presetPill: {
     padding: '3px 8px',
     borderRadius: 6,
@@ -1153,17 +1364,6 @@ const styles = {
   },
   aiGenerateBtn: {
     width: '100%',
-    padding: '13px 18px',
-    borderRadius: 16,
-    border: '2px solid #a855f7',
-    background: 'linear-gradient(135deg, #6b21a8 0%, #9333ea 50%, #db2777 100%)',
-    color: '#ffffff',
-    fontSize: '0.92rem',
-    fontWeight: 800,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 10,
     marginTop: 14,
     marginBottom: 6,
