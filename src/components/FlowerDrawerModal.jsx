@@ -32,6 +32,11 @@ import {
   drawStem
 } from '../utils/gardenEngine';
 
+const FLORAL_COLORS = [
+  '#FF4D6D', '#FF758F', '#FFB3C6', '#FFB703', '#FB8500',
+  '#9D4EDD', '#7209B7', '#4CC9F0', '#06D6A0', '#FFFFFF', '#000000'
+];
+
 export const AI_FLOWER_SPECIES = [
   { key: 'random', label: '🎲 Tüm Türlerden Rastgele (Sürpriz)', icon: '✨' },
   { key: 'white_lily', label: '🌺 Barış Zambağı / Calla Lily', icon: '🌺' },
