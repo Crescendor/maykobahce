@@ -18,7 +18,9 @@ export default function AdminFloatingToolbar({
   onAddSpeechBubble,
   onPublishMeadowObjects,
   selectedImageSize,
-  onUpdateSelectedImageSize
+  onUpdateSelectedImageSize,
+  selectedMeadowObjId,
+  onDeleteSelectedMeadowObject
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const fileInputRef = useRef(null);
@@ -232,7 +234,36 @@ export default function AdminFloatingToolbar({
         </>
       )}
 
-      {/* Clear Meadow Drawings if any exist */}
+      {/* Delete Only Selected Meadow Object */}
+      {selectedMeadowObjId && (
+        <>
+          <div style={styles.dividerHorizontal} />
+          <button
+            type="button"
+            onClick={() => onDeleteSelectedMeadowObject && onDeleteSelectedMeadowObject(selectedMeadowObjId)}
+            style={{
+              width: '100%',
+              padding: '7px 10px',
+              borderRadius: 12,
+              background: 'rgba(239, 68, 68, 0.25)',
+              border: '1.5px solid rgba(239, 68, 68, 0.6)',
+              color: '#f87171',
+              fontSize: '0.76rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 5
+            }}
+            title="Yalnızca Seçtiğiniz Bu Tek Nesneyi Silin"
+          >
+            <Trash2 size={14} /> Seçilen Nesneyi Sil
+          </button>
+        </>
+      )}
+
+      {/* Clear All Meadow Drawings */}
       {meadowObjectsCount > 0 && (
         <>
           <div style={styles.dividerHorizontal} />
@@ -242,7 +273,7 @@ export default function AdminFloatingToolbar({
             style={styles.clearBtn}
             title="Haritadaki Tüm Çizimleri Temizle"
           >
-            <X size={14} /> Temizle ({meadowObjectsCount})
+            <X size={14} /> Tümünü Temizle ({meadowObjectsCount})
           </button>
         </>
       )}

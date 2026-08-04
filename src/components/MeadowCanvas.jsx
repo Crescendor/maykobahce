@@ -1,6 +1,42 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GARDEN_SIZE, FENCE_PADDING, drawSmoothStroke, drawStem } from '../utils/gardenEngine';
 
+export function isPointInsideObject(o, worldX, worldY) {
+  if (!o) return false;
+  const dx = worldX - o.x;
+  const dy = worldY - o.y;
+
+  let localX = dx;
+  let localY = dy;
+  if (o.rotation) {
+    const rad = (-o.rotation * Math.PI) / 180;
+    localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+    localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+  }
+
+  if (o.type === 'circle') {
+    const r = (o.radius || 65) * (o.scale || 1);
+    return Math.hypot(dx, dy) <= r + 12;
+  }
+  if (o.type === 'rect' || o.type === 'image') {
+    const w = (o.width || 160) * (o.scale || 1);
+    const h = (o.height || 160) * (o.scale || 1);
+    return Math.abs(localX) <= w / 2 + 12 && Math.abs(localY) <= h / 2 + 12;
+  }
+  if (o.type === 'bubble') {
+    const w = (o.width || 200) * (o.scale || 1);
+    const h = (o.height || 95) * (o.scale || 1) + 18;
+    return Math.abs(localX) <= w / 2 + 12 && Math.abs(localY) <= h / 2 + 12;
+  }
+  if (o.type === 'text') {
+    return Math.hypot(dx, dy) <= 45;
+  }
+  if (o.type === 'stroke' && o.points) {
+    return o.points.some((p) => Math.hypot(p.x - worldX, p.y - worldY) < 30);
+  }
+  return false;
+}
+
 function drawBoundingBoxWithHandles(ctx, x, y, w, h, rotation = 0) {
   ctx.save();
   ctx.translate(x, y);
@@ -435,9 +471,9 @@ export default function MeadowCanvas({
           y: selectedObj.y + lx * Math.sin(rotRad) + ly * Math.cos(rotRad)
         });
 
-        // Top Rotation Handle (0, -h/2 - 24)
-        const rotHandleWorld = toWorld(0, -h / 2 - 24);
-        if (Math.hypot(worldX - rotHandleWorld.x, worldY - rotHandleWorld.y) < 30 / transformRef.current.scale) {
+        // Top Rotation Handle (0, -h/2 - 28)
+        const rotHandleWorld = toWorld(0, -h / 2 - 28);
+        if (Math.hypot(worldX - rotHandleWorld.x, worldY - rotHandleWorld.y) < 32 / transformRef.current.scale) {
           isRotatingObjRef.current = true;
           handleDragObjRef.current = selectedObj;
           isDraggingRef.current = false;
@@ -446,13 +482,13 @@ export default function MeadowCanvas({
 
         // 4 Corner Handles
         const corners = [
-          toWorld(-w / 2 - 4, -h / 2 - 4),
-          toWorld(w / 2 + 4, -h / 2 - 4),
-          toWorld(-w / 2 - 4, h / 2 + 4),
-          toWorld(w / 2 + 4, h / 2 + 4)
+          toWorld(-w / 2 - 6, -h / 2 - 6),
+          toWorld(w / 2 + 6, -h / 2 - 6),
+          toWorld(-w / 2 - 6, h / 2 + 6),
+          toWorld(w / 2 + 6, h / 2 + 6)
         ];
 
-        const hitCorner = corners.find((c) => Math.hypot(worldX - c.x, worldY - c.y) < 25 / transformRef.current.scale);
+        const hitCorner = corners.find((c) => Math.hypot(worldX - c.x, worldY - c.y) < 28 / transformRef.current.scale);
         if (hitCorner) {
           isResizingObjRef.current = true;
           handleDragObjRef.current = selectedObj;
@@ -469,24 +505,10 @@ export default function MeadowCanvas({
       }
     }
 
-    // Check hit on PNG sticker, shape, bubble, or text object first
+    // Check hit on PNG sticker, shape, bubble, text, or stroke object first
     let hitMeadowObj = null;
     if (isAdminAuthenticated && meadowObjects && meadowObjects.length > 0) {
-      hitMeadowObj = meadowObjects.slice().reverse().find((o) => {
-        if (o.type === 'image' || o.type === 'rect' || o.type === 'bubble') {
-          const w = (o.width || 160) * (o.scale || 1);
-          const h = (o.height || 160) * (o.scale || 1);
-          return Math.abs(o.x - worldX) < w / 2 && Math.abs(o.y - worldY) < h / 2;
-        }
-        if (o.type === 'circle') {
-          const r = (o.radius || 65) * (o.scale || 1);
-          return Math.hypot(o.x - worldX, o.y - worldY) < r;
-        }
-        if (o.type === 'text') {
-          return Math.hypot(o.x - worldX, o.y - worldY) < 45;
-        }
-        return false;
-      });
+      hitMeadowObj = meadowObjects.slice().reverse().find((o) => isPointInsideObject(o, worldX, worldY));
     }
 
     if (isAdminAuthenticated && hitMeadowObj) {

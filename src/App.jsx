@@ -433,6 +433,8 @@ export default function App() {
         onPublishMeadowObjects={handlePublishMeadowObjects}
         selectedImageSize={selectedMeadowObj && (selectedMeadowObj.type === 'image' || selectedMeadowObj.type === 'rect' || selectedMeadowObj.type === 'circle' || selectedMeadowObj.type === 'bubble') ? selectedMeadowObj.width || selectedMeadowObj.radius * 2 || 180 : null}
         onUpdateSelectedImageSize={handleUpdateSelectedImageSize}
+        selectedMeadowObjId={selectedMeadowObj ? selectedMeadowObj.id : null}
+        onDeleteSelectedMeadowObject={handleDeleteMeadowObject}
       />
 
       {/* Interactive Meadow Canvas */}
