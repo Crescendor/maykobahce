@@ -725,9 +725,7 @@ export async function fetchFlowersFromApi(isAdmin = false) {
         return result;
       }
     }
-  } catch (e) {
-    console.warn('Cloudflare API fetch offline, using localStorage fallback');
-  }
+  } catch (e) {}
   // Offline: return local minus tombstoned
   return local.filter((f) => !deleted.has(f.id));
 }
@@ -742,9 +740,7 @@ export async function postFlowerToApi(newFlower) {
     if (res.ok) {
       return await res.json().catch(() => null);
     }
-  } catch (e) {
-    console.warn('Cloudflare API post offline, saved locally');
-  }
+  } catch (e) {}
   return null;
 }
 
@@ -758,9 +754,7 @@ export async function deleteFlowerFromApi(flowerId, deleteCode = '', adminPasswo
     if (res.ok) {
       return await res.json().catch(() => null);
     }
-  } catch (e) {
-    console.warn('Cloudflare API delete offline, deleted locally');
-  }
+  } catch (e) {}
   return null;
 }
 
@@ -774,9 +768,7 @@ export async function patchFlowerToApi(flowerId, updates, adminPassword = '') {
     if (res.ok) {
       return await res.json().catch(() => null);
     }
-  } catch (e) {
-    console.warn('Cloudflare API patch offline, patched locally');
-  }
+  } catch (e) {}
   return null;
 }
 
@@ -790,9 +782,7 @@ export async function fetchMeadowObjectsFromApi() {
         return data;
       }
     }
-  } catch (e) {
-    console.warn('API fetch meadow objects error:', e);
-  }
+  } catch (e) {}
   return null;
 }
 
@@ -806,9 +796,7 @@ export async function publishMeadowObjectsToApi(objects, adminPassword = '') {
     if (res.ok) {
       return await res.json();
     }
-  } catch (e) {
-    console.warn('API publish meadow objects error:', e);
-  }
+  } catch (e) {}
   return null;
 }
 
@@ -820,9 +808,7 @@ export async function fetchCustomBgFromApi() {
       const data = await res.json();
       return data;
     }
-  } catch (e) {
-    console.warn('API fetch custom bg error:', e);
-  }
+  } catch (e) {}
   return null;
 }
 
@@ -836,9 +822,7 @@ export async function publishCustomBgToApi(customBg, adminPassword = '') {
     if (res.ok) {
       return await res.json();
     }
-  } catch (e) {
-    console.warn('API publish custom bg error:', e);
-  }
+  } catch (e) {}
   return null;
 }
 

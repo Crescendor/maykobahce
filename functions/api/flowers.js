@@ -26,30 +26,33 @@ export async function onRequestGet(context) {
 
       const { results } = await env.DB.prepare(query).all();
 
-      let formattedFlowers = (results || []).map((row) => ({
-        id: row.id,
-        x: row.x,
-        y: row.y,
-        name: row.name || 'Anonim',
-        instagram: row.instagram || '',
-        note: row.note || '',
-        isAnonymous: Boolean(row.is_anonymous),
-        isPrivate: Boolean(row.is_private),
-        password: row.password || null,
-        deleteCode: row.delete_code,
-        createdAt: row.created_at,
-        strokes: JSON.parse(row.strokes_json || '[]'),
-        stemType: row.stem_type || 'classic',
-        stemColor: row.stem_color || '#52b788',
-        scale: row.scale || 1,
-        stemAngle: row.stem_angle || 0,
-        approved: Number(row.approved || 0),
-        animation: row.animation || null,
-        animationColor: row.animation_color || null,
-        realSender: row.real_sender || null,
-        theme: row.theme || null,
-        adminComment: row.admin_comment || null
-      }));
+      let formattedFlowers = (results || []).map((row) => {
+        const isPriv = Boolean(row.is_private);
+        return {
+          id: row.id,
+          x: row.x,
+          y: row.y,
+          name: row.name || 'Anonim',
+          instagram: isAdmin ? (row.instagram || '') : (Boolean(row.is_anonymous) ? '' : (row.instagram || '')),
+          note: (isPriv && !isAdmin) ? '' : (row.note || ''),
+          isAnonymous: Boolean(row.is_anonymous),
+          isPrivate: isPriv,
+          password: isAdmin ? (row.password || null) : null,
+          deleteCode: isAdmin ? row.delete_code : null,
+          createdAt: row.created_at,
+          strokes: JSON.parse(row.strokes_json || '[]'),
+          stemType: row.stem_type || 'classic',
+          stemColor: row.stem_color || '#52b788',
+          scale: row.scale || 1,
+          stemAngle: row.stem_angle || 0,
+          approved: Number(row.approved || 0),
+          animation: row.animation || null,
+          animationColor: row.animation_color || null,
+          realSender: isAdmin ? (row.real_sender || null) : null,
+          theme: row.theme || null,
+          adminComment: isAdmin ? (row.admin_comment || null) : null
+        };
+      });
 
       // Non-admin public requests see ONLY approved flowers (approved === 1)
       if (!isAdmin) {

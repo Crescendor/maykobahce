@@ -212,9 +212,7 @@ export default function AdminDashboardModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adminPassword: adminToken, ...patch })
       });
-    } catch (e) {
-      console.error('Patch failed', e);
-    }
+    } catch (e) {}
   };
 
   // Merge local patches into flower list for live UI

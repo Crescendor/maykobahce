@@ -15,9 +15,12 @@ export default function FlowerPopup({ flower, onClose, onDeleteFlower }) {
   const [deletePassInput, setDeletePassInput] = useState('');
   const [deleteError, setDeleteError] = useState(false);
 
+  const [unlockedNote, setUnlockedNote] = useState('');
+
   useEffect(() => {
     if (flower) {
       setIsUnlocked(!flower.isPrivate);
+      setUnlockedNote(flower.isPrivate ? '' : (flower.note || ''));
       setEnteredPassword('');
       setUnlockError(false);
       setCopiedLink(false);
@@ -66,17 +69,29 @@ export default function FlowerPopup({ flower, onClose, onDeleteFlower }) {
 
   if (!flower) return null;
 
-  // Unlock Private Note Handler
-  const handleUnlockPrivateNote = (e) => {
+  // Unlock Private Note Handler (Secure Server-Side Check)
+  const handleUnlockPrivateNote = async (e) => {
     e.preventDefault();
     setUnlockError(false);
 
-    const targetPass = (flower.password || '').trim().toUpperCase();
     const inputPass = enteredPassword.trim().toUpperCase();
+    if (!inputPass) return;
 
-    if (inputPass === targetPass) {
-      setIsUnlocked(true);
-    } else {
+    try {
+      const res = await fetch('/api/unlock-note', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flowerId: flower.id, password: inputPass })
+      });
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data && data.success) {
+        setUnlockedNote(data.note || '');
+        setIsUnlocked(true);
+      } else {
+        setUnlockError(true);
+      }
+    } catch (err) {
       setUnlockError(true);
     }
   };
@@ -199,7 +214,7 @@ const CARD_THEMES = {
             /* Unlocked / Public Note */
             <div style={{ ...styles.unlockedNoteBox, ...(themeStyle ? { background: themeStyle.noteBoxBg, borderColor: 'rgba(255,255,255,0.2)' } : {}) }}>
               <p style={{ ...styles.noteText, ...(themeStyle ? { color: themeStyle.noteTextColor } : {}) }}>
-                {flower.note ? `"${flower.note}"` : 'Bu çiçeğe yazılı bir not iliştirilmemiş.'}
+                {(unlockedNote || flower.note) ? `"${unlockedNote || flower.note}"` : 'Bu çiçeğe yazılı bir not iliştirilmemiş.'}
               </p>
               {flower.isPrivate && (
                 <span style={styles.unlockedBadge}>
