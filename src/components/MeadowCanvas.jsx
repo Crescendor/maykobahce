@@ -377,13 +377,13 @@ export default function MeadowCanvas({
 }
 
 function drawLawnDetails(ctx) {
-  // 1. Organic Grass Blade Tufts
+  // 1. Organic Grass Blade Tufts (Drawn across full canvas inside & outside fences)
   const grassColors = ['#52b788', '#74c69d', '#38b000', '#95d5b2', '#2d6a4f'];
   
   ctx.lineCap = 'round';
   
-  for (let x = 180; x < GARDEN_SIZE - 180; x += 120) {
-    for (let y = 180; y < GARDEN_SIZE - 180; y += 120) {
+  for (let x = -200; x < GARDEN_SIZE + 200; x += 110) {
+    for (let y = -200; y < GARDEN_SIZE + 200; y += 110) {
       const offsetX = (Math.sin(x * 0.05 + y * 0.03) * 40);
       const offsetY = (Math.cos(x * 0.03 - y * 0.05) * 40);
       const gx = x + offsetX;

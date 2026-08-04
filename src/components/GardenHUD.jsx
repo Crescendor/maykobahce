@@ -221,13 +221,17 @@ const styles = {
     width: 48,
     height: 48,
     borderRadius: '50%',
+    background: 'rgba(15, 33, 24, 0.85)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#ffffff',
     cursor: 'pointer',
     transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-    border: '1px solid rgba(255, 255, 255, 0.25)'
+    border: '1.5px solid rgba(255, 255, 255, 0.25)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
   },
   fabWrapper: {
     position: 'fixed',
