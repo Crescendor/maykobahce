@@ -1,9 +1,9 @@
 // Garden Engine Utilities
 // Dimensions and constraints for the Virtual Meadow
 
-export const GARDEN_SIZE = 4000;
-export const FENCE_PADDING = 160;
-export const MIN_FLOWER_DISTANCE = 60; // minimum distance between flowers in pixels
+export const GARDEN_SIZE = 2000;
+export const FENCE_PADDING = 120;
+export const MIN_FLOWER_DISTANCE = 45; // minimum distance between flowers in pixels
 export const MAX_FLOWERS = 3000;
 
 const LOCAL_STORAGE_KEY = 'mayko_garden_flowers_v1';

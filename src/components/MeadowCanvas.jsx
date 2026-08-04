@@ -1,5 +1,17 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { GARDEN_SIZE, FENCE_PADDING, drawSmoothStroke, drawStem } from '../utils/gardenEngine';
+function getEffectiveFlower(flower) {
+  if (!flower) return flower;
+  let x = flower.x;
+  let y = flower.y;
+
+  // Legacy coordinate mapping: if flower was saved in 4000x4000 coordinate space,
+  // scale coordinates by 0.5 so they fit inside the new 2000x2000 meadow!
+  if (x > 1800 || y > 1800 || (x > 1100 && y > 1100 && !flower._v2Scaled)) {
+    x = Math.round(x * 0.5);
+    y = Math.round(y * 0.5);
+  }
+
+  return { ...flower, x, y };
+}
 
 export default function MeadowCanvas({
   flowers,
@@ -21,7 +33,7 @@ export default function MeadowCanvas({
   const [transform, setTransform] = useState({
     x: -GARDEN_SIZE / 2 + window.innerWidth / 2,
     y: -GARDEN_SIZE / 2 + window.innerHeight / 2,
-    scale: 0.75
+    scale: 0.85
   });
 
   const transformRef = useRef(transform);
@@ -103,7 +115,8 @@ export default function MeadowCanvas({
     drawGardenFences(ctx);
 
     if (flowers && flowers.length > 0) {
-      flowers.forEach((flower) => {
+      flowers.forEach((rawFlower) => {
+        const flower = getEffectiveFlower(rawFlower);
         const isSelected = selectedFlower && selectedFlower.id === flower.id;
         drawFlower(ctx, flower, isSelected, scale, time);
       });
@@ -162,9 +175,10 @@ export default function MeadowCanvas({
     const worldY = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
 
     let hitFlower = null;
-    for (const flower of flowers) {
+    for (const rawFlower of flowers) {
+      const flower = getEffectiveFlower(rawFlower);
       const dist = Math.hypot(flower.x - worldX, flower.y - worldY);
-      if (dist < 45) {
+      if (dist < 55) {
         hitFlower = flower;
         break;
       }
@@ -242,9 +256,10 @@ export default function MeadowCanvas({
 
     if (moveDist < 8) {
       let hitFlower = null;
-      for (const flower of flowers) {
+      for (const rawFlower of flowers) {
+        const flower = getEffectiveFlower(rawFlower);
         const dist = Math.hypot(flower.x - worldX, flower.y - worldY);
-        if (dist < 45) {
+        if (dist < 55) {
           hitFlower = flower;
           break;
         }
@@ -393,7 +408,8 @@ function drawGardenFences(ctx) {
  * Render a Single Flower (Vivid Visible Stem + Leaves + Custom Petals + Wind Sway & Animations)
  */
 function drawFlower(ctx, flower, isSelected, zoomScale, time = 0) {
-  const { x, y, strokes, scale = 1, stemAngle = 0 } = flower;
+  const { x, y, strokes, stemAngle = 0 } = flower;
+  const scale = (flower.scale || 1) * 1.5;
 
   // Unapproved flowers (approved === 0) render at reduced opacity
   const isPending = flower.approved === 0;
