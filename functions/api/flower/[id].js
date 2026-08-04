@@ -54,10 +54,12 @@ export async function onRequestDelete(context) {
 
 async function ensureSchema(db) {
   if (!db) return;
-  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 0').run(); } catch (e) { }
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 1').run(); } catch (e) { }
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation TEXT DEFAULT NULL').run(); } catch (e) { }
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation_color TEXT DEFAULT NULL').run(); } catch (e) { }
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN real_sender TEXT DEFAULT NULL').run(); } catch (e) { }
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN theme TEXT DEFAULT NULL').run(); } catch (e) { }
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN admin_comment TEXT DEFAULT NULL').run(); } catch (e) { }
 }
 
 // PATCH /api/flower/[id] — Admin: approve or set animation

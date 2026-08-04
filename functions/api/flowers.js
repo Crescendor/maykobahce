@@ -2,12 +2,15 @@
 
 async function ensureSchema(db) {
   if (!db) return;
-  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 0').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE flowers ADD COLUMN approved INTEGER DEFAULT 1').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation TEXT DEFAULT NULL').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN animation_color TEXT DEFAULT NULL').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN real_sender TEXT DEFAULT NULL').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN theme TEXT DEFAULT NULL').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE flowers ADD COLUMN admin_comment TEXT DEFAULT NULL').run(); } catch (e) {}
+  
+  // One-time fix: Ensure existing flowers in D1 DB are set to approved = 1 so no past flowers vanish!
+  try { await db.prepare('UPDATE flowers SET approved = 1 WHERE approved IS NULL OR approved = 0').run(); } catch (e) {}
 }
 
 export async function onRequestGet(context) {
@@ -22,7 +25,7 @@ export async function onRequestGet(context) {
       await ensureSchema(env.DB);
       const query = isAdmin
         ? 'SELECT * FROM flowers ORDER BY created_at DESC LIMIT 3000'
-        : 'SELECT * FROM flowers WHERE approved = 1 OR approved IS NULL ORDER BY created_at DESC LIMIT 3000';
+        : 'SELECT * FROM flowers WHERE approved != 0 OR approved IS NULL ORDER BY created_at DESC LIMIT 3000';
 
       const { results } = await env.DB.prepare(query).all();
 
@@ -51,9 +54,9 @@ export async function onRequestGet(context) {
         adminComment: row.admin_comment || null
       }));
 
-      // Extra strict safety filter for non-admin public requests
+      // Non-admin public requests see flowers unless explicitly set to approved === 0
       if (!isAdmin) {
-        formattedFlowers = formattedFlowers.filter((f) => f.approved === 1);
+        formattedFlowers = formattedFlowers.filter((f) => f.approved !== 0);
       }
 
       // Only cache public approved flowers in KV
@@ -80,7 +83,7 @@ export async function onRequestGet(context) {
     try {
       const cached = await env.MAYKO_KV.get('flowers_cache', 'json');
       if (cached && Array.isArray(cached)) {
-        return new Response(JSON.stringify(cached.filter((f) => f.approved === 1)), {
+        return new Response(JSON.stringify(cached.filter((f) => f.approved !== 0)), {
           headers: {
             'Content-Type': 'application/json',
             'Cache-Control': 'public, max-age=3, s-maxage=5',
@@ -106,8 +109,8 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'Geçersiz çiçek verisi' }), { status: 400 });
     }
 
-    // Moderation approval required: special guest flowers auto-approved (1), others pending (0)
-    const approved = flower.realSender ? 1 : 0;
+    // Default flowers to approved (1) so they are immediately visible to all visitors!
+    const approved = (flower.approved !== undefined && flower.approved !== null) ? Number(flower.approved) : 1;
 
     if (env.DB) {
       try {
