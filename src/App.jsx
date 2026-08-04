@@ -60,11 +60,26 @@ export default function App() {
     return [];
   });
 
-  // Sync Published Meadow Objects from Cloudflare Edge API for all visitors
+  const [customBg, setCustomBg] = useState(() => {
+    try {
+      const s = localStorage.getItem('mayko_custom_bg_v1');
+      if (s) return JSON.parse(s);
+    } catch (e) {}
+    return null;
+  });
+
+  // Sync Published Meadow Objects & Custom Background from Cloudflare Edge API for all visitors
   const syncMeadowObjects = useCallback(async () => {
     const data = await fetchMeadowObjectsFromApi();
     if (data && Array.isArray(data)) {
       setMeadowObjects(data);
+      const bgItem = data.find((o) => o.type === 'custom_bg');
+      if (bgItem) {
+        setCustomBg(bgItem);
+        try {
+          localStorage.setItem('mayko_custom_bg_v1', JSON.stringify(bgItem));
+        } catch (e) {}
+      }
       try {
         localStorage.setItem('mayko_meadow_objects_v1', JSON.stringify(data));
       } catch (e) {}
@@ -80,6 +95,21 @@ export default function App() {
     try {
       localStorage.setItem('mayko_meadow_objects_v1', JSON.stringify(objs));
     } catch (e) {}
+  };
+
+  const handleUpdateCustomBg = (newBg) => {
+    setCustomBg(newBg);
+    try {
+      if (newBg) {
+        localStorage.setItem('mayko_custom_bg_v1', JSON.stringify(newBg));
+      } else {
+        localStorage.removeItem('mayko_custom_bg_v1');
+      }
+    } catch (e) {}
+
+    const filtered = meadowObjects.filter((o) => o.type !== 'custom_bg');
+    const updated = newBg ? [...filtered, { id: 'bg_setting', type: 'custom_bg', ...newBg }] : filtered;
+    saveMeadowObjects(updated);
   };
 
   const handleAddMeadowObject = (newObj) => {
@@ -480,6 +510,7 @@ export default function App() {
         onUpdateFlowerLocalPos={handleUpdateFlowerLocalPos}
         onUpdateFlowerPosition={handleUpdateFlowerPosition}
         onDeleteFlower={handleDeleteFlower}
+        customBg={customBg}
       />
 
       {/* Floating HUD Controls */}
@@ -591,6 +622,8 @@ export default function App() {
           setSelectedFlower(flower);
           setViewportTarget({ x: flower.x, y: flower.y, scale: 1.5 });
         }}
+        customBg={customBg}
+        onUpdateCustomBg={handleUpdateCustomBg}
       />
 
       {/* Toast Alert Banner */}

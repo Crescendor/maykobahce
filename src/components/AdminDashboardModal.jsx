@@ -87,7 +87,17 @@ function FlowerThumbnail({ flower }) {
   );
 }
 
-export default function AdminDashboardModal({ isOpen, onClose, flowers, onDeleteFlower, onFocusFlower, onAdminAuth, onPatchFlower }) {
+export default function AdminDashboardModal({
+  isOpen,
+  onClose,
+  flowers,
+  onDeleteFlower,
+  onFocusFlower,
+  onAdminAuth,
+  onPatchFlower,
+  customBg,
+  onUpdateCustomBg
+}) {
   // ALL hooks must be declared before any early returns (React rules of hooks)
   const [passwordInput, setPasswordInput] = useState('');
   // Initialize from localStorage so admin login survives page refresh
@@ -102,6 +112,29 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
   const [editNote, setEditNote] = useState('');
   const [editInstagram, setEditInstagram] = useState('');
   const [viewNoteFlower, setViewNoteFlower] = useState(null);
+
+  const handleBgFileUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target.result;
+      const newBg = {
+        url: dataUrl,
+        x: customBg?.x !== undefined ? customBg.x : 1000,
+        y: customBg?.y !== undefined ? customBg.y : 1000,
+        width: customBg?.width || 3000,
+        height: customBg?.height || 2000,
+        opacity: customBg?.opacity !== undefined ? customBg.opacity : 1.0
+      };
+      if (onUpdateCustomBg) onUpdateCustomBg(newBg);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveBg = () => {
+    if (onUpdateCustomBg) onUpdateCustomBg(null);
+  };
 
   const handleStartEdit = (flower) => {
     const patch = localPatches[flower.id] || {};
@@ -324,6 +357,106 @@ export default function AdminDashboardModal({ isOpen, onClose, flowers, onDelete
                 <div style={styles.statCard}>
                   <span style={{ ...styles.statNumber, color: '#38bdf8' }}>{anonCount}</span>
                   <span style={styles.statLabel}>Anonim</span>
+                </div>
+              </div>
+
+              {/* Custom Outer Background PNG Image Manager */}
+              <div style={styles.bgManagerCard}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: '1.2rem' }}>🖼️</span>
+                    <div>
+                      <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#fbbf24', margin: 0 }}>
+                        Dış Arka Plan Görseli Yöneticisi (PNG)
+                      </h4>
+                      <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: 0 }}>
+                        Çitlerin dışındaki alana özel PNG görsel yükleyebilir, boyutlandırıp konumlandırabilirsiniz.
+                      </p>
+                    </div>
+                  </div>
+                  {customBg && customBg.url && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveBg}
+                      style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: 10, background: '#ef4444', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                    >
+                      🗑️ Arka Planı Kaldır
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
+                  <label style={{
+                    padding: '8px 16px',
+                    borderRadius: 12,
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    📁 PNG Görsel Seç / Yükle
+                    <input type="file" accept="image/*" onChange={handleBgFileUpload} style={{ display: 'none' }} />
+                  </label>
+
+                  {customBg && customBg.url && (
+                    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', flex: 1, alignItems: 'center', background: 'rgba(0,0,0,0.35)', padding: '8px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 700 }}>Genişlik: {customBg.width || 3000}px</span>
+                        <input
+                          type="range"
+                          min="500"
+                          max="6000"
+                          step="50"
+                          value={customBg.width || 3000}
+                          onChange={(e) => onUpdateCustomBg && onUpdateCustomBg({ ...customBg, width: Number(e.target.value) })}
+                          style={{ width: 90, accentColor: '#3b82f6' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 700 }}>Yükseklik: {customBg.height || 2000}px</span>
+                        <input
+                          type="range"
+                          min="500"
+                          max="6000"
+                          step="50"
+                          value={customBg.height || 2000}
+                          onChange={(e) => onUpdateCustomBg && onUpdateCustomBg({ ...customBg, height: Number(e.target.value) })}
+                          style={{ width: 90, accentColor: '#3b82f6' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 700 }}>Konum X: {customBg.x !== undefined ? customBg.x : 1000}</span>
+                        <input
+                          type="range"
+                          min="-1000"
+                          max="3000"
+                          step="50"
+                          value={customBg.x !== undefined ? customBg.x : 1000}
+                          onChange={(e) => onUpdateCustomBg && onUpdateCustomBg({ ...customBg, x: Number(e.target.value) })}
+                          style={{ width: 90, accentColor: '#10b981' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 700 }}>Konum Y: {customBg.y !== undefined ? customBg.y : 1000}</span>
+                        <input
+                          type="range"
+                          min="-1000"
+                          max="3000"
+                          step="50"
+                          value={customBg.y !== undefined ? customBg.y : 1000}
+                          onChange={(e) => onUpdateCustomBg && onUpdateCustomBg({ ...customBg, y: Number(e.target.value) })}
+                          style={{ width: 90, accentColor: '#10b981' }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -933,6 +1066,18 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 4
+  },
+  bgManagerCard: {
+    width: '100%',
+    margin: '10px 0',
+    padding: '12px 16px',
+    borderRadius: 16,
+    background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
+    border: '1.5px solid rgba(245, 158, 11, 0.4)',
+    boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8
   },
   cancelEditBtn: {
     background: 'rgba(51, 65, 85, 0.8)',

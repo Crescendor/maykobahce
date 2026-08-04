@@ -156,22 +156,28 @@ export default function MeadowCanvas({
 
     const scale = transformRef.current.scale;
 
-    // 1. Render Endless Meadow Lawn Base & Grass Tufts
-    ctx.fillStyle = '#2d6a4f';
-    ctx.fillRect(-800, -800, GARDEN_SIZE + 1600, GARDEN_SIZE + 1600);
+    // 1. Draw Custom Outer Background Image if uploaded by admin
+    if (customBg && customBg.url && bgImgLoadedRef.current && bgImgRef.current) {
+      ctx.save();
+      ctx.globalAlpha = customBg.opacity !== undefined ? customBg.opacity : 1.0;
+      const bgW = customBg.width || 3000;
+      const bgH = customBg.height || 2000;
+      const bgX = (customBg.x !== undefined ? customBg.x : GARDEN_SIZE / 2) - bgW / 2;
+      const bgY = (customBg.y !== undefined ? customBg.y : GARDEN_SIZE / 2) - bgH / 2;
+      ctx.drawImage(bgImgRef.current, bgX, bgY, bgW, bgH);
+      ctx.restore();
+    }
 
+    // 2. Render Infinite Grass Blade Tufts & Clovers
     drawLawnDetails(ctx);
 
-    // 2. Render Left Sandy Beach & Ocean Water
-    drawBeachAndCoastline(ctx, time);
+    // 3. Render Constant Garden Lawn Base Inside Wooden Fences (Always Green & Constant!)
+    const p = FENCE_PADDING;
+    const innerSize = GARDEN_SIZE - p * 2;
+    ctx.fillStyle = '#2d6a4f';
+    ctx.fillRect(p, p, innerSize, innerSize);
 
-    // 3. Render Cobblestone Pathways
-    drawCobblestonePaths(ctx);
-
-    // 4. Render Outer Forest Trees & Mossy Boulders
-    drawOuterTreesAndRocks(ctx, time);
-
-    // 5. Render Wooden Fence Outer Boundary
+    // 4. Render Wooden Fence Outer Boundary
     drawGardenFences(ctx);
 
     if (flowers && flowers.length > 0) {
@@ -386,19 +392,20 @@ export default function MeadowCanvas({
 }
 
 function drawLawnDetails(ctx) {
-  // 1. Organic Grass Blade Tufts (Drawn across full canvas inside & outside fences)
+  // 1. Organic Grass Blade Tufts (Drawn infinitely across canvas)
   const grassColors = ['#52b788', '#74c69d', '#38b000', '#95d5b2', '#2d6a4f'];
   
   ctx.lineCap = 'round';
   
-  for (let x = -200; x < GARDEN_SIZE + 200; x += 110) {
-    for (let y = -200; y < GARDEN_SIZE + 200; y += 110) {
+  for (let x = -3000; x < GARDEN_SIZE + 3000; x += 110) {
+    for (let y = -3000; y < GARDEN_SIZE + 3000; y += 110) {
       const offsetX = (Math.sin(x * 0.05 + y * 0.03) * 40);
       const offsetY = (Math.cos(x * 0.03 - y * 0.05) * 40);
       const gx = x + offsetX;
       const gy = y + offsetY;
       
-      const color = grassColors[(x + y) % grassColors.length];
+      const idx = Math.abs(Math.floor(x + y)) % grassColors.length;
+      const color = grassColors[idx];
       ctx.strokeStyle = color;
       ctx.lineWidth = 2.5;
 
@@ -418,7 +425,7 @@ function drawLawnDetails(ctx) {
       ctx.stroke();
 
       // Occasional Tiny White Clover Accents
-      if ((x + y) % 7 === 0) {
+      if ((Math.abs(Math.floor(x + y))) % 7 === 0) {
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(gx + 12, gy - 8, 2.5, 0, Math.PI * 2);
@@ -432,258 +439,6 @@ function drawLawnDetails(ctx) {
       }
     }
   }
-}
-
-/**
- * Draw Sandy Beach Shoreline & Ocean Water on the Left Outer Margin
- */
-function drawBeachAndCoastline(ctx, time = 0) {
-  ctx.save();
-
-  // 1. Deep Blue Ocean Water (x < -220)
-  ctx.fillStyle = '#0284c7';
-  ctx.fillRect(-800, -500, 580, GARDEN_SIZE + 1000);
-
-  // Shallow Turquoise Water Edge
-  ctx.fillStyle = '#38bdf8';
-  ctx.beginPath();
-  ctx.moveTo(-220, -500);
-  ctx.bezierCurveTo(-140, 500, -280, 1200, -180, GARDEN_SIZE + 500);
-  ctx.lineTo(-350, GARDEN_SIZE + 500);
-  ctx.lineTo(-350, -500);
-  ctx.closePath();
-  ctx.fill();
-
-  // 2. Animated White Water Wave Foam
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.lineWidth = 4;
-  for (let y = -400; y < GARDEN_SIZE + 400; y += 140) {
-    const waveX = -200 + Math.sin(time * 2.5 + y * 0.015) * 18;
-    ctx.beginPath();
-    ctx.arc(waveX, y, 18, -Math.PI / 2, Math.PI / 2);
-    ctx.stroke();
-  }
-
-  // 3. Sandy Shoreline Beach (-220 to 60)
-  ctx.fillStyle = '#fef08a';
-  ctx.beginPath();
-  ctx.moveTo(-180, -500);
-  ctx.bezierCurveTo(-90, 500, -220, 1200, -130, GARDEN_SIZE + 500);
-  ctx.lineTo(30, GARDEN_SIZE + 500);
-  ctx.lineTo(30, -500);
-  ctx.closePath();
-  ctx.fill();
-
-  // Wet Sand Transition Zone
-  ctx.fillStyle = 'rgba(217, 119, 6, 0.25)';
-  ctx.beginPath();
-  ctx.moveTo(-190, -500);
-  ctx.bezierCurveTo(-100, 500, -230, 1200, -140, GARDEN_SIZE + 500);
-  ctx.lineTo(-150, GARDEN_SIZE + 500);
-  ctx.lineTo(-200, -500);
-  ctx.closePath();
-  ctx.fill();
-
-  // 4. Wooden Pier / Dock extending onto the beach at y = 1000
-  const pierY = 1000;
-  ctx.fillStyle = '#78350f';
-  ctx.fillRect(-280, pierY - 20, 200, 40);
-  ctx.strokeStyle = '#451a03';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(-280, pierY - 20, 200, 40);
-
-  // Pier Plank Lines
-  ctx.strokeStyle = '#451a03';
-  ctx.lineWidth = 2;
-  for (let px = -270; px < -80; px += 16) {
-    ctx.beginPath();
-    ctx.moveTo(px, pierY - 20);
-    ctx.lineTo(px, pierY + 20);
-    ctx.stroke();
-  }
-
-  // Pier Posts
-  ctx.fillStyle = '#451a03';
-  ctx.fillRect(-270, pierY - 24, 10, 8);
-  ctx.fillRect(-270, pierY + 16, 10, 8);
-  ctx.fillRect(-100, pierY - 24, 10, 8);
-  ctx.fillRect(-100, pierY + 16, 10, 8);
-
-  // Seashell / Starfish Accents on Beach
-  const beachDetails = [
-    { x: -70, y: 300, icon: '⭐' },
-    { x: -50, y: 750, icon: '🐚' },
-    { x: -80, y: 1300, icon: '⭐' },
-    { x: -40, y: 1650, icon: '🐚' }
-  ];
-  ctx.font = '16px sans-serif';
-  beachDetails.forEach((bd) => {
-    ctx.fillText(bd.icon, bd.x, bd.y);
-  });
-
-  ctx.restore();
-}
-
-/**
- * Draw Cobblestone Pathways connecting the garden gates & beach
- */
-function drawCobblestonePaths(ctx) {
-  ctx.save();
-
-  // Main Path from Left Garden Gate (x = 120, y = 1000) to Beach Pier (x = -80, y = 1000)
-  const pathStones = [];
-  for (let px = -80; px <= 140; px += 18) {
-    const py = 1000 + Math.sin(px * 0.04) * 8;
-    pathStones.push({ x: px, y: py, r: 8 + (px % 4) });
-  }
-
-  // Path wrapping top-left corner
-  for (let a = 0; a <= Math.PI / 2; a += 0.15) {
-    const px = 120 - Math.cos(a) * 160;
-    const py = 120 - Math.sin(a) * 160;
-    pathStones.push({ x: px, y: py, r: 9 });
-  }
-
-  // Path wrapping bottom-left corner
-  for (let a = 0; a <= Math.PI / 2; a += 0.15) {
-    const px = 120 - Math.cos(a) * 160;
-    const py = GARDEN_SIZE - 120 + Math.sin(a) * 160;
-    pathStones.push({ x: px, y: py, r: 9 });
-  }
-
-  pathStones.forEach((st) => {
-    ctx.fillStyle = '#94a3b8';
-    ctx.beginPath();
-    ctx.ellipse(st.x, st.y, st.r, st.r * 0.6, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  });
-
-  ctx.restore();
-}
-
-/**
- * Draw Outer Trees, Pine Trees, Sakura, Autumn Trees & Mossy Boulders
- */
-function drawOuterTreesAndRocks(ctx, time = 0) {
-  ctx.save();
-  const size = GARDEN_SIZE;
-
-  // Boulders & Rocks
-  const rocks = [
-    { x: 50, y: 220, r: 18 }, { x: 80, y: 240, r: 12 },
-    { x: size - 80, y: 80, r: 22 }, { x: size - 50, y: 110, r: 14 },
-    { x: size - 90, y: size - 90, r: 24 }, { x: size - 60, y: size - 60, r: 16 },
-    { x: 60, y: size - 80, r: 20 }
-  ];
-
-  rocks.forEach((rk) => {
-    ctx.fillStyle = '#64748b';
-    ctx.beginPath();
-    ctx.ellipse(rk.x, rk.y, rk.r, rk.r * 0.7, 0.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Moss accent on top
-    ctx.fillStyle = '#4d7c0f';
-    ctx.beginPath();
-    ctx.ellipse(rk.x - 2, rk.y - rk.r * 0.3, rk.r * 0.6, rk.r * 0.3, 0.3, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  // Trees positioned outside the fences (Top, Right, Bottom borders)
-  const treePositions = [];
-
-  // Top Outer Border
-  for (let x = 60; x <= size - 60; x += 130) {
-    treePositions.push({ x, y: 45, type: x % 4 });
-  }
-
-  // Right Outer Border
-  for (let y = 60; y <= size - 60; y += 130) {
-    treePositions.push({ x: size - 45, y, type: (y + 1) % 4 });
-  }
-
-  // Bottom Outer Border
-  for (let x = 60; x <= size - 60; x += 130) {
-    treePositions.push({ x, y: size - 45, type: (x + 2) % 4 });
-  }
-
-  // Render each tree with subtle wind sway
-  treePositions.forEach((tp) => {
-    const sway = Math.sin(time * 1.6 + tp.x * 0.02 + tp.y * 0.01) * 0.06;
-    ctx.save();
-    ctx.translate(tp.x, tp.y);
-    ctx.rotate(sway);
-
-    if (tp.type === 0) {
-      // 🌲 Pine Tree
-      ctx.fillStyle = '#451a03';
-      ctx.fillRect(-5, 0, 10, 18);
-
-      ctx.fillStyle = '#14532d';
-      ctx.beginPath();
-      ctx.moveTo(0, -50);
-      ctx.lineTo(-24, -22);
-      ctx.lineTo(24, -22);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#166534';
-      ctx.beginPath();
-      ctx.moveTo(0, -32);
-      ctx.lineTo(-28, 0);
-      ctx.lineTo(28, 0);
-      ctx.closePath();
-      ctx.fill();
-
-    } else if (tp.type === 1) {
-      // 🌳 Oak Tree
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(-6, 0, 12, 20);
-
-      ctx.fillStyle = '#15803d';
-      ctx.beginPath();
-      ctx.arc(0, -22, 26, 0, Math.PI * 2);
-      ctx.arc(-12, -12, 18, 0, Math.PI * 2);
-      ctx.arc(12, -12, 18, 0, Math.PI * 2);
-      ctx.fill();
-
-    } else if (tp.type === 2) {
-      // 🌸 Sakura Blossom Tree
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(-5, 0, 10, 18);
-
-      ctx.fillStyle = '#f472b6';
-      ctx.beginPath();
-      ctx.arc(0, -20, 24, 0, Math.PI * 2);
-      ctx.arc(-10, -12, 16, 0, Math.PI * 2);
-      ctx.arc(10, -12, 16, 0, Math.PI * 2);
-      ctx.fill();
-
-    } else {
-      // 🍊 Autumn Orange Tree
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(-5, 0, 10, 18);
-
-      ctx.fillStyle = '#ea580c';
-      ctx.beginPath();
-      ctx.arc(0, -20, 24, 0, Math.PI * 2);
-      ctx.arc(-10, -12, 16, 0, Math.PI * 2);
-      ctx.arc(10, -12, 16, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-  });
-
-  ctx.restore();
 }
 
 /**
