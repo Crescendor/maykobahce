@@ -135,6 +135,15 @@ export default function AdminDashboardModal({
     }
   }, [isOpen, isAuthenticated, activeTab]);
 
+  const filteredLogs = (activityLogs || []).filter((logItem) => {
+    if (!logItem) return false;
+    if (logFilter === 'all') return true;
+    if (logFilter === 'trigger') return logItem.eventType === 'trigger_detected' || logItem.eventType === 'trigger_answered';
+    if (logFilter === 'abandoned') return logItem.eventType === 'draft_abandoned';
+    if (logFilter === 'deleted') return logItem.eventType === 'flower_deleted';
+    return true;
+  });
+
   const handleBgFileUpload = (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
