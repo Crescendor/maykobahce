@@ -826,3 +826,27 @@ export async function publishCustomBgToApi(customBg, adminPassword = '') {
   return null;
 }
 
+export async function postLogToApi(eventType, data = {}) {
+  try {
+    const res = await fetch('/api/flower-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventType, data, timestamp: new Date().toISOString() })
+    });
+    if (res.ok) {
+      return await res.json().catch(() => null);
+    }
+  } catch (e) {}
+  return null;
+}
+
+export async function fetchLogsFromApi(adminPassword = '') {
+  try {
+    const res = await fetch(`/api/flower-logs?adminPassword=${encodeURIComponent(adminPassword)}`);
+    if (res.ok) {
+      return await res.json().catch(() => []);
+    }
+  } catch (e) {}
+  return [];
+}
+

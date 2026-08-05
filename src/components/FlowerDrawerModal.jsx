@@ -29,7 +29,8 @@ import {
   performFloodFill,
   STEM_TYPES,
   STEM_COLORS,
-  drawStem
+  drawStem,
+  postLogToApi
 } from '../utils/gardenEngine';
 
 const FLORAL_COLORS = [
@@ -474,6 +475,12 @@ export default function FlowerDrawerModal({ isOpen, onClose, onSaveFlower, targe
         if (isMatch && active) {
           setShowSpecialModal(true);
           setHasShownSpecial(true);
+          postLogToApi('trigger_detected', {
+            typedName: name,
+            typedInstagram: instagram,
+            stage: 'Ayşenur İsim/Instagram Algılandı (Soru Ekranı Açıldı)',
+            timestamp: new Date().toISOString()
+          });
         }
       }
     };
@@ -750,6 +757,23 @@ function b64(str) {
     onSaveFlower(newFlower);
   };
 
+  const handleCloseModal = () => {
+    if (name || note || instagram || (strokes && strokes.length > 0) || hasShownSpecial || realSender) {
+      postLogToApi('draft_abandoned', {
+        name: name || '(İsimsiz taslak)',
+        note: note || '(Not yazılmadı)',
+        instagram: instagram || '',
+        strokeCount: strokes.length,
+        realSender: realSender || null,
+        stage: hasShownSpecial
+          ? 'Ayşenur Triggerı Açıldı/Soru Soruldu Fakat Gönderilmedi'
+          : 'Çiçek Taslağı Yarıda Bırakıldı (Kapatıldı)',
+        timestamp: new Date().toISOString()
+      });
+    }
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -779,7 +803,7 @@ function b64(str) {
                 : 'Topluluk ve moderasyon şartlarını onaylayın'}
             </p>
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>
+          <button style={styles.closeBtn} onClick={handleCloseModal}>
             <X size={20} />
           </button>
         </div>

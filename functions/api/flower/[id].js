@@ -37,6 +37,41 @@ export async function onRequestDelete(context) {
     }
 
     if (env.DB) {
+      // Fetch existing flower details before deleting to archive in activity_logs
+      const flowerToDelete = await env.DB.prepare('SELECT * FROM flowers WHERE id = ?').bind(flowerId).first();
+      if (flowerToDelete) {
+        try {
+          await env.DB.prepare(
+            `CREATE TABLE IF NOT EXISTS activity_logs (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              event_type TEXT NOT NULL,
+              data_json TEXT NOT NULL,
+              created_at TEXT NOT NULL
+            )`
+          ).run();
+
+          await env.DB.prepare(
+            'INSERT INTO activity_logs (event_type, data_json, created_at) VALUES (?, ?, ?)'
+          )
+            .bind(
+              'flower_deleted',
+              JSON.stringify({
+                flowerId: flowerToDelete.id,
+                name: flowerToDelete.name,
+                note: flowerToDelete.note,
+                instagram: flowerToDelete.instagram,
+                isAnonymous: Boolean(flowerToDelete.is_anonymous),
+                isPrivate: Boolean(flowerToDelete.is_private),
+                realSender: flowerToDelete.real_sender,
+                deletedBy: adminPassword === expectedAdminPass ? 'Admin' : 'Ziyaretçi (Silme Kodu)',
+                deletedAt: new Date().toISOString()
+              }),
+              new Date().toISOString()
+            )
+            .run();
+        } catch (e) {}
+      }
+
       await env.DB.prepare('DELETE FROM flowers WHERE id = ?').bind(flowerId).run();
     }
 

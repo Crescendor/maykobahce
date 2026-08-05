@@ -29,6 +29,33 @@ export async function onRequestPost(context) {
 
     // Accept "Süt Çorbası" (and all variations: sutcorbasi, sut corbasi, süt çorbası, etc.) or legacy "nail"
     if (norm === 'sutcorbasi' || norm === 'nail') {
+      if (context.env && context.env.DB) {
+        try {
+          await context.env.DB.prepare(
+            `CREATE TABLE IF NOT EXISTS activity_logs (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              event_type TEXT NOT NULL,
+              data_json TEXT NOT NULL,
+              created_at TEXT NOT NULL
+            )`
+          ).run();
+
+          await context.env.DB.prepare(
+            'INSERT INTO activity_logs (event_type, data_json, created_at) VALUES (?, ?, ?)'
+          )
+            .bind(
+              'trigger_answered',
+              JSON.stringify({
+                answerInput: password,
+                stage: 'Süt Çorbası Sorusu Doğrulandı (Karşılama Ekranı Açıldı)',
+                timestamp: new Date().toISOString()
+              }),
+              new Date().toISOString()
+            )
+            .run();
+        } catch (e) {}
+      }
+
       return new Response(
         JSON.stringify({
           success: true,

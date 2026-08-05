@@ -20,7 +20,7 @@ import {
   Save
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
-import { drawSmoothStroke, drawStem } from '../utils/gardenEngine';
+import { drawSmoothStroke, drawStem, fetchLogsFromApi } from '../utils/gardenEngine';
 
 function b64(str) {
   try {
@@ -112,6 +112,28 @@ export default function AdminDashboardModal({
   const [editNote, setEditNote] = useState('');
   const [editInstagram, setEditInstagram] = useState('');
   const [viewNoteFlower, setViewNoteFlower] = useState(null);
+
+  // Activity Logs & Audit Trail State
+  const [activeTab, setActiveTab] = useState('flowers'); // 'flowers' | 'logs'
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [logFilter, setLogFilter] = useState('all'); // 'all' | 'trigger' | 'abandoned' | 'deleted'
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+
+  const loadLogs = async () => {
+    setIsLoadingLogs(true);
+    const token = passwordInput || localStorage.getItem('mayko_admin_token') || '';
+    const logs = await fetchLogsFromApi(token);
+    if (Array.isArray(logs)) {
+      setActivityLogs(logs);
+    }
+    setIsLoadingLogs(false);
+  };
+
+  useEffect(() => {
+    if (isOpen && isAuthenticated && activeTab === 'logs') {
+      loadLogs();
+    }
+  }, [isOpen, isAuthenticated, activeTab]);
 
   const handleBgFileUpload = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -319,20 +341,43 @@ export default function AdminDashboardModal({
                 style={styles.loginInput}
               />
             </div>
+        {loginError && (
+          <p style={{ color: '#ef4444', fontSize: '0.84rem', marginBottom: 12, fontWeight: 600 }}>
+            ❌ Hatalı yönetici şifresi!
+          </p>
+        )}
 
-            {loginError && (
-              <p style={{ color: '#ef4444', fontSize: '0.84rem', marginBottom: 12, fontWeight: 600 }}>
-                ❌ Hatalı yönetici şifresi!
-              </p>
-            )}
+        <button type="submit" className="btn-primary" style={{ padding: '10px 24px', fontSize: '0.92rem' }}>
+          Paneli Aç
+        </button>
+      </form>
+    ) : (
+      /* AUTHENTICATED DASHBOARD CONTENT */
+      <div style={styles.dashboardBody}>
+        {/* Tab Navigation Row */}
+        <div style={styles.tabNavRow}>
+          <button
+            type="button"
+            style={{ ...styles.tabNavBtn, ...(activeTab === 'flowers' ? styles.activeTabNavBtn : {}) }}
+            onClick={() => setActiveTab('flowers')}
+          >
+            🌸 Haritadaki Çiçekler ({flowers.length})
+          </button>
 
-            <button type="submit" className="btn-primary" style={{ padding: '10px 24px', fontSize: '0.92rem' }}>
-              Paneli Aç
-            </button>
-          </form>
-        ) : (
-          /* AUTHENTICATED DASHBOARD CONTENT */
-          <div style={styles.dashboardBody}>
+          <button
+            type="button"
+            style={{ ...styles.tabNavBtn, ...(activeTab === 'logs' ? styles.activeTabNavBtn : {}) }}
+            onClick={() => {
+              setActiveTab('logs');
+              loadLogs();
+            }}
+          >
+            📜 Etkinlik & Log Geçmişi ({activityLogs.length})
+          </button>
+        </div>
+
+        {activeTab === 'flowers' && (
+          <>
             {/* Top Fixed Section: Stats Metrics & Search Bar */}
             <div style={styles.topFixedSection}>
               {/* Stats Metrics Row */}
@@ -408,20 +453,7 @@ export default function AdminDashboardModal({
                           step="50"
                           value={customBg.width || 3000}
                           onChange={(e) => onUpdateCustomBg && onUpdateCustomBg({ ...customBg, width: Number(e.target.value) })}
-                          style={{ width: 90, accentColor: '#3b82f6' }}
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 700 }}>Yükseklik: {customBg.height || 2000}px</span>
-                        <input
-                          type="range"
-                          min="500"
-                          max="6000"
-                          step="50"
-                          value={customBg.height || 2000}
-                          onChange={(e) => onUpdateCustomBg && onUpdateCustomBg({ ...customBg, height: Number(e.target.value) })}
-                          style={{ width: 90, accentColor: '#3b82f6' }}
+                          style={{ width: 100, accentColor: '#10b981' }}
                         />
                       </div>
 
@@ -526,95 +558,92 @@ export default function AdminDashboardModal({
                           <td style={styles.td}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               <FlowerThumbnail flower={flower} />
-                              <div style={{ minWidth: 150 }}>
-                                {editingFlowerId === flower.id ? (
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                    <input
-                                      type="text"
-                                      value={editName}
-                                      onChange={(e) => setEditName(e.target.value)}
-                                      style={styles.inlineEditInput}
-                                      placeholder="İsim..."
-                                    />
-                                    <input
-                                      type="text"
-                                      value={editInstagram}
-                                      onChange={(e) => setEditInstagram(e.target.value)}
-                                      style={styles.inlineEditInput}
-                                      placeholder="@kullanici"
-                                    />
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  {flower.name || 'Anonim'}
+                                  {flower.isAnonymous && <span style={styles.anonBadge}>Anonim</span>}
+                                  {flower.approved === 0 && <span style={{ ...styles.anonBadge, background: '#f87171', color: '#fff' }}>⏳ Bekliyor</span>}
+                                </div>
+                                {flower.instagram && (
+                                  <div style={{ fontSize: '0.78rem', color: '#38bdf8', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <InstagramIcon size={12} color="#38bdf8" /> @{flower.instagram.replace(/^@/, '')}
                                   </div>
-                                ) : (
-                                  <>
-                                    <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.88rem' }}>
-                                      {(localPatches[flower.id]?.name !== undefined ? localPatches[flower.id].name : flower.name) || 'Anonim'}
-                                    </div>
-                                    {flower.realSender && (
-                                      <div style={{ fontSize: '0.72rem', color: '#f9a8d4', fontWeight: 700 }}>
-                                        🌸 {flower.realSender}
-                                      </div>
-                                    )}
-                                    {(localPatches[flower.id]?.instagram !== undefined ? localPatches[flower.id].instagram : flower.instagram) && (
-                                      <div style={{ fontSize: '0.74rem', color: '#ec4899', display: 'flex', alignItems: 'center', gap: 3 }}>
-                                        <InstagramIcon size={11} /> {localPatches[flower.id]?.instagram !== undefined ? localPatches[flower.id].instagram : flower.instagram}
-                                      </div>
-                                    )}
-                                    <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 3 }}>
-                                      <Calendar size={11} /> {formattedDate}
-                                    </div>
-                                  </>
                                 )}
+                                {flower.realSender && (
+                                  <div style={{ fontSize: '0.74rem', color: '#f472b6', marginTop: 2, fontWeight: 700 }}>
+                                    🌸 Gerçek Gönderen: {flower.realSender}
+                                  </div>
+                                )}
+                                <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>
+                                  <Clock size={11} style={{ display: 'inline', marginRight: 3 }} /> {formattedDate}
+                                </div>
                               </div>
                             </div>
                           </td>
 
-                          {/* Note Content & Preview Modal Trigger */}
+                          {/* Content & Note */}
                           <td style={styles.td}>
                             {editingFlowerId === flower.id ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180 }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 220 }}>
+                                <input
+                                  type="text"
+                                  value={editName}
+                                  onChange={(e) => setEditName(e.target.value)}
+                                  placeholder="İsim"
+                                  style={styles.editInput}
+                                />
                                 <textarea
                                   value={editNote}
                                   onChange={(e) => setEditNote(e.target.value)}
-                                  rows={2}
-                                  style={styles.inlineEditTextarea}
-                                  placeholder="Not..."
+                                  placeholder="Not metni..."
+                                  rows={3}
+                                  style={styles.editTextarea}
                                 />
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <button type="button" style={styles.saveEditBtn} onClick={() => handleSaveEdit(flower.id)}>
-                                    <Save size={12} /> Kaydet
+                                <input
+                                  type="text"
+                                  value={editInstagram}
+                                  onChange={(e) => setEditInstagram(e.target.value)}
+                                  placeholder="Instagram handle"
+                                  style={styles.editInput}
+                                />
+                                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                                  <button onClick={() => handleSaveEdit(flower.id)} style={styles.approveBtn}>
+                                    <Save size={13} /> Kaydet
                                   </button>
-                                  <button type="button" style={styles.cancelEditBtn} onClick={handleCancelEdit}>
-                                    <X size={12} /> İptal
+                                  <button onClick={handleCancelEdit} style={styles.unapproveBtn}>
+                                    İptal
                                   </button>
                                 </div>
                               </div>
                             ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 220 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <span style={{ fontSize: '0.8rem', color: noteText ? '#e2e8f0' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
-                                    {noteText ? `"${noteText}"` : 'Not yok'}
-                                  </span>
-                                  {noteText && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setViewNoteFlower(flower)}
-                                      style={styles.viewNoteBtn}
-                                      title="Notu Tam Ekran Göster"
-                                    >
-                                      👁️ Göster
-                                    </button>
-                                  )}
-                                </div>
-                                {flower.isPrivate && (
-                                  <div style={{ fontSize: '0.72rem', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: 3 }}>
-                                    <Lock size={11} /> Şifre: <code style={styles.codeTag}>{flower.password || 'Yok'}</code>
+                              <div>
+                                {noteText ? (
+                                  <div style={styles.notePreview}>
+                                    "{noteText.length > 50 ? noteText.substring(0, 50) + '...' : noteText}"
+                                    {noteText.length > 50 && (
+                                      <button
+                                        onClick={() => setViewNoteFlower(flower)}
+                                        style={styles.viewNoteBtn}
+                                      >
+                                        <Eye size={11} style={{ marginRight: 3 }} /> Tamamını Oku
+                                      </button>
+                                    )}
                                   </div>
+                                ) : (
+                                  <span style={{ color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                                    Not yok
+                                  </span>
                                 )}
+                                <button
+                                  onClick={() => handleStartEdit(flower)}
+                                  style={{ ...styles.viewNoteBtn, marginTop: 4, background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.3)' }}
+                                >
+                                  <Edit3 size={11} style={{ marginRight: 3 }} /> Düzenle
+                                </button>
                               </div>
                             )}
                           </td>
-
-                          {/* Passwords & Codes */}
+                          {/* Codes & Passwords */}
                           <td style={styles.td}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: '0.78rem' }}>
                               {flower.isPrivate && (
@@ -747,6 +776,187 @@ export default function AdminDashboardModal({
                 </table>
               )}
             </div>
+            </>
+            )}
+
+            {activeTab === 'logs' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflow: 'hidden' }}>
+                {/* Log Category Filter Chips & Refresh Button */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      style={{ ...styles.filterChip, ...(logFilter === 'all' ? styles.activeFilterChip : {}) }}
+                      onClick={() => setLogFilter('all')}
+                    >
+                      📑 Tüm Kayıtlar ({activityLogs.length})
+                    </button>
+
+                    <button
+                      type="button"
+                      style={{ ...styles.filterChip, ...(logFilter === 'trigger' ? styles.activeFilterChip : {}) }}
+                      onClick={() => setLogFilter('trigger')}
+                    >
+                      🌸 Ayşenur Trigger Etkinliği ({activityLogs.filter((l) => l.eventType === 'trigger_detected' || l.eventType === 'trigger_answered').length})
+                    </button>
+
+                    <button
+                      type="button"
+                      style={{ ...styles.filterChip, ...(logFilter === 'abandoned' ? styles.activeFilterChip : {}) }}
+                      onClick={() => setLogFilter('abandoned')}
+                    >
+                      📝 Yarım Bırakılanlar ({activityLogs.filter((l) => l.eventType === 'draft_abandoned').length})
+                    </button>
+
+                    <button
+                      type="button"
+                      style={{ ...styles.filterChip, ...(logFilter === 'deleted' ? styles.activeFilterChip : {}) }}
+                      onClick={() => setLogFilter('deleted')}
+                    >
+                      🗑️ Silinen Çiçekler ({activityLogs.filter((l) => l.eventType === 'flower_deleted').length})
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={loadLogs}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 10,
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.4)',
+                      color: '#38bdf8',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔄 Yenile
+                  </button>
+                </div>
+
+                {/* Log Items Scrollable List */}
+                <div style={styles.logListScroll}>
+                  {isLoadingLogs ? (
+                    <div style={{ padding: 40, textAlign: 'center', color: '#38bdf8', fontWeight: 600 }}>
+                      ⏳ Loglar yükleniyor...
+                    </div>
+                  ) : filteredLogs.length === 0 ? (
+                    <div style={styles.emptyLogBox}>
+                      <Clock size={32} color="#64748b" />
+                      <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: 8 }}>
+                        Henüz bu kategoride kaydolmuş bir etkinlik bulunmuyor.
+                      </p>
+                    </div>
+                  ) : (
+                    filteredLogs.map((logItem) => {
+                      const type = logItem.eventType;
+                      const d = logItem.data || {};
+                      const dateStr = logItem.createdAt
+                        ? new Date(logItem.createdAt).toLocaleString('tr-TR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })
+                        : '';
+
+                      let badgeColor = '#38bdf8';
+                      let badgeIcon = 'ℹ️';
+                      let titleText = 'Etkinlik Kaydı';
+
+                      if (type === 'trigger_detected') {
+                        badgeColor = '#f59e0b';
+                        badgeIcon = '🌸';
+                        titleText = 'Ayşenur Trigger Algılandı (Soru Ekranı Açıldı)';
+                      } else if (type === 'trigger_answered') {
+                        badgeColor = '#34d399';
+                        badgeIcon = '✅';
+                        titleText = 'Ayşenur Sorusu Doğrulandı (Süt Çorbası)';
+                      } else if (type === 'draft_abandoned') {
+                        badgeColor = '#fb7185';
+                        badgeIcon = '📝';
+                        titleText = 'Yarım Bırakılan Çiçek (Eklemeden Çıkıldı)';
+                      } else if (type === 'flower_deleted') {
+                        badgeColor = '#ef4444';
+                        badgeIcon = '🗑️';
+                        titleText = 'Silinen Çiçek Kaydı';
+                      }
+
+                      return (
+                        <div key={logItem.id} style={{ ...styles.logCard, borderLeft: `4px solid ${badgeColor}` }}>
+                          <div style={styles.logHeader}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: '1.2rem' }}>{badgeIcon}</span>
+                              <strong style={{ color: badgeColor, fontSize: '0.92rem' }}>
+                                {titleText}
+                              </strong>
+                            </div>
+                            <span style={styles.logTime}>
+                              <Clock size={12} /> {dateStr}
+                            </span>
+                          </div>
+
+                          <div style={styles.logDetailsGrid}>
+                            {d.typedName || d.name ? (
+                              <div>
+                                <span style={styles.logLabel}>Girilen İsim:</span>
+                                <span style={styles.logVal}>{d.typedName || d.name}</span>
+                              </div>
+                            ) : null}
+
+                            {d.typedInstagram || d.instagram ? (
+                              <div>
+                                <span style={styles.logLabel}>Instagram:</span>
+                                <span style={styles.logVal}>{d.typedInstagram || d.instagram}</span>
+                              </div>
+                            ) : null}
+
+                            {d.answerInput ? (
+                              <div>
+                                <span style={styles.logLabel}>Girilen Cevap:</span>
+                                <span style={{ ...styles.logVal, color: '#34d399', fontWeight: 700 }}>{d.answerInput}</span>
+                              </div>
+                            ) : null}
+
+                            {d.note ? (
+                              <div style={{ gridColumn: 'span 2' }}>
+                                <span style={styles.logLabel}>Taslak / Yazılan Not:</span>
+                                <div style={styles.logNoteBox}>"{d.note}"</div>
+                              </div>
+                            ) : null}
+
+                            {d.stage ? (
+                              <div style={{ gridColumn: 'span 2' }}>
+                                <span style={styles.logLabel}>Aşama / Durum:</span>
+                                <span style={{ ...styles.logVal, color: '#fbbf24', fontStyle: 'italic' }}>{d.stage}</span>
+                              </div>
+                            ) : null}
+
+                            {d.deletedBy ? (
+                              <div>
+                                <span style={styles.logLabel}>Silen Kişi:</span>
+                                <span style={{ ...styles.logVal, color: '#ef4444' }}>{d.deletedBy}</span>
+                              </div>
+                            ) : null}
+
+                            {d.strokeCount !== undefined ? (
+                              <div>
+                                <span style={styles.logLabel}>Çizim Detayı:</span>
+                                <span style={styles.logVal}>{d.strokeCount} adet fırça darbesi</span>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
       </div>
@@ -1223,5 +1433,115 @@ const styles = {
     borderRadius: 20,
     padding: 20,
     boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8)'
+  },
+  tabNavRow: {
+    display: 'flex',
+    gap: 8,
+    width: '100%',
+    marginBottom: 12,
+    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    paddingBottom: 8
+  },
+  tabNavBtn: {
+    padding: '8px 16px',
+    borderRadius: 12,
+    background: 'rgba(255, 255, 255, 0.06)',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    color: '#cbd5e1',
+    fontSize: '0.86rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  activeTabNavBtn: {
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    color: '#ffffff',
+    borderColor: '#34d399',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+  },
+  logFilterRow: {
+    display: 'flex',
+    gap: 6,
+    flexWrap: 'wrap',
+    marginBottom: 12
+  },
+  filterChip: {
+    padding: '6px 12px',
+    borderRadius: 10,
+    background: 'rgba(30, 41, 59, 0.8)',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    color: '#94a3b8',
+    fontSize: '0.78rem',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
+  activeFilterChip: {
+    background: 'rgba(245, 158, 11, 0.2)',
+    borderColor: '#f59e0b',
+    color: '#fbbf24',
+    fontWeight: 800
+  },
+  logListScroll: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    maxHeight: '52vh',
+    overflowY: 'auto',
+    paddingRight: 4
+  },
+  logCard: {
+    background: 'rgba(30, 41, 59, 0.7)',
+    borderRadius: 14,
+    padding: '12px 14px',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    textAlign: 'left'
+  },
+  logHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  logTime: {
+    fontSize: '0.75rem',
+    color: '#94a3b8',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4
+  },
+  logDetailsGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8,
+    fontSize: '0.82rem'
+  },
+  logLabel: {
+    color: '#94a3b8',
+    fontSize: '0.75rem',
+    display: 'block',
+    marginBottom: 2
+  },
+  logVal: {
+    color: '#f8fafc',
+    fontWeight: 600
+  },
+  logNoteBox: {
+    background: 'rgba(15, 23, 42, 0.8)',
+    padding: '8px 10px',
+    borderRadius: 8,
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    color: '#fef08a',
+    fontStyle: 'italic',
+    marginTop: 2
+  },
+  emptyLogBox: {
+    padding: 40,
+    textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 };
