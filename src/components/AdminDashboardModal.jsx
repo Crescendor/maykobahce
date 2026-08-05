@@ -127,14 +127,14 @@ export default function AdminDashboardModal({
         height: customBg?.height || 2000,
         opacity: customBg?.opacity !== undefined ? customBg.opacity : 1.0
       };
-      const pass = passwordInput || localStorage.getItem('mayko_admin_pass') || 'Doxish44_';
+      const pass = passwordInput || localStorage.getItem('mayko_admin_token') || '';
       if (onUpdateCustomBg) onUpdateCustomBg(newBg, pass);
     };
     reader.readAsDataURL(file);
   };
 
   const handleRemoveBg = () => {
-    const pass = passwordInput || localStorage.getItem('mayko_admin_pass') || 'Doxish44_';
+    const pass = passwordInput || localStorage.getItem('mayko_admin_token') || '';
     if (onUpdateCustomBg) onUpdateCustomBg(null, pass);
   };
 
@@ -161,20 +161,14 @@ export default function AdminDashboardModal({
 
   if (!isOpen) return null;
 
-  // Handle Admin Login (Client verification + API fallback)
+  // Handle Admin Login (Secure Server-Side API verification)
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError(false);
 
     const inputPass = (passwordInput || '').trim();
-    const expectedPass = 'Doxish44_';
-
-    if (inputPass === expectedPass) {
-      setIsAuthenticated(true);
-      localStorage.setItem('mayko_admin_auth', 'true');
-      localStorage.setItem('mayko_admin_token', inputPass);
-      localStorage.setItem('mayko_admin_pass', inputPass);
-      if (onAdminAuth) onAdminAuth();
+    if (!inputPass) {
+      setLoginError(true);
       return;
     }
 

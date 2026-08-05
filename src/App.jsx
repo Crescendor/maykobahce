@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import MeadowCanvas from './components/MeadowCanvas';
 import GardenHUD from './components/GardenHUD';
 import FlowerDrawerModal from './components/FlowerDrawerModal';
 import FlowerPopup from './components/FlowerPopup';
 import SearchModal from './components/SearchModal';
 import DeleteCodeModal from './components/DeleteCodeModal';
-import AdminDashboardModal from './components/AdminDashboardModal';
-import AdminFloatingToolbar from './components/AdminFloatingToolbar';
+
+// Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
+const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
+const AdminFloatingToolbar = lazy(() => import('./components/AdminFloatingToolbar'));
 import { Check, X, Sparkles } from 'lucide-react';
 import {
   GARDEN_SIZE,
@@ -115,7 +117,7 @@ export default function App() {
     } catch (e) {}
 
     // Push live background setting to Cloudflare Edge API for all visitors
-    const pass = adminPassword || localStorage.getItem('mayko_admin_pass') || 'Doxish44_';
+    const pass = adminPassword || localStorage.getItem('mayko_admin_token') || '';
     await publishCustomBgToApi(newBg, pass);
   };
 
@@ -495,12 +497,16 @@ export default function App() {
   return (
     <div className="app-container">
       {/* Admin Floating Left Photoshop-style Toolbar */}
-      <AdminFloatingToolbar
-        isAdminAuthenticated={isAdminAuthenticated}
-        adminTool={adminTool}
-        setAdminTool={setAdminTool}
-        onOpenDashboard={() => setIsAdminOpen(true)}
-      />
+      <Suspense fallback={null}>
+        {isAdminAuthenticated && (
+          <AdminFloatingToolbar
+            isAdminAuthenticated={isAdminAuthenticated}
+            adminTool={adminTool}
+            setAdminTool={setAdminTool}
+            onOpenDashboard={() => setIsAdminOpen(true)}
+          />
+        )}
+      </Suspense>
 
       {/* Interactive Meadow Canvas */}
       <MeadowCanvas
@@ -613,25 +619,29 @@ export default function App() {
       />
 
       {/* Secret Admin Dashboard (/burak or #burak) */}
-      <AdminDashboardModal
-        isOpen={isAdminOpen}
-        onClose={() => {
-          setIsAdminOpen(false);
-          if (window.location.hash === '#burak' || window.location.hash === '#/burak') {
-            window.history.replaceState(null, '', window.location.pathname);
-          }
-        }}
-        flowers={flowers}
-        onDeleteFlower={handleDeleteFlower}
-        onAdminAuth={handleAdminAuth}
-        onPatchFlower={handlePatchFlower}
-        onFocusFlower={(flower) => {
-          setSelectedFlower(flower);
-          setViewportTarget({ x: flower.x, y: flower.y, scale: 1.5 });
-        }}
-        customBg={customBg}
-        onUpdateCustomBg={handleUpdateCustomBg}
-      />
+      <Suspense fallback={null}>
+        {isAdminOpen && (
+          <AdminDashboardModal
+            isOpen={isAdminOpen}
+            onClose={() => {
+              setIsAdminOpen(false);
+              if (window.location.hash === '#burak' || window.location.hash === '#/burak') {
+                window.history.replaceState(null, '', window.location.pathname);
+              }
+            }}
+            flowers={flowers}
+            onDeleteFlower={handleDeleteFlower}
+            onAdminAuth={handleAdminAuth}
+            onPatchFlower={handlePatchFlower}
+            onFocusFlower={(flower) => {
+              setSelectedFlower(flower);
+              setViewportTarget({ x: flower.x, y: flower.y, scale: 1.5 });
+            }}
+            customBg={customBg}
+            onUpdateCustomBg={handleUpdateCustomBg}
+          />
+        )}
+      </Suspense>
 
       {/* Toast Alert Banner */}
       {toastMsg && (
