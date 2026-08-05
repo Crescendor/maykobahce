@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, Lock, X } from 'lucide-react';
 
-// Cryptographic SHA-256 hashes of trigger keywords — ZERO plain-text words exposed in JS bundle
+// Cryptographic SHA-256 hashes of trigger keywords — ZERO plain-text names exposed in JS bundle
 const TARGET_HASHES = new Set([
   'd35e6c32b90ac44a02fdfe33fa48710d1ed640b555c518a0fae1f7bebfa5b166', // aysenur / ayşenur
   '5a38282c626015c43cba559ab74c785bec0f86475d27f9a557a55612c6d1e277', // ayshenur
@@ -9,20 +9,6 @@ const TARGET_HASHES = new Set([
   '5219e2a890917e60ec6323bc7e7a111faa7049928b84082f5170298cb713847b', // lukac / lukaç
   'f26bc499e0adcfe69c5aa49b23cf43bb5962fe2e5945760bca9337e5444f8460'  // lukach
 ]);
-
-// Base64 decoder helper to prevent static text scraping in bundle
-function b64(str) {
-  try {
-    return decodeURIComponent(
-      atob(str)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-  } catch (e) {
-    return str;
-  }
-}
 
 async function sha256Hex(str) {
   try {
@@ -142,15 +128,15 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
               </button>
             </div>
 
-            <h2 style={styles.title}>{b64('U2VuIG8gbXVzdW4/')}</h2>
+            <h2 style={styles.title}>Sen o musun?</h2>
             <p style={styles.subtitle}>
-              {b64('QnUgaXNpbSDDtnplbC4gTMOjdGZlbiBzb3J1eXUgY2V2YXBsYXlhcmFrIGRldmFtIGVkaW4u')}
+              Bu isim özel. Lütfen soruyu cevaplayarak devam edin.
             </p>
 
             {/* Answer Question Form */}
             <form onSubmit={handlePasswordSubmit} style={styles.form}>
               <label style={styles.label}>
-                {b64('QmFuYSB5YXB0xLHEn8EsbiBiaXIgecO2cmVzZWwgeWVtZWsuIERhbWFrIHRhZMSxbWEgw6dvayB1eWd1biBkZcSeaWxkaSBhbWEgc2V2bWlzdGltLg==')}
+                Bana yaptığın bir yöresel yemek. Damak tadıma çok uygun değildi ama sevmiştim.
               </label>
               <input
                 type="text"
@@ -161,15 +147,15 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
                 autoFocus
               />
               {passwordError && (
-                <p style={styles.errorText}>{b64('4p2MIFlhbmzEscWfY2V2YXAuIERldmFtIGVkaXlvcnN1bi4=')}</p>
+                <p style={styles.errorText}>❌ Yanlış cevap. Devam ediyorsun.</p>
               )}
               <button type="submit" className="btn-primary" style={styles.submitBtn}>
-                {b64('RGV2YW0gRXQ=')}
+                Devam Et
               </button>
             </form>
 
             <p style={styles.skipHint} onClick={handleClose}>
-              {b64('QmVuIGRlxJ9pbGltIOKGkQ==')}
+              Ben değilim ↑
             </p>
           </>
         ) : (
@@ -333,7 +319,7 @@ const styles = {
     textAlign: 'left',
     lineHeight: 1.5,
     width: '100%',
-    padding: '10px 14px',
+    padding: '12px 16px',
     background: 'rgba(245,158,11,0.1)',
     borderRadius: 14,
     border: '1px solid rgba(245,158,11,0.25)'
