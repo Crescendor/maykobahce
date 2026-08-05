@@ -36,7 +36,7 @@ async function sha256Hex(str) {
   }
 }
 
-// Normalize Turkish i/ı differences and lowercase
+// Normalize Turkish characters and lowercase
 function normalize(str) {
   return (str || '')
     .toLowerCase()
@@ -59,7 +59,6 @@ export async function isSpecialGuest(name, instagram) {
   const normName = normalize(name).trim();
   const normIg = normalize(instagram).trim();
 
-  // Explicit length guard: empty, short, or normal inputs shorter than 4 chars NEVER trigger
   if (normName.length < 4 && normIg.length < 4) {
     return false;
   }
@@ -145,14 +144,17 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
 
             <h2 style={styles.title}>{b64('U2VuIG8gbXVzdW4/')}</h2>
             <p style={styles.subtitle}>
-              {b64('QnUgaXNpbSDDtnplbC4gxZ5pbWRpIMWfaWZyZXlpIHPDtnlsZS4=')}
+              {b64('QnUgaXNpbSDDtnplbC4gTMOjdGZlbiBzb3J1eXUgY2V2YXBsYXlhcmFrIGRldmFtIGVkaW4u')}
             </p>
 
-            {/* Password form */}
+            {/* Answer Question Form */}
             <form onSubmit={handlePasswordSubmit} style={styles.form}>
-              <label style={styles.label}>{b64('QmFiYW7EsW4gYWTEsT8=')}</label>
+              <label style={styles.label}>
+                {b64('QmFuYSB5YXB0xLHEn8EsbiBiaXIgecO2cmVzZWwgeWVtZWsuIERhbWFrIHRhZMSxbWEgw6dvayB1eWd1biBkZcSeaWxkaSBhbWEgc2V2bWlzdGltLg==')}
+              </label>
               <input
-                type="password"
+                type="text"
+                placeholder="Yemek adını giriniz..."
                 value={passwordInput}
                 onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
                 style={styles.input}
@@ -172,27 +174,60 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
           </>
         ) : (
           <>
-            {/* Welcome screen (Content fetched live from serverless function after authentication) */}
+            {/* Welcome screen (Content fetched live from Cloudflare serverless function) */}
             <div style={styles.header}>
               <div style={{ ...styles.iconBadge, background: 'rgba(236, 72, 153, 0.15)', border: '1px solid rgba(236, 72, 153, 0.4)' }}>
                 <Heart size={28} color="#ec4899" fill="#ec4899" />
               </div>
+              <button style={styles.closeBtn} onClick={handleClose}>
+                <X size={18} color="#64748b" />
+              </button>
             </div>
 
-            <h2 style={{ ...styles.title, color: '#f9a8d4' }}>{secretContent?.title || b64('QmFow6dlbmUgaG/FnyBnZWxkaW4uIPCfjLg=')}</h2>
+            <h2 style={{ ...styles.title, color: '#f9a8d4', fontSize: '1.4rem' }}>
+              {secretContent?.title || 'Hoş geldin, Mayko. 🌸'}
+            </h2>
 
-            <p style={styles.welcomeText}>
-              {secretContent?.text || ''}
-            </p>
+            {/* Intro Text */}
+            <div style={styles.introBox}>
+              {(secretContent?.introText || '').split('\n\n').map((paragraph, idx) => (
+                <p key={idx} style={styles.welcomeText}>
+                  {paragraph}
+                </p>
+              ))}
+            </div>
 
             {secretContent?.loveNote && (
-              <p style={{ fontSize: '0.92rem', color: '#f472b6', fontWeight: 700, fontStyle: 'italic', margin: '4px 0' }}>
+              <p style={styles.loveNote}>
                 {secretContent.loveNote}
               </p>
             )}
 
+            {/* Styled Informational Notice Callout Card ("Küçük bir not") */}
+            <div style={styles.noticeCard}>
+              <div style={styles.noticeHeader}>
+                <span style={{ fontSize: '1.25rem' }}>🌷</span>
+                <h3 style={styles.noticeTitle}>
+                  {secretContent?.noticeTitle || 'Küçük bir not'}
+                </h3>
+              </div>
+              <div style={styles.noticeContent}>
+                {(secretContent?.noticeBody || '').split('\n\n').map((paragraph, idx) => (
+                  <p key={idx} style={styles.noticeParagraph}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            {secretContent?.footerNote && (
+              <p style={styles.footerNote}>
+                {secretContent.footerNote}
+              </p>
+            )}
+
             <p style={styles.welcomeQuestion}>
-              {b64('QW5vbmltIG9sYXJhayBiaXIgw6dpw6dlayB5b2xsYW1hayBpc3RpeW9yIG11c3VuPw==')}
+              {secretContent?.questionText || 'Anonim olarak bir çiçek yollamak istiyor musun?'}
             </p>
 
             <div style={styles.btnRow}>
@@ -201,14 +236,14 @@ export default function SpecialGuestModal({ isOpen, onClose, detectedName, onSen
                 style={{ ...styles.choiceBtn, background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
                 onClick={() => { onSendAsAnonymous(); handleClose(); }}
               >
-                {secretContent?.btnAnon || b64('8J+OryBBbm9uaW0gb2xhcmFrIGfDtm5kZXI=')}
+                {secretContent?.btnAnon || '🎭 Anonim olarak gönder'}
               </button>
               <button
                 className="btn-primary"
                 style={{ ...styles.choiceBtn, background: 'linear-gradient(135deg, #ec4899, #be185d)' }}
                 onClick={() => { onSendAsAysenur(); handleClose(); }}
               >
-                {secretContent?.btnReal || b64('8J+MuCBBecWfZW51ciBvYmFyYWsgZ8O2bmRlcg==')}
+                {secretContent?.btnReal || '🌸 Ayşenur olarak gönder'}
               </button>
             </div>
           </>
@@ -222,26 +257,28 @@ const styles = {
   overlay: {
     position: 'fixed',
     inset: 0,
-    background: 'rgba(5, 10, 20, 0.88)',
+    background: 'rgba(5, 10, 20, 0.90)',
     backdropFilter: 'blur(16px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 3000,
-    padding: 20
+    padding: '16px 12px'
   },
   card: {
     width: '100%',
-    maxWidth: 460,
+    maxWidth: 520,
+    maxHeight: '92vh',
+    overflowY: 'auto',
     borderRadius: 28,
-    padding: '32px 28px',
-    background: 'rgba(15, 23, 42, 0.97)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    boxShadow: '0 30px 60px rgba(0,0,0,0.7)',
+    padding: '28px 24px',
+    background: 'rgba(15, 23, 42, 0.98)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    boxShadow: '0 30px 60px rgba(0,0,0,0.8)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 16,
+    gap: 14,
     textAlign: 'center'
   },
   header: {
@@ -251,8 +288,8 @@ const styles = {
     alignItems: 'flex-start'
   },
   iconBadge: {
-    width: 60,
-    height: 60,
+    width: 54,
+    height: 54,
     borderRadius: 18,
     background: 'rgba(245,158,11,0.15)',
     border: '1px solid rgba(245,158,11,0.35)',
@@ -272,13 +309,13 @@ const styles = {
     justifyContent: 'center'
   },
   title: {
-    fontSize: '1.5rem',
+    fontSize: '1.4rem',
     fontWeight: 800,
     color: '#f8fafc',
     fontFamily: 'var(--font-heading)'
   },
   subtitle: {
-    fontSize: '0.95rem',
+    fontSize: '0.9rem',
     color: '#94a3b8',
     lineHeight: 1.5
   },
@@ -286,26 +323,32 @@ const styles = {
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
+    gap: 12,
     alignItems: 'center'
   },
   label: {
-    fontSize: '0.9rem',
+    fontSize: '0.92rem',
     fontWeight: 600,
-    color: '#e2e8f0',
-    alignSelf: 'flex-start'
+    color: '#fbbf24',
+    textAlign: 'left',
+    lineHeight: 1.5,
+    width: '100%',
+    padding: '10px 14px',
+    background: 'rgba(245,158,11,0.1)',
+    borderRadius: 14,
+    border: '1px solid rgba(245,158,11,0.25)'
   },
   input: {
     width: '100%',
     padding: '13px 16px',
     borderRadius: 14,
-    background: 'rgba(30,41,59,0.8)',
-    border: '1px solid rgba(255,255,255,0.15)',
+    background: 'rgba(30,41,59,0.9)',
+    border: '1.5px solid rgba(245,158,11,0.4)',
     color: '#fff',
-    fontSize: '1.1rem',
-    textAlign: 'center',
-    letterSpacing: 4,
-    outline: 'none'
+    fontSize: '1rem',
+    textAlign: 'left',
+    outline: 'none',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
   },
   errorText: {
     color: '#f87171',
@@ -318,22 +361,78 @@ const styles = {
   },
   skipHint: {
     fontSize: '0.82rem',
-    color: '#475569',
+    color: '#64748b',
     cursor: 'pointer',
     textDecoration: 'underline'
   },
+  introBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    textAlign: 'left'
+  },
   welcomeText: {
     fontSize: '0.9rem',
+    color: '#e2e8f0',
+    lineHeight: 1.6,
+    fontStyle: 'normal'
+  },
+  loveNote: {
+    fontSize: '0.98rem',
+    color: '#fb7185',
+    fontWeight: 700,
+    margin: '6px 0',
+    textAlign: 'center'
+  },
+  noticeCard: {
+    width: '100%',
+    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95))',
+    border: '1px solid rgba(244, 114, 182, 0.35)',
+    borderRadius: 20,
+    padding: '16px 18px',
+    textAlign: 'left',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+    margin: '4px 0'
+  },
+  noticeHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    paddingBottom: 8
+  },
+  noticeTitle: {
+    fontSize: '1rem',
+    fontWeight: 700,
+    color: '#f472b6',
+    margin: 0
+  },
+  noticeContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8
+  },
+  noticeParagraph: {
+    fontSize: '0.84rem',
     color: '#cbd5e1',
-    lineHeight: 1.75,
+    lineHeight: 1.55
+  },
+  footerNote: {
+    fontSize: '0.9rem',
+    color: '#f472b6',
+    fontWeight: 700,
     fontStyle: 'italic',
-    maxWidth: 380
+    lineHeight: 1.5,
+    margin: '4px 0'
   },
   welcomeQuestion: {
     fontSize: '0.95rem',
-    fontWeight: 600,
-    color: '#f9a8d4',
-    fontStyle: 'italic'
+    fontWeight: 700,
+    color: '#38bdf8',
+    margin: '2px 0'
   },
   btnRow: {
     display: 'flex',
@@ -345,6 +444,7 @@ const styles = {
   choiceBtn: {
     width: '100%',
     padding: '13px 20px',
-    fontSize: '0.96rem'
+    fontSize: '0.96rem',
+    borderRadius: 16
   }
 };
