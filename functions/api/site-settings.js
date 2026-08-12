@@ -77,22 +77,36 @@ export async function onRequestPost({ request, env }) {
       return new Response(JSON.stringify({ error: 'Yetki hatası!' }), { status: 403 });
     }
 
-    // Test Discord Webhook notification if requested
+    // Test Discord / BotGhost Webhook notification if requested
     if (body.testDiscordWebhook) {
       const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '127.0.0.1';
       const city = request.headers.get('cf-ipcity') || (request.cf && request.cf.city) || '';
       const country = request.headers.get('cf-ipcountry') || (request.cf && request.cf.country) || '';
 
-      await sendDiscordWebhook(env, 'test_notification', {
-        action: 'Discord Webhook Test Bildirimi Başarılı',
-        ip: clientIp,
-        location: city && country ? `${city}, ${country}` : country || city || 'Türkiye',
-        device: 'Admin Yönetim Paneli'
-      });
+      const testResult = await sendDiscordWebhook(
+        env,
+        'test_notification',
+        {
+          action: 'Discord & BotGhost Webhook Test Bildirimi Başarılı',
+          ip: clientIp,
+          location: city && country ? `${city}, ${country}` : country || city || 'Türkiye',
+          device: 'Admin Yönetim Paneli'
+        },
+        null,
+        body.webhookUrl,
+        body.apiKey
+      );
 
-      return new Response(JSON.stringify({ success: true, tested: true }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
+      if (testResult.success) {
+        return new Response(JSON.stringify({ success: true, tested: true, status: testResult.status }), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } else {
+        return new Response(JSON.stringify({ error: testResult.error || 'Webhook gönderilemedi' }), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          status: 400
+        });
+      }
     }
 
     const settings = body.settings || { isMelancholyMode: false, discordWebhookUrl: '' };

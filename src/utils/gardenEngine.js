@@ -874,17 +874,21 @@ export async function publishSiteSettingsToApi(settings, adminPassword = '') {
   return null;
 }
 
-export async function testDiscordWebhookApi(adminPassword = '') {
+export async function testDiscordWebhookApi(adminPassword = '', webhookUrl = null, apiKey = null) {
   try {
     const res = await fetch('/api/site-settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ testDiscordWebhook: true, adminPassword })
+      body: JSON.stringify({ testDiscordWebhook: true, adminPassword, webhookUrl, apiKey })
     });
-    if (res.ok) {
-      return await res.json().catch(() => null);
+    const data = await res.json().catch(() => null);
+    if (res.ok && data) {
+      return data;
+    } else {
+      return { success: false, error: data?.error || `Hata (${res.status})` };
     }
-  } catch (e) {}
-  return null;
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
 }
 

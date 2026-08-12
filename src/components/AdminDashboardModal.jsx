@@ -172,13 +172,18 @@ export default function AdminDashboardModal({
   const handleTestDiscordWebhook = async () => {
     setWebhookStatusMsg('⏳ Discord test bildirimi gönderiliyor...');
     const token = passwordInput || localStorage.getItem('mayko_admin_token') || '';
-    const res = await testDiscordWebhookApi(token);
+    const res = await testDiscordWebhookApi(
+      token,
+      discordWebhookUrl ? discordWebhookUrl.trim() : null,
+      botGhostApiKey ? botGhostApiKey.trim() : null
+    );
     if (res && res.success) {
-      setWebhookStatusMsg('🎉 Discord test bildirimi botunuza başarıyla iletildi!');
-      setTimeout(() => setWebhookStatusMsg(''), 5000);
+      setWebhookStatusMsg('🎉 Discord test bildirimi botunuza başarıyla iletildi! (HTTP 200 OK)');
+      setTimeout(() => setWebhookStatusMsg(''), 6000);
     } else {
-      setWebhookStatusMsg('❌ Test bildirimi gönderilemedi. Webhook URL\'sini kontrol edin.');
-      setTimeout(() => setWebhookStatusMsg(''), 5000);
+      const errMsg = res?.error || 'Test bildirimi gönderilemedi. Webhook URL veya API Key\'i kontrol edin.';
+      setWebhookStatusMsg(`❌ ${errMsg}`);
+      setTimeout(() => setWebhookStatusMsg(''), 8000);
     }
   };
 

@@ -28,11 +28,21 @@ export async function getDiscordWebhookConfig(env) {
   return { webhookUrl, apiKey };
 }
 
-export async function sendDiscordWebhook(env, eventType, data = {}, timestamp = null) {
+export async function sendDiscordWebhook(
+  env,
+  eventType,
+  data = {},
+  timestamp = null,
+  overrideWebhookUrl = null,
+  overrideApiKey = null
+) {
   try {
-    const { webhookUrl, apiKey } = await getDiscordWebhookConfig(env);
+    const config = await getDiscordWebhookConfig(env);
+    const webhookUrl = overrideWebhookUrl || config.webhookUrl;
+    const apiKey = overrideApiKey !== undefined && overrideApiKey !== null ? overrideApiKey : config.apiKey;
+
     if (!webhookUrl || typeof webhookUrl !== 'string' || !webhookUrl.startsWith('https://')) {
-      return;
+      return { success: false, error: 'Geçersiz veya boş Webhook URL. Lütfen Webhook URL alanını doldurun.' };
     }
 
     let title = '🌸 Mayko Bahçe Etkinliği';
@@ -136,12 +146,22 @@ export async function sendDiscordWebhook(env, eventType, data = {}, timestamp = 
         headers['Authorization'] = apiKey;
       }
 
-      await fetch(webhookUrl, {
+      const res = await fetch(webhookUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(botGhostPayload)
       });
-      return;
+
+      const resText = await res.text().catch(() => '');
+      if (res.ok) {
+        return { success: true, status: res.status };
+      } else {
+        return {
+          success: false,
+          status: res.status,
+          error: `BotGhost Hatası (${res.status}): ${resText || res.statusText || 'Bilinmeyen hata'}. (401 hatası ise lütfen BotGhost API Key alanını doldurun).`
+        };
+      }
     }
 
     // 2. Standard Discord Webhook (https://discord.com/api/webhooks/...)
@@ -160,12 +180,23 @@ export async function sendDiscordWebhook(env, eventType, data = {}, timestamp = 
       ]
     };
 
-    await fetch(webhookUrl, {
+    const res = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+
+    const resText = await res.text().catch(() => '');
+    if (res.ok || res.status === 204) {
+      return { success: true, status: res.status };
+    } else {
+      return {
+        success: false,
+        status: res.status,
+        error: `Discord Hatası (${res.status}): ${resText || res.statusText || 'Bilinmeyen hata'}`
+      };
+    }
   } catch (err) {
-    console.error('sendDiscordWebhook error:', err);
+    return { success: false, error: err.message };
   }
 }
