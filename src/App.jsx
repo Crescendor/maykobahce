@@ -432,32 +432,19 @@ export default function App() {
 
   // Zoom Control Handlers
   const handleZoomIn = () => {
-    setCurrentScale((prev) => {
-      const nextScale = Math.min(prev * 1.25, 2.5);
-      return nextScale;
-    });
     setViewportTarget((prev) => ({
-      x: prev ? prev.x : GARDEN_SIZE / 2,
-      y: prev ? prev.y : GARDEN_SIZE / 2,
-      scale: Math.min(currentScale * 1.25, 2.5)
+      scale: Math.min((prev?.scale || 0.85) * 1.3, 2.2)
     }));
   };
 
   const handleZoomOut = () => {
-    setCurrentScale((prev) => {
-      const nextScale = Math.max(prev * 0.75, 0.4);
-      return nextScale;
-    });
     setViewportTarget((prev) => ({
-      x: prev ? prev.x : GARDEN_SIZE / 2,
-      y: prev ? prev.y : GARDEN_SIZE / 2,
-      scale: Math.max(currentScale * 0.75, 0.4)
+      scale: Math.max((prev?.scale || 0.85) * 0.75, 0.48)
     }));
   };
 
   const handleResetView = () => {
-    setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 0.75 });
-    setCurrentScale(0.75);
+    setViewportTarget({ x: GARDEN_SIZE / 2, y: GARDEN_SIZE / 2, scale: 0.85 });
   };
 
   // Select Flower (Centers Camera & Opens Popup)

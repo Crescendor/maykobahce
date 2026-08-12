@@ -113,21 +113,40 @@ export default function MeadowCanvas({
     }
   }, [customBg]);
 
+  const onViewportChangeRef = useRef(onViewportChange);
+  onViewportChangeRef.current = onViewportChange;
+
+  const viewportAnimIdRef = useRef(null);
+
   useEffect(() => {
     if (!viewportTarget) return;
+
+    if (viewportAnimIdRef.current) {
+      cancelAnimationFrame(viewportAnimIdRef.current);
+      viewportAnimIdRef.current = null;
+    }
 
     const startX = transformRef.current.x;
     const startY = transformRef.current.y;
     const startScale = transformRef.current.scale;
 
-    const targetX = -viewportTarget.x * viewportTarget.scale + window.innerWidth / 2;
-    const targetY = -viewportTarget.y * viewportTarget.scale + window.innerHeight / 2;
-    const targetScale = viewportTarget.scale;
+    const targetScale = viewportTarget.scale || startScale;
+    let targetX, targetY;
+
+    if (viewportTarget.x !== undefined && viewportTarget.y !== undefined) {
+      targetX = -viewportTarget.x * targetScale + window.innerWidth / 2;
+      targetY = -viewportTarget.y * targetScale + window.innerHeight / 2;
+    } else {
+      const screenCenterX = window.innerWidth / 2;
+      const screenCenterY = window.innerHeight / 2;
+      targetX = screenCenterX - (screenCenterX - startX) * (targetScale / startScale);
+      targetY = screenCenterY - (screenCenterY - startY) * (targetScale / startScale);
+    }
 
     const clamped = clampTransform({ x: targetX, y: targetY, scale: targetScale });
 
     const startTime = performance.now();
-    const duration = 650;
+    const duration = 400;
 
     const animate = (now) => {
       const elapsed = now - startTime;
@@ -141,15 +160,26 @@ export default function MeadowCanvas({
       };
 
       setTransform(nextTransform);
-      if (onViewportChange) onViewportChange(nextTransform);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        viewportAnimIdRef.current = requestAnimationFrame(animate);
+      } else {
+        viewportAnimIdRef.current = null;
+        if (onViewportChangeRef.current) {
+          onViewportChangeRef.current(clamped);
+        }
       }
     };
 
-    requestAnimationFrame(animate);
-  }, [viewportTarget, onViewportChange]);
+    viewportAnimIdRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (viewportAnimIdRef.current) {
+        cancelAnimationFrame(viewportAnimIdRef.current);
+        viewportAnimIdRef.current = null;
+      }
+    };
+  }, [viewportTarget]);
 
   const render = useCallback((time = 0) => {
     const canvas = canvasRef.current;
