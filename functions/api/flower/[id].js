@@ -73,7 +73,7 @@ export async function onRequestDelete(context) {
             .run();
 
           const { sendDiscordWebhook } = await import('./../_discord.js');
-          sendDiscordWebhook(env, 'flower_deleted', deletePayload).catch(() => {});
+          await sendDiscordWebhook(env, 'flower_deleted', deletePayload);
         } catch (e) {}
       }
 

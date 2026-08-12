@@ -82,8 +82,10 @@ export async function onRequestPost(context) {
         .run();
     }
 
-    // Send Discord Webhook notification asynchronously
-    sendDiscordWebhook(env, eventType, enrichedData, timestamp).catch(() => {});
+    // Send Discord / BotGhost Webhook notification
+    try {
+      await sendDiscordWebhook(env, eventType, enrichedData, timestamp);
+    } catch (e) {}
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }

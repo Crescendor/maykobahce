@@ -892,3 +892,32 @@ export async function testDiscordWebhookApi(adminPassword = '', webhookUrl = nul
   }
 }
 
+export function detectClientDevice() {
+  if (typeof window === 'undefined') return 'Bilinmiyor';
+  const ua = navigator.userAgent || '';
+  let deviceName = 'Masaüstü Bilgisayar';
+
+  if (/iPhone/i.test(ua)) {
+    deviceName = 'Apple iPhone (iOS)';
+  } else if (/iPad/i.test(ua)) {
+    deviceName = 'Apple iPad (iPadOS)';
+  } else if (/Android/i.test(ua)) {
+    deviceName = /Mobile/i.test(ua) ? 'Android Telefon' : 'Android Tablet';
+  } else if (/Macintosh|Mac OS X/i.test(ua)) {
+    deviceName = 'Apple Mac (macOS)';
+  } else if (/Windows/i.test(ua)) {
+    deviceName = 'Windows PC';
+  } else if (/Linux/i.test(ua)) {
+    deviceName = 'Linux';
+  }
+
+  let browser = 'Tarayıcı';
+  if (/Edg/i.test(ua)) browser = 'Edge';
+  else if (/Chrome/i.test(ua)) browser = 'Chrome';
+  else if (/Safari/i.test(ua)) browser = 'Safari';
+  else if (/Firefox/i.test(ua)) browser = 'Firefox';
+
+  const screenInfo = `${window.screen?.width || window.innerWidth}x${window.screen?.height || window.innerHeight}`;
+  return `${deviceName} • ${browser} • (${screenInfo})`;
+}
+

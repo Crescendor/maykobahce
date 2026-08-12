@@ -28,7 +28,9 @@ import {
   fetchCustomBgFromApi,
   publishCustomBgToApi,
   fetchSiteSettingsFromApi,
-  publishSiteSettingsToApi
+  publishSiteSettingsToApi,
+  postLogToApi,
+  detectClientDevice
 } from './utils/gardenEngine';
 
 export default function App() {
@@ -107,6 +109,15 @@ export default function App() {
     if (settings && typeof settings.isMelancholyMode === 'boolean') {
       setIsMelancholyMode(settings.isMelancholyMode);
       if (settings.isMelancholyMode) {
+        const alreadyLogged = sessionStorage.getItem('mayko_melancholy_visit_logged');
+        if (!alreadyLogged) {
+          sessionStorage.setItem('mayko_melancholy_visit_logged', 'true');
+          postLogToApi('melancholy_quote_viewed', {
+            action: 'Hüzün Modunda Bahçeye Giriş Yapıldı',
+            device: detectClientDevice(),
+            viewport: `${window.innerWidth}x${window.innerHeight}`
+          });
+        }
         const alreadySeen = sessionStorage.getItem('mayko_melancholy_quote_seen');
         if (!alreadySeen) {
           setShowMelancholyQuote(true);
