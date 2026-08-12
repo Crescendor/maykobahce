@@ -151,31 +151,53 @@ export default function MeadowCanvas({
     requestAnimationFrame(animate);
   }, [viewportTarget, onViewportChange]);
 
-  const render = useCallback((time) => {
+  const render = useCallback((time = 0) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const { x, y, scale } = transformRef.current;
+    if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    ctx.clearRect(0, 0, width, height);
+
+    // Fill entire screen viewport with lush grass green FIRST
+    ctx.fillStyle = '#2d6a4f';
+    ctx.fillRect(0, 0, width, height);
 
     ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(scale, scale);
+    ctx.translate(transformRef.current.x, transformRef.current.y);
+    ctx.scale(transformRef.current.scale, transformRef.current.scale);
 
-    // 0. Render Custom Background Image outside fence if set
-    if (customBg && bgImgRef.current && bgImgLoadedRef.current) {
+    const scale = transformRef.current.scale;
+
+    // 1. Draw Custom Outer Background Image if uploaded by admin
+    if (customBg && customBg.url && bgImgLoadedRef.current && bgImgRef.current) {
       ctx.save();
       ctx.globalAlpha = customBg.opacity !== undefined ? customBg.opacity : 1.0;
       const bgW = customBg.width || 3000;
       const bgH = customBg.height || 2000;
-      const bgX = (customBg.x !== undefined ? customBg.x : 1000) - bgW / 2;
-      const bgY = (customBg.y !== undefined ? customBg.y : 1000) - bgH / 2;
+      const bgX = (customBg.x !== undefined ? customBg.x : GARDEN_SIZE / 2) - bgW / 2;
+      const bgY = (customBg.y !== undefined ? customBg.y : GARDEN_SIZE / 2) - bgH / 2;
       ctx.drawImage(bgImgRef.current, bgX, bgY, bgW, bgH);
       ctx.restore();
     }
 
-    drawDetailedGrass(ctx);
+    // 2. Render Constant Garden Lawn Base Inside Wooden Fences
+    const p = FENCE_PADDING;
+    const innerSize = GARDEN_SIZE - p * 2;
+    ctx.fillStyle = '#2d6a4f';
+    ctx.fillRect(p, p, innerSize, innerSize);
+
+    // 3. Render Grass Blade Tufts & Clovers strictly inside the fence
+    drawLawnDetails(ctx);
+
+    // 4. Render Wooden Fence Outer Boundary
     drawGardenFences(ctx);
 
     if (flowers && flowers.length > 0) {
