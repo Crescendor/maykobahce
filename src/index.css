@@ -383,4 +383,5 @@ html, body, #root {
 .melancholy-mode {
   filter: grayscale(100%) contrast(108%) brightness(92%);
   transition: filter 1.5s ease-in-out;
+  background: radial-gradient(circle at center, #1b2620 0%, #0d1310 50%, #040504 100%) !important;
 }

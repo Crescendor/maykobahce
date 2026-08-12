@@ -238,29 +238,31 @@ export default function MeadowCanvas({
       });
     }
 
-    if (isMelancholyMode) {
-      // Dark moody atmospheric vignette overlay
-      ctx.save();
-      const grad = ctx.createRadialGradient(
-        GARDEN_SIZE / 2, GARDEN_SIZE / 2, 250,
-        GARDEN_SIZE / 2, GARDEN_SIZE / 2, GARDEN_SIZE * 0.75
-      );
-      grad.addColorStop(0, 'rgba(0, 0, 0, 0.18)');
-      grad.addColorStop(0.65, 'rgba(10, 10, 15, 0.40)');
-      grad.addColorStop(1, 'rgba(5, 5, 8, 0.70)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, GARDEN_SIZE, GARDEN_SIZE);
-      ctx.restore();
-
-      // Falling black withered leaves & petals
-      drawFallingBlackLeaves(ctx, time);
-    }
-
     if (pendingPlantPosition) {
       drawPlantingFlag(ctx, pendingPlantPosition.x, pendingPlantPosition.y, scale);
     }
 
     ctx.restore();
+
+    // In Melancholy Mode: render seamless dark vignette gradient and falling leaves across ENTIRE screen
+    if (isMelancholyMode) {
+      ctx.save();
+      const screenRadius = Math.max(width, height) * 0.72;
+      const grad = ctx.createRadialGradient(
+        width / 2, height / 2, Math.min(width, height) * 0.12,
+        width / 2, height / 2, screenRadius
+      );
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.04)');
+      grad.addColorStop(0.42, 'rgba(5, 7, 8, 0.32)');
+      grad.addColorStop(0.76, 'rgba(2, 3, 5, 0.68)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.92)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
+
+      // Falling black leaves across the full screen
+      drawFallingBlackLeaves(ctx, time, width, height);
+    }
   }, [flowers, selectedFlower, pendingPlantPosition, customBg, isMelancholyMode]);
 
   useEffect(() => {
@@ -546,29 +548,29 @@ function drawGardenFences(ctx) {
 /**
  * Render Falling Black Leaves & Withered Petals in Melancholy Mode
  */
-function drawFallingBlackLeaves(ctx, time = 0) {
-  const LEAF_COUNT = 48;
+function drawFallingBlackLeaves(ctx, time = 0, width = window.innerWidth, height = window.innerHeight) {
+  const LEAF_COUNT = 60;
   ctx.save();
 
   for (let i = 0; i < LEAF_COUNT; i++) {
-    const speed = 35 + ((i * 19) % 30);
-    const totalDist = GARDEN_SIZE + 200;
-    const initialY = -100;
-    const offset = (i * 137.5) % totalDist;
+    const speed = 40 + ((i * 19) % 35);
+    const totalDist = height + 160;
+    const initialY = -60;
+    const offset = (i * 97.3) % totalDist;
     const y = ((time * speed + offset) % totalDist) + initialY;
 
-    const baseX = (i * 83.7) % GARDEN_SIZE;
-    const windSway = Math.sin(time * 1.5 + i * 1.3) * (25 + (i % 15));
-    const x = baseX + windSway;
+    const baseX = (i * (width / LEAF_COUNT * 1.5)) % width;
+    const windSway = Math.sin(time * 1.5 + i * 1.3) * (20 + (i % 18));
+    const x = (baseX + windSway + width) % width;
 
-    const rotation = time * (1.2 + (i % 5) * 0.3) + i * 1.1;
-    const leafSize = 8 + (i % 8);
-    const alpha = 0.55 + 0.35 * Math.sin(i * 3 + time);
+    const rotation = time * (1.2 + (i % 5) * 0.35) + i * 1.1;
+    const leafSize = 9 + (i % 9);
+    const alpha = 0.5 + 0.35 * Math.sin(i * 3 + time);
 
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
-    ctx.globalAlpha = Math.max(0.2, Math.min(0.9, alpha));
+    ctx.globalAlpha = Math.max(0.2, Math.min(0.85, alpha));
 
     // Dark black / charcoal withered leaf shape
     ctx.fillStyle = i % 3 === 0 ? '#111115' : i % 3 === 1 ? '#1c1c22' : '#282830';
@@ -579,7 +581,7 @@ function drawFallingBlackLeaves(ctx, time = 0) {
     ctx.fill();
 
     // Leaf center vein line
-    ctx.strokeStyle = '#08080c';
+    ctx.strokeStyle = '#050508';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, -leafSize);
