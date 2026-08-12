@@ -128,15 +128,17 @@ export default function AdminDashboardModal({
   const [logFilter, setLogFilter] = useState('all'); // 'all' | 'trigger' | 'abandoned' | 'deleted'
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
-  // Discord Webhook State
+  // Discord & BotGhost Webhook State
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
+  const [botGhostApiKey, setBotGhostApiKey] = useState('');
   const [isSavingWebhook, setIsSavingWebhook] = useState(false);
   const [webhookStatusMsg, setWebhookStatusMsg] = useState('');
 
   const loadSettings = async () => {
     const s = await fetchSiteSettingsFromApi();
-    if (s && s.discordWebhookUrl) {
-      setDiscordWebhookUrl(s.discordWebhookUrl);
+    if (s) {
+      if (s.discordWebhookUrl) setDiscordWebhookUrl(s.discordWebhookUrl);
+      if (s.botGhostApiKey) setBotGhostApiKey(s.botGhostApiKey);
     }
   };
 
@@ -150,12 +152,16 @@ export default function AdminDashboardModal({
     setIsSavingWebhook(true);
     const token = passwordInput || localStorage.getItem('mayko_admin_token') || '';
     const res = await publishSiteSettingsToApi(
-      { isMelancholyMode, discordWebhookUrl: discordWebhookUrl.trim() },
+      {
+        isMelancholyMode,
+        discordWebhookUrl: discordWebhookUrl.trim(),
+        botGhostApiKey: botGhostApiKey.trim()
+      },
       token
     );
     setIsSavingWebhook(false);
     if (res && res.success) {
-      setWebhookStatusMsg('✅ Discord Webhook URL başarıyla kaydedildi!');
+      setWebhookStatusMsg('✅ Webhook & API Key başarıyla kaydedildi!');
       setTimeout(() => setWebhookStatusMsg(''), 4000);
     } else {
       setWebhookStatusMsg('❌ Kayıt sırasında hata oluştu.');
@@ -651,64 +657,85 @@ export default function AdminDashboardModal({
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-                  <input
-                    type="url"
-                    placeholder="https://discord.com/api/webhooks/..."
-                    value={discordWebhookUrl}
-                    onChange={(e) => setDiscordWebhookUrl(e.target.value)}
-                    style={{
-                      flex: 1,
-                      minWidth: 260,
-                      padding: '9px 14px',
-                      borderRadius: 12,
-                      background: 'rgba(0, 0, 0, 0.45)',
-                      border: '1px solid rgba(88, 101, 242, 0.4)',
-                      color: '#f8fafc',
-                      fontSize: '0.84rem',
-                      outline: 'none'
-                    }}
-                  />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <input
+                      type="url"
+                      placeholder="Webhook URL (Örn: https://api.botghost.com/webhook/... veya https://discord.com/api/webhooks/...)"
+                      value={discordWebhookUrl}
+                      onChange={(e) => setDiscordWebhookUrl(e.target.value)}
+                      style={{
+                        flex: 1,
+                        minWidth: 280,
+                        padding: '9px 14px',
+                        borderRadius: 12,
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        border: '1px solid rgba(88, 101, 242, 0.4)',
+                        color: '#f8fafc',
+                        fontSize: '0.84rem',
+                        outline: 'none'
+                      }}
+                    />
 
-                  <button
-                    type="button"
-                    onClick={handleSaveDiscordWebhook}
-                    disabled={isSavingWebhook}
-                    style={{
-                      padding: '9px 16px',
-                      borderRadius: 12,
-                      background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
-                      color: '#ffffff',
-                      fontSize: '0.84rem',
-                      fontWeight: 800,
-                      border: 'none',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(88, 101, 242, 0.3)',
-                      transition: 'all 0.2s',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {isSavingWebhook ? '💾 Kaydediliyor...' : '💾 Webhook\'u Kaydet'}
-                  </button>
+                    <input
+                      type="text"
+                      placeholder="BotGhost API Key (Opsiyonel / İsteğe bağlı)"
+                      value={botGhostApiKey}
+                      onChange={(e) => setBotGhostApiKey(e.target.value)}
+                      style={{
+                        width: 240,
+                        padding: '9px 14px',
+                        borderRadius: 12,
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        border: '1px solid rgba(88, 101, 242, 0.25)',
+                        color: '#f8fafc',
+                        fontSize: '0.84rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={handleTestDiscordWebhook}
-                    style={{
-                      padding: '9px 14px',
-                      borderRadius: 12,
-                      background: 'rgba(88, 101, 242, 0.15)',
-                      color: '#818cf8',
-                      fontSize: '0.84rem',
-                      fontWeight: 700,
-                      border: '1px solid rgba(88, 101, 242, 0.4)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    🔔 Test Bildirimi Gönder
-                  </button>
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={handleSaveDiscordWebhook}
+                      disabled={isSavingWebhook}
+                      style={{
+                        padding: '9px 16px',
+                        borderRadius: 12,
+                        background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+                        color: '#ffffff',
+                        fontSize: '0.84rem',
+                        fontWeight: 800,
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(88, 101, 242, 0.3)',
+                        transition: 'all 0.2s',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {isSavingWebhook ? '💾 Kaydediliyor...' : '💾 Webhook\'u Kaydet'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleTestDiscordWebhook}
+                      style={{
+                        padding: '9px 14px',
+                        borderRadius: 12,
+                        background: 'rgba(88, 101, 242, 0.15)',
+                        color: '#818cf8',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        border: '1px solid rgba(88, 101, 242, 0.4)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      🔔 Test Bildirimi Gönder
+                    </button>
+                  </div>
                 </div>
               </div>
 

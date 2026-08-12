@@ -1,30 +1,36 @@
-// Cloudflare Pages Function helper: Discord Webhook Notification System
+export async function getDiscordWebhookConfig(env) {
+  let webhookUrl = env.DISCORD_WEBHOOK_URL || null;
+  let apiKey = env.BOTGHOST_API_KEY || null;
 
-export async function getDiscordWebhookUrl(env) {
-  if (env.DISCORD_WEBHOOK_URL) return env.DISCORD_WEBHOOK_URL;
   if (env.MAYKO_KV) {
     try {
       const cached = await env.MAYKO_KV.get('site_settings_cache', 'json');
-      if (cached && cached.discordWebhookUrl) return cached.discordWebhookUrl;
+      if (cached) {
+        if (cached.discordWebhookUrl) webhookUrl = cached.discordWebhookUrl;
+        if (cached.botGhostApiKey) apiKey = cached.botGhostApiKey;
+      }
     } catch (e) {}
   }
-  if (env.DB) {
+  if (env.DB && !webhookUrl) {
     try {
       const { results } = await env.DB.prepare(
         'SELECT data FROM meadow_objects WHERE id = ?'
       ).bind('site_settings').all();
       if (results && results.length > 0) {
         const s = JSON.parse(results[0].data);
-        if (s && s.discordWebhookUrl) return s.discordWebhookUrl;
+        if (s) {
+          if (s.discordWebhookUrl) webhookUrl = s.discordWebhookUrl;
+          if (s.botGhostApiKey) apiKey = s.botGhostApiKey;
+        }
       }
     } catch (e) {}
   }
-  return null;
+  return { webhookUrl, apiKey };
 }
 
 export async function sendDiscordWebhook(env, eventType, data = {}, timestamp = null) {
   try {
-    const webhookUrl = await getDiscordWebhookUrl(env);
+    const { webhookUrl, apiKey } = await getDiscordWebhookConfig(env);
     if (!webhookUrl || typeof webhookUrl !== 'string' || !webhookUrl.startsWith('https://')) {
       return;
     }
@@ -59,9 +65,9 @@ export async function sendDiscordWebhook(env, eventType, data = {}, timestamp = 
       color = 15679793; // Red #ef4444
       description = 'Bir çiçek bahçeden kaldırıldı.';
     } else if (eventType === 'test_notification') {
-      title = '🔔 Discord Webhook Test Bildirimi';
+      title = '🔔 Discord & BotGhost Webhook Test Bildirimi';
       color = 3718648; // Sky Blue #38bdf8
-      description = 'Mayko Bahçe Discord Webhook entegrasyonu sorunsuz bir şekilde bağlandı ve çalışıyor!';
+      description = 'Mayko Bahçe Webhook entegrasyonu sorunsuz bir şekilde bağlandı ve çalışıyor!';
     }
 
     if (data.name || data.typedName) {
@@ -104,6 +110,41 @@ export async function sendDiscordWebhook(env, eventType, data = {}, timestamp = 
       fields.push({ name: '⚠️ Silen Kişi', value: String(data.deletedBy), inline: true });
     }
 
+    // 1. BotGhost Webhook Compatibility (https://api.botghost.com/webhook/...)
+    if (webhookUrl.includes('botghost.com')) {
+      const summaryText = `${title}\n${description}\n\n` +
+        fields.map((f) => `• ${f.name}: ${f.value}`).join('\n');
+
+      const botGhostPayload = {
+        variables: [
+          { name: 'message', variable: '{event_message}', value: summaryText },
+          { name: 'event_message', variable: '{event_message}', value: summaryText },
+          { name: 'title', variable: '{title}', value: title },
+          { name: 'event_type', variable: '{event_type}', value: eventType },
+          { name: 'ip', variable: '{ip}', value: String(data.ip || 'Bilinmiyor') },
+          { name: 'location', variable: '{location}', value: String(data.location || 'Bilinmiyor') },
+          { name: 'device', variable: '{device}', value: String(data.device || 'Bilinmiyor') },
+          { name: 'name', variable: '{name}', value: String(data.name || data.typedName || '') },
+          { name: 'note', variable: '{note}', value: String(data.note || '') },
+          { name: 'instagram', variable: '{instagram}', value: String(data.instagram || data.typedInstagram || '') },
+          { name: 'answer', variable: '{answer}', value: String(data.answerInput || '') }
+        ]
+      };
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) {
+        headers['Authorization'] = apiKey;
+      }
+
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(botGhostPayload)
+      });
+      return;
+    }
+
+    // 2. Standard Discord Webhook (https://discord.com/api/webhooks/...)
     const payload = {
       username: 'Mayko Bahçe Bildirim',
       avatar_url: 'https://mayko.pages.dev/mayko_logo.png',
