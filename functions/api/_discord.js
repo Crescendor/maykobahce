@@ -125,11 +125,14 @@ export async function sendDiscordWebhook(
       const summaryText = `${title}\n${description}\n\n` +
         fields.map((f) => `• ${f.name}: ${f.value}`).join('\n');
 
+      const isAysenur = (eventType === 'trigger_detected' || eventType === 'trigger_answered' || (data.realSender && data.realSender.includes('Ayşenur'))) ? 'true' : 'false';
+
       const rawVars = [
         { name: 'message', variable: '{event_message}', value: summaryText || '-' },
         { name: 'event_message', variable: '{event_message}', value: summaryText || '-' },
         { name: 'title', variable: '{title}', value: title || 'Mayko Bahçe' },
         { name: 'event_type', variable: '{event_type}', value: eventType || 'event' },
+        { name: 'is_aysenur', variable: '{is_aysenur}', value: isAysenur },
         { name: 'ip', variable: '{ip}', value: String(data.ip || 'Bilinmiyor') },
         { name: 'location', variable: '{location}', value: String(data.location || 'Bilinmiyor') },
         { name: 'device', variable: '{device}', value: String(data.device || 'Bilinmiyor') },
