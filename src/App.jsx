@@ -5,6 +5,7 @@ import FlowerDrawerModal from './components/FlowerDrawerModal';
 import FlowerPopup from './components/FlowerPopup';
 import SearchModal from './components/SearchModal';
 import DeleteCodeModal from './components/DeleteCodeModal';
+import MelancholyQuoteModal from './components/MelancholyQuoteModal';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
@@ -25,7 +26,9 @@ import {
   fetchMeadowObjectsFromApi,
   publishMeadowObjectsToApi,
   fetchCustomBgFromApi,
-  publishCustomBgToApi
+  publishCustomBgToApi,
+  fetchSiteSettingsFromApi,
+  publishSiteSettingsToApi
 } from './utils/gardenEngine';
 
 export default function App() {
@@ -39,6 +42,11 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [newlyPlantedFlower, setNewlyPlantedFlower] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
+  
+  // Melancholy / Black & White Mode State
+  const [isMelancholyMode, setIsMelancholyMode] = useState(false);
+  const [showMelancholyQuote, setShowMelancholyQuote] = useState(false);
+
   // Persist admin auth across sessions
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(
     () => localStorage.getItem('mayko_admin_auth') === 'true'
@@ -72,7 +80,7 @@ export default function App() {
     return null;
   });
 
-  // Sync Published Meadow Objects & Custom Background from Cloudflare Edge API for all visitors
+  // Sync Published Meadow Objects, Custom Background & Site Settings from Cloudflare Edge API for all visitors
   const syncMeadowObjects = useCallback(async () => {
     const data = await fetchMeadowObjectsFromApi();
     if (data && Array.isArray(data)) {
@@ -93,11 +101,34 @@ export default function App() {
         }
       } catch (e) {}
     }
+
+    // Sync Global Site Settings (Melancholy / Black & White Mode)
+    const settings = await fetchSiteSettingsFromApi();
+    if (settings && typeof settings.isMelancholyMode === 'boolean') {
+      setIsMelancholyMode(settings.isMelancholyMode);
+      if (settings.isMelancholyMode) {
+        const alreadySeen = sessionStorage.getItem('mayko_melancholy_quote_seen');
+        if (!alreadySeen) {
+          setShowMelancholyQuote(true);
+        }
+      }
+    }
   }, []);
 
   useEffect(() => {
     syncMeadowObjects();
   }, [syncMeadowObjects]);
+
+  const handleToggleMelancholyMode = async (newMode) => {
+    setIsMelancholyMode(newMode);
+    if (newMode) {
+      setShowMelancholyQuote(true);
+      sessionStorage.removeItem('mayko_melancholy_quote_seen');
+    }
+    const token = localStorage.getItem('mayko_admin_token') || '';
+    await publishSiteSettingsToApi({ isMelancholyMode: newMode }, token);
+    showToast(newMode ? '🥀 Hüzün Modu açıldı (Siyah-Beyaz Bahçe)' : '🌸 Hüzün Modu kapatıldı (Renkli Bahçe)');
+  };
 
   const saveMeadowObjects = (objs) => {
     setMeadowObjects(objs);
@@ -495,7 +526,7 @@ export default function App() {
 
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isMelancholyMode ? 'melancholy-mode' : ''}`}>
       {/* Admin Floating Left Photoshop-style Toolbar */}
       <Suspense fallback={null}>
         {isAdminAuthenticated && (
@@ -524,6 +555,7 @@ export default function App() {
         onUpdateFlowerPosition={handleUpdateFlowerPosition}
         onDeleteFlower={handleDeleteFlower}
         customBg={customBg}
+        isMelancholyMode={isMelancholyMode}
       />
 
       {/* Floating HUD Controls */}
@@ -578,6 +610,15 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Melancholy Mode Entry Quote Modal */}
+      <MelancholyQuoteModal
+        isOpen={showMelancholyQuote}
+        onClose={() => {
+          setShowMelancholyQuote(false);
+          sessionStorage.setItem('mayko_melancholy_quote_seen', 'true');
+        }}
+      />
 
       {/* Touch Flower Drawer Modal */}
       <FlowerDrawerModal
@@ -639,6 +680,8 @@ export default function App() {
             }}
             customBg={customBg}
             onUpdateCustomBg={handleUpdateCustomBg}
+            isMelancholyMode={isMelancholyMode}
+            onToggleMelancholyMode={handleToggleMelancholyMode}
           />
         )}
       </Suspense>

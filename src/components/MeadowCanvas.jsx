@@ -70,7 +70,8 @@ export default function MeadowCanvas({
   onUpdateFlowerLocalPos,
   onUpdateFlowerPosition,
   onDeleteFlower,
-  customBg
+  customBg,
+  isMelancholyMode = false
 }) {
   const canvasRef = useRef(null);
 
@@ -119,11 +120,11 @@ export default function MeadowCanvas({
     const startY = transformRef.current.y;
     const startScale = transformRef.current.scale;
 
-    const targetScale = viewportTarget.scale || startScale;
-    const targetX = -viewportTarget.x * targetScale + window.innerWidth / 2;
-    const targetY = -viewportTarget.y * targetScale + window.innerHeight / 2;
+    const targetX = -viewportTarget.x * viewportTarget.scale + window.innerWidth / 2;
+    const targetY = -viewportTarget.y * viewportTarget.scale + window.innerHeight / 2;
+    const targetScale = viewportTarget.scale;
 
-    const clampedTarget = clampTransform({ x: targetX, y: targetY, scale: targetScale });
+    const clamped = clampTransform({ x: targetX, y: targetY, scale: targetScale });
 
     const startTime = performance.now();
     const duration = 650;
@@ -131,13 +132,13 @@ export default function MeadowCanvas({
     const animate = (now) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const ease = 1 - Math.pow(1 - progress, 3);
 
-      const nextTransform = clampTransform({
-        x: startX + (clampedTarget.x - startX) * easeProgress,
-        y: startY + (clampedTarget.y - startY) * easeProgress,
-        scale: startScale + (clampedTarget.scale - startScale) * easeProgress
-      });
+      const nextTransform = {
+        x: startX + (clamped.x - startX) * ease,
+        y: startY + (clamped.y - startY) * ease,
+        scale: startScale + (clamped.scale - startScale) * ease
+      };
 
       setTransform(nextTransform);
       if (onViewportChange) onViewportChange(nextTransform);
@@ -148,62 +149,40 @@ export default function MeadowCanvas({
     };
 
     requestAnimationFrame(animate);
-  }, [viewportTarget]);
+  }, [viewportTarget, onViewportChange]);
 
-  const render = useCallback((time = 0) => {
+  const render = useCallback((time) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const { x, y, scale } = transformRef.current;
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-
-    ctx.clearRect(0, 0, width, height);
-
-    // Fill entire screen viewport with lush grass green FIRST (zero dark void!)
-    ctx.fillStyle = '#2d6a4f';
-    ctx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
-    ctx.translate(transformRef.current.x, transformRef.current.y);
-    ctx.scale(transformRef.current.scale, transformRef.current.scale);
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
 
-    const scale = transformRef.current.scale;
-
-    // 1. Draw Custom Outer Background Image if uploaded by admin
-    if (customBg && customBg.url && bgImgLoadedRef.current && bgImgRef.current) {
+    // 0. Render Custom Background Image outside fence if set
+    if (customBg && bgImgRef.current && bgImgLoadedRef.current) {
       ctx.save();
       ctx.globalAlpha = customBg.opacity !== undefined ? customBg.opacity : 1.0;
       const bgW = customBg.width || 3000;
       const bgH = customBg.height || 2000;
-      const bgX = (customBg.x !== undefined ? customBg.x : GARDEN_SIZE / 2) - bgW / 2;
-      const bgY = (customBg.y !== undefined ? customBg.y : GARDEN_SIZE / 2) - bgH / 2;
+      const bgX = (customBg.x !== undefined ? customBg.x : 1000) - bgW / 2;
+      const bgY = (customBg.y !== undefined ? customBg.y : 1000) - bgH / 2;
       ctx.drawImage(bgImgRef.current, bgX, bgY, bgW, bgH);
       ctx.restore();
     }
 
-    // 2. Render Constant Garden Lawn Base Inside Wooden Fences (Always Green & Constant!)
-    const p = FENCE_PADDING;
-    const innerSize = GARDEN_SIZE - p * 2;
-    ctx.fillStyle = '#2d6a4f';
-    ctx.fillRect(p, p, innerSize, innerSize);
-
-    // 3. Render Grass Blade Tufts & Clovers strictly inside the fence
-    drawLawnDetails(ctx);
-
-    // 4. Render Wooden Fence Outer Boundary
+    drawDetailedGrass(ctx);
     drawGardenFences(ctx);
 
     if (flowers && flowers.length > 0) {
       flowers.forEach((rawFlower) => {
         const flower = getEffectiveFlower(rawFlower);
         const isSelected = selectedFlower && selectedFlower.id === flower.id;
-        drawFlower(ctx, flower, isSelected, scale, time);
+        drawFlower(ctx, flower, isSelected, scale, time, isMelancholyMode);
       });
     }
 
@@ -212,7 +191,7 @@ export default function MeadowCanvas({
     }
 
     ctx.restore();
-  }, [flowers, selectedFlower, pendingPlantPosition, customBg]);
+  }, [flowers, selectedFlower, pendingPlantPosition, customBg, isMelancholyMode]);
 
   useEffect(() => {
     const loop = (time) => {
@@ -497,7 +476,7 @@ function drawGardenFences(ctx) {
 /**
  * Render a Single Flower (Vivid Visible Stem + Leaves + Custom Petals + Wind Sway & Animations)
  */
-function drawFlower(ctx, flower, isSelected, zoomScale, time = 0) {
+function drawFlower(ctx, flower, isSelected, zoomScale, time = 0, isMelancholyMode = false) {
   const { x, y, strokes, stemAngle = 0 } = flower;
   const scale = (flower.scale || 1) * 1.5;
 
@@ -507,7 +486,10 @@ function drawFlower(ctx, flower, isSelected, zoomScale, time = 0) {
 
   // Gentle wind sway calculation based on coordinates & time
   const windSway = Math.sin(time * 2 + x * 0.04 + y * 0.03) * 0.07;
-  const currentAngle = stemAngle + windSway;
+  
+  // Melancholic droop: stems bend downward to the side, petal heads hang low in sorrow
+  const wiltStemAngle = isMelancholyMode ? ((stemAngle < 0 ? -0.36 : 0.36) + Math.sin(x * 0.08) * 0.06) : 0;
+  const currentAngle = stemAngle + windSway + wiltStemAngle;
 
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -565,16 +547,20 @@ function drawFlower(ctx, flower, isSelected, zoomScale, time = 0) {
     ctx.restore();
   }
 
-  // 2. Draw High-Contrast Vivid Stem & Leaves (with wind sway)
+  // 2. Draw High-Contrast Vivid Stem & Leaves (with wind sway + wilting angle)
   ctx.save();
   ctx.rotate(currentAngle);
   drawStem(ctx, flower.stemType || 'classic', flower.stemColor || '#52b788', scale);
   ctx.restore();
 
-  // 3. Draw Petal Top (Sways together with stem tip at y = -50 * scale)
+  // 3. Draw Petal Top (Sways together with stem tip at y = -50 * scale, droops downward if melancholy)
   ctx.save();
   ctx.translate(0, -50 * scale);
-  ctx.rotate(windSway * 0.5); // extra subtle petal tip tilt
+  const wiltPetalTilt = isMelancholyMode ? (stemAngle < 0 ? -0.58 : 0.58) : 0;
+  ctx.rotate(windSway * 0.5 + wiltPetalTilt);
+  if (isMelancholyMode) {
+    ctx.translate(0, 12 * scale); // head hangs down
+  }
   ctx.scale(scale * 0.20, scale * 0.20);
   ctx.translate(-150, -240);
 

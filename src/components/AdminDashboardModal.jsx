@@ -96,7 +96,9 @@ export default function AdminDashboardModal({
   onAdminAuth,
   onPatchFlower,
   customBg,
-  onUpdateCustomBg
+  onUpdateCustomBg,
+  isMelancholyMode = false,
+  onToggleMelancholyMode
 }) {
   // ALL hooks must be declared before any early returns (React rules of hooks)
   const [passwordInput, setPasswordInput] = useState('');
@@ -407,6 +409,67 @@ export default function AdminDashboardModal({
                   <span style={{ ...styles.statNumber, color: '#38bdf8' }}>{anonCount}</span>
                   <span style={styles.statLabel}>Anonim</span>
                 </div>
+              </div>
+
+              {/* Global Melancholy / Black & White Mode Toggle Card */}
+              <div style={{
+                background: isMelancholyMode ? 'rgba(30, 27, 40, 0.9)' : 'rgba(15, 23, 42, 0.65)',
+                border: isMelancholyMode ? '1.5px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 16,
+                padding: '12px 16px',
+                marginBottom: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                boxShadow: isMelancholyMode ? '0 0 20px rgba(168, 85, 247, 0.25)' : 'none',
+                transition: 'all 0.3s ease'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: '1.4rem' }}>🥀</span>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <h4 style={{ fontSize: '0.94rem', fontWeight: 800, color: isMelancholyMode ? '#d8b4fe' : '#f8fafc', margin: 0 }}>
+                        Hüzün Modu (Siyah & Beyaz Bahçe)
+                      </h4>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        padding: '2px 8px',
+                        borderRadius: 8,
+                        fontWeight: 800,
+                        background: isMelancholyMode ? '#7e22ce' : 'rgba(255, 255, 255, 0.1)',
+                        color: isMelancholyMode ? '#ffffff' : '#94a3b8'
+                      }}>
+                        {isMelancholyMode ? 'AKTİF (SİYAH-BEYAZ)' : 'KAPALI'}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '3px 0 0 0' }}>
+                      Açıldığında tüm ziyaretçiler için siteyi siyah-beyaz filtreye alır, çiçeklerin boynunu büker ve George Eliot sözüyle karşılar.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onToggleMelancholyMode && onToggleMelancholyMode(!isMelancholyMode)}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: 12,
+                    fontWeight: 800,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: isMelancholyMode
+                      ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                      : 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
+                    color: '#ffffff',
+                    boxShadow: isMelancholyMode ? '0 4px 12px rgba(239, 68, 68, 0.3)' : '0 4px 12px rgba(168, 85, 247, 0.3)',
+                    transition: 'all 0.2s',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {isMelancholyMode ? '❌ Hüzün Modunu Kapat' : '🥀 Hüzün Modunu Aç'}
+                </button>
               </div>
 
               {/* Custom Outer Background PNG Image Manager */}

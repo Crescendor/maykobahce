@@ -378,3 +378,9 @@ html, body, #root {
     justify-content: center;
   }
 }
+
+/* ─── Melancholy (Hüzün / Siyah Beyaz) Global Mode ──────────────── */
+.melancholy-mode {
+  filter: grayscale(100%) contrast(108%) brightness(92%);
+  transition: filter 1.5s ease-in-out;
+}
