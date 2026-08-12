@@ -125,20 +125,27 @@ export async function sendDiscordWebhook(
       const summaryText = `${title}\n${description}\n\n` +
         fields.map((f) => `• ${f.name}: ${f.value}`).join('\n');
 
+      const rawVars = [
+        { name: 'message', variable: '{event_message}', value: summaryText || '-' },
+        { name: 'event_message', variable: '{event_message}', value: summaryText || '-' },
+        { name: 'title', variable: '{title}', value: title || 'Mayko Bahçe' },
+        { name: 'event_type', variable: '{event_type}', value: eventType || 'event' },
+        { name: 'ip', variable: '{ip}', value: String(data.ip || 'Bilinmiyor') },
+        { name: 'location', variable: '{location}', value: String(data.location || 'Bilinmiyor') },
+        { name: 'device', variable: '{device}', value: String(data.device || 'Bilinmiyor') },
+        { name: 'name', variable: '{name}', value: String(data.name || data.typedName || '-') },
+        { name: 'note', variable: '{note}', value: String(data.note || '-') },
+        { name: 'instagram', variable: '{instagram}', value: String(data.instagram || data.typedInstagram || '-') },
+        { name: 'answer', variable: '{answer}', value: String(data.answerInput || '-') },
+        { name: 'stage', variable: '{stage}', value: String(data.stage || '-') }
+      ];
+
       const botGhostPayload = {
-        variables: [
-          { name: 'message', variable: '{event_message}', value: summaryText },
-          { name: 'event_message', variable: '{event_message}', value: summaryText },
-          { name: 'title', variable: '{title}', value: title },
-          { name: 'event_type', variable: '{event_type}', value: eventType },
-          { name: 'ip', variable: '{ip}', value: String(data.ip || 'Bilinmiyor') },
-          { name: 'location', variable: '{location}', value: String(data.location || 'Bilinmiyor') },
-          { name: 'device', variable: '{device}', value: String(data.device || 'Bilinmiyor') },
-          { name: 'name', variable: '{name}', value: String(data.name || data.typedName || '') },
-          { name: 'note', variable: '{note}', value: String(data.note || '') },
-          { name: 'instagram', variable: '{instagram}', value: String(data.instagram || data.typedInstagram || '') },
-          { name: 'answer', variable: '{answer}', value: String(data.answerInput || '') }
-        ]
+        variables: rawVars.map((v) => ({
+          name: v.name,
+          variable: v.variable,
+          value: v.value && String(v.value).trim() ? String(v.value) : '-'
+        }))
       };
 
       const headers = { 'Content-Type': 'application/json' };
