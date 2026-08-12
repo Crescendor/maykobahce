@@ -874,3 +874,17 @@ export async function publishSiteSettingsToApi(settings, adminPassword = '') {
   return null;
 }
 
+export async function testDiscordWebhookApi(adminPassword = '') {
+  try {
+    const res = await fetch('/api/site-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ testDiscordWebhook: true, adminPassword })
+    });
+    if (res.ok) {
+      return await res.json().catch(() => null);
+    }
+  } catch (e) {}
+  return null;
+}
+

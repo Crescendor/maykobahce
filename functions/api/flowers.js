@@ -157,6 +157,23 @@ export async function onRequestPost(context) {
       } catch (err) {}
     }
 
+    // Send Discord Webhook notification asynchronously
+    try {
+      const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || 'Bilinmiyor';
+      const city = request.headers.get('cf-ipcity') || (request.cf && request.cf.city) || '';
+      const country = request.headers.get('cf-ipcountry') || (request.cf && request.cf.country) || '';
+      const { sendDiscordWebhook } = await import('./_discord.js');
+      sendDiscordWebhook(env, 'flower_planted', {
+        name: flower.name || (flower.isAnonymous ? 'Gizli Bahçıvan (Anonim)' : 'İsimsiz Çiçek'),
+        instagram: flower.instagram || null,
+        note: flower.isPrivate ? '🔒 Gizli / Şifreli Not' : flower.note || null,
+        realSender: flower.realSender || null,
+        deleteCode: flower.deleteCode,
+        ip: clientIp,
+        location: city && country ? `${city}, ${country}` : country || city || null
+      }).catch(() => {});
+    } catch (e) {}
+
     return new Response(JSON.stringify({ success: true, flower: { ...flower, approved } }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       status: 201

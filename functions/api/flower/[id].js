@@ -41,6 +41,18 @@ export async function onRequestDelete(context) {
       const flowerToDelete = await env.DB.prepare('SELECT * FROM flowers WHERE id = ?').bind(flowerId).first();
       if (flowerToDelete) {
         try {
+          const deletePayload = {
+            flowerId: flowerToDelete.id,
+            name: flowerToDelete.name,
+            note: flowerToDelete.note,
+            instagram: flowerToDelete.instagram,
+            isAnonymous: Boolean(flowerToDelete.is_anonymous),
+            isPrivate: Boolean(flowerToDelete.is_private),
+            realSender: flowerToDelete.real_sender,
+            deletedBy: adminPassword === expectedAdminPass ? 'Admin' : 'Ziyaretçi (Silme Kodu)',
+            deletedAt: new Date().toISOString()
+          };
+
           await env.DB.prepare(
             `CREATE TABLE IF NOT EXISTS activity_logs (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,20 +67,13 @@ export async function onRequestDelete(context) {
           )
             .bind(
               'flower_deleted',
-              JSON.stringify({
-                flowerId: flowerToDelete.id,
-                name: flowerToDelete.name,
-                note: flowerToDelete.note,
-                instagram: flowerToDelete.instagram,
-                isAnonymous: Boolean(flowerToDelete.is_anonymous),
-                isPrivate: Boolean(flowerToDelete.is_private),
-                realSender: flowerToDelete.real_sender,
-                deletedBy: adminPassword === expectedAdminPass ? 'Admin' : 'Ziyaretçi (Silme Kodu)',
-                deletedAt: new Date().toISOString()
-              }),
+              JSON.stringify(deletePayload),
               new Date().toISOString()
             )
             .run();
+
+          const { sendDiscordWebhook } = await import('./../_discord.js');
+          sendDiscordWebhook(env, 'flower_deleted', deletePayload).catch(() => {});
         } catch (e) {}
       }
 

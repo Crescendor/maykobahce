@@ -49,6 +49,8 @@ export async function onRequestGet(context) {
   });
 }
 
+import { sendDiscordWebhook } from './_discord.js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -79,6 +81,9 @@ export async function onRequestPost(context) {
         .bind(eventType, JSON.stringify(enrichedData), timestamp)
         .run();
     }
+
+    // Send Discord Webhook notification asynchronously
+    sendDiscordWebhook(env, eventType, enrichedData, timestamp).catch(() => {});
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }

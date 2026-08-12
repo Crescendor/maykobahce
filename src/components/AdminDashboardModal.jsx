@@ -20,7 +20,14 @@ import {
   Save
 } from 'lucide-react';
 import InstagramIcon from './InstagramIcon';
-import { drawSmoothStroke, drawStem, fetchLogsFromApi } from '../utils/gardenEngine';
+import {
+  drawSmoothStroke,
+  drawStem,
+  fetchLogsFromApi,
+  fetchSiteSettingsFromApi,
+  publishSiteSettingsToApi,
+  testDiscordWebhookApi
+} from '../utils/gardenEngine';
 
 function b64(str) {
   try {
@@ -46,7 +53,7 @@ function FlowerThumbnail({ flower }) {
 
     // Stem
     ctx.save();
-    ctx.translate(35, 60);
+    ctx.translate(35, 62);
     drawStem(ctx, flower.stemType || 'classic', flower.stemColor || '#52b788', 0.65);
     ctx.restore();
 
@@ -120,6 +127,54 @@ export default function AdminDashboardModal({
   const [activityLogs, setActivityLogs] = useState([]);
   const [logFilter, setLogFilter] = useState('all'); // 'all' | 'trigger' | 'abandoned' | 'deleted'
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+
+  // Discord Webhook State
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
+  const [isSavingWebhook, setIsSavingWebhook] = useState(false);
+  const [webhookStatusMsg, setWebhookStatusMsg] = useState('');
+
+  const loadSettings = async () => {
+    const s = await fetchSiteSettingsFromApi();
+    if (s && s.discordWebhookUrl) {
+      setDiscordWebhookUrl(s.discordWebhookUrl);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && isAuthenticated) {
+      loadSettings();
+    }
+  }, [isOpen, isAuthenticated]);
+
+  const handleSaveDiscordWebhook = async () => {
+    setIsSavingWebhook(true);
+    const token = passwordInput || localStorage.getItem('mayko_admin_token') || '';
+    const res = await publishSiteSettingsToApi(
+      { isMelancholyMode, discordWebhookUrl: discordWebhookUrl.trim() },
+      token
+    );
+    setIsSavingWebhook(false);
+    if (res && res.success) {
+      setWebhookStatusMsg('✅ Discord Webhook URL başarıyla kaydedildi!');
+      setTimeout(() => setWebhookStatusMsg(''), 4000);
+    } else {
+      setWebhookStatusMsg('❌ Kayıt sırasında hata oluştu.');
+      setTimeout(() => setWebhookStatusMsg(''), 4000);
+    }
+  };
+
+  const handleTestDiscordWebhook = async () => {
+    setWebhookStatusMsg('⏳ Discord test bildirimi gönderiliyor...');
+    const token = passwordInput || localStorage.getItem('mayko_admin_token') || '';
+    const res = await testDiscordWebhookApi(token);
+    if (res && res.success) {
+      setWebhookStatusMsg('🎉 Discord test bildirimi botunuza başarıyla iletildi!');
+      setTimeout(() => setWebhookStatusMsg(''), 5000);
+    } else {
+      setWebhookStatusMsg('❌ Test bildirimi gönderilemedi. Webhook URL\'sini kontrol edin.');
+      setTimeout(() => setWebhookStatusMsg(''), 5000);
+    }
+  };
 
   const loadLogs = async () => {
     setIsLoadingLogs(true);
@@ -557,6 +612,103 @@ export default function AdminDashboardModal({
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Discord Bot & Webhook Notification Manager */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(88, 101, 242, 0.12) 0%, rgba(15, 23, 42, 0.7) 100%)',
+                border: '1px solid rgba(88, 101, 242, 0.35)',
+                borderRadius: 16,
+                padding: '14px 16px',
+                marginBottom: 14,
+                boxShadow: '0 4px 16px rgba(88, 101, 242, 0.12)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: '1.4rem' }}>🤖</span>
+                    <div>
+                      <h4 style={{ fontSize: '0.94rem', fontWeight: 800, color: '#818cf8', margin: 0 }}>
+                        Discord Bot & Webhook Bildirim Entegrasyonu
+                      </h4>
+                      <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                        Hüzün modu girişleri (IP & Cihaz), Ayşenur tetiklemeleri, yeni çiçekler ve silinenler Discord botunuza anında gönderilir.
+                      </p>
+                    </div>
+                  </div>
+
+                  {webhookStatusMsg && (
+                    <span style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      padding: '4px 10px',
+                      borderRadius: 8,
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: webhookStatusMsg.startsWith('✅') || webhookStatusMsg.startsWith('🎉') ? '#34d399' : '#fb7185'
+                    }}>
+                      {webhookStatusMsg}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+                  <input
+                    type="url"
+                    placeholder="https://discord.com/api/webhooks/..."
+                    value={discordWebhookUrl}
+                    onChange={(e) => setDiscordWebhookUrl(e.target.value)}
+                    style={{
+                      flex: 1,
+                      minWidth: 260,
+                      padding: '9px 14px',
+                      borderRadius: 12,
+                      background: 'rgba(0, 0, 0, 0.45)',
+                      border: '1px solid rgba(88, 101, 242, 0.4)',
+                      color: '#f8fafc',
+                      fontSize: '0.84rem',
+                      outline: 'none'
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleSaveDiscordWebhook}
+                    disabled={isSavingWebhook}
+                    style={{
+                      padding: '9px 16px',
+                      borderRadius: 12,
+                      background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+                      color: '#ffffff',
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(88, 101, 242, 0.3)',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {isSavingWebhook ? '💾 Kaydediliyor...' : '💾 Webhook\'u Kaydet'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleTestDiscordWebhook}
+                    style={{
+                      padding: '9px 14px',
+                      borderRadius: 12,
+                      background: 'rgba(88, 101, 242, 0.15)',
+                      color: '#818cf8',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      border: '1px solid rgba(88, 101, 242, 0.4)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    🔔 Test Bildirimi Gönder
+                  </button>
                 </div>
               </div>
 

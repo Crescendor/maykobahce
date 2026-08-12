@@ -65,6 +65,8 @@ export async function onRequestGet({ env }) {
   });
 }
 
+import { sendDiscordWebhook } from './_discord.js';
+
 export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
@@ -75,7 +77,25 @@ export async function onRequestPost({ request, env }) {
       return new Response(JSON.stringify({ error: 'Yetki hatası!' }), { status: 403 });
     }
 
-    const settings = body.settings || { isMelancholyMode: false };
+    // Test Discord Webhook notification if requested
+    if (body.testDiscordWebhook) {
+      const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '127.0.0.1';
+      const city = request.headers.get('cf-ipcity') || (request.cf && request.cf.city) || '';
+      const country = request.headers.get('cf-ipcountry') || (request.cf && request.cf.country) || '';
+
+      await sendDiscordWebhook(env, 'test_notification', {
+        action: 'Discord Webhook Test Bildirimi Başarılı',
+        ip: clientIp,
+        location: city && country ? `${city}, ${country}` : country || city || 'Türkiye',
+        device: 'Admin Yönetim Paneli'
+      });
+
+      return new Response(JSON.stringify({ success: true, tested: true }), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+
+    const settings = body.settings || { isMelancholyMode: false, discordWebhookUrl: '' };
     const dataJson = JSON.stringify(settings);
     const nowIso = new Date().toISOString();
 
