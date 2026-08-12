@@ -58,12 +58,25 @@ export async function onRequestPost(context) {
     const data = body.data || {};
     const timestamp = body.timestamp || new Date().toISOString();
 
+    // Extract real client IP and Cloudflare geo metadata
+    const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || 'Bilinmiyor';
+    const userAgent = request.headers.get('user-agent') || '';
+    const city = request.headers.get('cf-ipcity') || (request.cf && request.cf.city) || '';
+    const country = request.headers.get('cf-ipcountry') || (request.cf && request.cf.country) || '';
+
+    const enrichedData = {
+      ...data,
+      ip: clientIp,
+      location: city && country ? `${city}, ${country}` : country || city || null,
+      userAgent: data.userAgent || userAgent
+    };
+
     if (env.DB) {
       await ensureLogSchema(env.DB);
       await env.DB.prepare(
         'INSERT INTO activity_logs (event_type, data_json, created_at) VALUES (?, ?, ?)'
       )
-        .bind(eventType, JSON.stringify(data), timestamp)
+        .bind(eventType, JSON.stringify(enrichedData), timestamp)
         .run();
     }
 

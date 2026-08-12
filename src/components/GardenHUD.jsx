@@ -13,7 +13,8 @@ export default function GardenHUD({
   isPlantingMode,
   onCancelPlanting,
   isAdminAuthenticated,
-  onOpenAdmin
+  onOpenAdmin,
+  isMelancholyMode = false
 }) {
   return (
     <>
@@ -24,9 +25,11 @@ export default function GardenHUD({
           <div style={styles.headerSectionLeft}>
             <img src="/mayko_logo.png" alt="mayko" style={styles.logoImg} />
           </div>
-          <div style={styles.headerSectionCenter}>
-            <p style={styles.brandSub}>"Ben sana bir bahçe verdim."</p>
-          </div>
+          {!isMelancholyMode && (
+            <div style={styles.headerSectionCenter}>
+              <p style={styles.brandSub}>"Ben sana bir bahçe verdim."</p>
+            </div>
+          )}
         </div>
 
         {/* Row 2 (mobile) / inline right (desktop): Counter Badge */}

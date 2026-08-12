@@ -560,6 +560,7 @@ export default function App() {
         onCancelPlanting={() => setIsPlantingMode(false)}
         isAdminAuthenticated={isAdminAuthenticated}
         onOpenAdmin={() => setIsAdminOpen(true)}
+        isMelancholyMode={isMelancholyMode}
       />
 
       {/* Flag Confirmation Overlay Bar */}

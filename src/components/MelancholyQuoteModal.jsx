@@ -1,14 +1,55 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { postLogToApi } from '../utils/gardenEngine';
+
+function detectClientDevice() {
+  const ua = navigator.userAgent || '';
+  let deviceName = 'Masaüstü Bilgisayar';
+
+  if (/iPhone/i.test(ua)) {
+    deviceName = 'Apple iPhone (iOS)';
+  } else if (/iPad/i.test(ua)) {
+    deviceName = 'Apple iPad (iPadOS)';
+  } else if (/Android/i.test(ua)) {
+    deviceName = /Mobile/i.test(ua) ? 'Android Telefon' : 'Android Tablet';
+  } else if (/Macintosh|Mac OS X/i.test(ua)) {
+    deviceName = 'Apple Mac (macOS)';
+  } else if (/Windows/i.test(ua)) {
+    deviceName = 'Windows PC';
+  } else if (/Linux/i.test(ua)) {
+    deviceName = 'Linux';
+  }
+
+  let browser = 'Tarayıcı';
+  if (/Edg/i.test(ua)) browser = 'Edge';
+  else if (/Chrome/i.test(ua)) browser = 'Chrome';
+  else if (/Safari/i.test(ua)) browser = 'Safari';
+  else if (/Firefox/i.test(ua)) browser = 'Firefox';
+
+  const screenInfo = `${window.screen?.width || window.innerWidth}x${window.screen?.height || window.innerHeight}`;
+  return `${deviceName} • ${browser} • (${screenInfo})`;
+}
 
 export default function MelancholyQuoteModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
+  const handleProceed = () => {
+    try {
+      postLogToApi('melancholy_quote_viewed', {
+        action: 'Hüzün Modu Karşılama Ekranı Görüldü / Bahçeye Geçildi',
+        device: detectClientDevice(),
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {}
+    onClose();
+  };
+
   return (
-    <div style={styles.overlay} className="animate-fade-in" onClick={onClose}>
+    <div style={styles.overlay} className="animate-fade-in" onClick={handleProceed}>
       <div style={styles.card} className="animate-slide-up" onClick={(e) => e.stopPropagation()}>
         {/* Subtle Close Button */}
-        <button style={styles.closeBtn} onClick={onClose} aria-label="Kapat">
+        <button style={styles.closeBtn} onClick={handleProceed} aria-label="Kapat">
           <X size={18} />
         </button>
 
@@ -26,7 +67,7 @@ export default function MelancholyQuoteModal({ isOpen, onClose }) {
           — George Eliot
         </cite>
 
-        <button style={styles.continueBtn} onClick={onClose}>
+        <button style={styles.continueBtn} onClick={handleProceed}>
           Bahçeyi Gör
         </button>
       </div>

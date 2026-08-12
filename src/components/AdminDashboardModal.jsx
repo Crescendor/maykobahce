@@ -143,6 +143,7 @@ export default function AdminDashboardModal({
     if (logFilter === 'trigger') return logItem.eventType === 'trigger_detected' || logItem.eventType === 'trigger_answered';
     if (logFilter === 'abandoned') return logItem.eventType === 'draft_abandoned';
     if (logFilter === 'deleted') return logItem.eventType === 'flower_deleted';
+    if (logFilter === 'melancholy') return logItem.eventType === 'melancholy_quote_viewed';
     return true;
   });
 
@@ -882,6 +883,14 @@ export default function AdminDashboardModal({
 
                     <button
                       type="button"
+                      style={{ ...styles.filterChip, ...(logFilter === 'melancholy' ? styles.activeFilterChip : {}) }}
+                      onClick={() => setLogFilter('melancholy')}
+                    >
+                      🥀 Hüzün Modu Girişleri ({activityLogs.filter((l) => l.eventType === 'melancholy_quote_viewed').length})
+                    </button>
+
+                    <button
+                      type="button"
                       style={{ ...styles.filterChip, ...(logFilter === 'deleted' ? styles.activeFilterChip : {}) }}
                       onClick={() => setLogFilter('deleted')}
                     >
@@ -955,6 +964,10 @@ export default function AdminDashboardModal({
                         badgeColor = '#ef4444';
                         badgeIcon = '🗑️';
                         titleText = 'Silinen Çiçek Kaydı';
+                      } else if (type === 'melancholy_quote_viewed') {
+                        badgeColor = '#a855f7';
+                        badgeIcon = '🥀';
+                        titleText = 'Hüzün Modu - Karşılama Ekranı Geçildi';
                       }
 
                       return (
@@ -972,6 +985,34 @@ export default function AdminDashboardModal({
                           </div>
 
                           <div style={styles.logDetailsGrid}>
+                            {d.action && (
+                              <div style={{ gridColumn: 'span 2' }}>
+                                <span style={styles.logLabel}>İşlem:</span>
+                                <span style={{ ...styles.logVal, color: '#e2e8f0', fontWeight: 700 }}>{d.action}</span>
+                              </div>
+                            )}
+
+                            {d.device && (
+                              <div style={{ gridColumn: 'span 2' }}>
+                                <span style={styles.logLabel}>📱 Cihaz Modeli & Tarayıcı:</span>
+                                <span style={{ ...styles.logVal, color: '#38bdf8' }}>{d.device}</span>
+                              </div>
+                            )}
+
+                            {d.ip && (
+                              <div>
+                                <span style={styles.logLabel}>🌐 IP Adresi:</span>
+                                <span style={{ ...styles.logVal, color: '#f59e0b', fontFamily: 'monospace' }}>{d.ip}</span>
+                              </div>
+                            )}
+
+                            {d.location && (
+                              <div>
+                                <span style={styles.logLabel}>📍 Konum / Bölge:</span>
+                                <span style={{ ...styles.logVal, color: '#34d399' }}>{d.location}</span>
+                              </div>
+                            )}
+
                             {d.typedName || d.name ? (
                               <div>
                                 <span style={styles.logLabel}>Girilen İsim:</span>
