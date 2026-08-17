@@ -704,10 +704,10 @@ export default function App() {
 }
 
 const styles = {
-  // Height creates the scroll timeline length (125vh per stage)
+  // Height creates the scroll timeline length (165vh per stage for longer, cinematic pacing)
   pageScrollTrack: {
     width: '100%',
-    height: `${LETTER_SECTIONS.length * 125}vh`,
+    height: `${LETTER_SECTIONS.length * 165}vh`,
     backgroundColor: '#0f1115'
   },
   fixedViewport: {
