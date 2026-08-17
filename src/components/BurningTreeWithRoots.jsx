@@ -11,22 +11,22 @@ import React from 'react';
  * - 100% scrubbable forward & backward via mouse wheel.
  */
 export default function BurningTreeWithRoots({ scrollProgress = 0 }) {
-  // Extended active window around Paragraph 4 (range 2.85 to 4.95)
-  if (scrollProgress < 2.85 || scrollProgress > 4.95) {
+  // Balanced active window around Paragraph 4 (range 3.12 to 4.85)
+  if (scrollProgress < 3.12 || scrollProgress > 4.85) {
     return null;
   }
 
-  // Tree evolution progress from 0.0 to 1.0 (longer, more gradual timeline)
+  // Tree evolution progress from 0.0 to 1.0 (crisp, elegant pacing)
   let treeP = 0;
   let opacity = 1;
 
   if (scrollProgress <= 4.0) {
-    treeP = Math.min(Math.max((scrollProgress - 2.85) / 1.15, 0), 1);
-    opacity = Math.min(treeP * 1.5, 1);
+    treeP = Math.min(Math.max((scrollProgress - 3.12) / 0.85, 0), 1);
+    opacity = Math.min(treeP * 1.6, 1);
   } else {
     treeP = 1;
     // Fade out gently as scrolling into paragraph 5
-    opacity = Math.max(0, 1 - (scrollProgress - 4.1) / 0.75);
+    opacity = Math.max(0, 1 - (scrollProgress - 4.1) / 0.65);
   }
 
   if (opacity <= 0.01) {
@@ -34,24 +34,24 @@ export default function BurningTreeWithRoots({ scrollProgress = 0 }) {
   }
 
   // Smooth easing for tree rising up from below
-  const easeTreeRise = Math.pow(treeP, 0.75);
-  // Tree rises up from the bottom of the screen
-  const treeRiseY = (1 - easeTreeRise) * 240;
+  const easeTreeRise = Math.pow(treeP, 0.9);
+  // Tree rises up modestly from the bottom
+  const treeRiseY = (1 - easeTreeRise) * 110;
 
-  // 1. Root Growth Progress (roots progressively spread and delve deeper)
-  const rootGrowth = Math.min(Math.max((treeP - 0.08) / 0.9, 0), 1);
+  // 1. Root Growth Progress
+  const rootGrowth = Math.min(Math.max((treeP - 0.06) / 0.9, 0), 1);
   const rootDashOffset = (1 - rootGrowth) * 100;
 
-  // 2. Fire Embers & Burning Glow (broad burning timeline from treeP 0.25 -> 0.85)
-  const burnIntensity = Math.min(Math.max((treeP - 0.22) / 0.45, 0), 1) * (1 - Math.max(0, (treeP - 0.88) / 0.12));
+  // 2. Fire Embers & Burning Glow (burns around canopy at peak)
+  const burnIntensity = Math.min(Math.max((treeP - 0.25) / 0.45, 0), 1) * (1 - Math.max(0, (treeP - 0.85) / 0.15));
 
-  // 3. Falling Broken Branch (snaps at treeP = 0.42 and tumbles down gradually until treeP = 0.95)
-  const fallProgress = Math.min(Math.max((treeP - 0.42) / 0.52, 0), 1);
+  // 3. Falling Broken Branch (snaps and drops)
+  const fallProgress = Math.min(Math.max((treeP - 0.44) / 0.48, 0), 1);
   const fallEase = Math.pow(fallProgress, 1.35);
-  const branchFallY = fallEase * 180;
-  const branchFallX = fallEase * 38;
-  const branchRot = fallEase * 80;
-  const branchOpacity = Math.max(0, 1 - Math.max(0, (fallProgress - 0.78) / 0.22));
+  const branchFallY = fallEase * 120;
+  const branchFallX = fallEase * 28;
+  const branchRot = fallEase * 70;
+  const branchOpacity = Math.max(0, 1 - Math.max(0, (fallProgress - 0.75) / 0.25));
 
   return (
     <div
@@ -66,17 +66,18 @@ export default function BurningTreeWithRoots({ scrollProgress = 0 }) {
         opacity
       }}
     >
-      {/* Anchored to the bottom of the viewport so tree rises up from ground */}
+      {/* Anchored neatly to bottom of screen with refined, smaller proportions */}
       <div
         style={{
           position: 'absolute',
-          bottom: '2%',
+          bottom: '3%',
           left: '50%',
-          transform: `translateX(-50%) translateY(${treeRiseY}px)`,
+          transform: `translateX(-50%) translateY(${treeRiseY}px) scale(0.76)`,
+          transformOrigin: '50% 100%',
           width: '100vw',
-          maxWidth: 1200,
-          height: '68vh',
-          maxHeight: 640,
+          maxWidth: 820,
+          height: '46vh',
+          maxHeight: 410,
           display: 'flex',
           alignItems: 'flex-end',
           justifyContent: 'center',
@@ -91,12 +92,12 @@ export default function BurningTreeWithRoots({ scrollProgress = 0 }) {
               top: '20%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 380,
-              height: 260,
+              width: 280,
+              height: 190,
               borderRadius: '50%',
-              background: 'radial-gradient(ellipse at center, rgba(255, 200, 120, 0.28) 0%, rgba(255, 120, 50, 0.12) 45%, transparent 70%)',
+              background: 'radial-gradient(ellipse at center, rgba(255, 200, 120, 0.25) 0%, rgba(255, 120, 50, 0.1) 45%, transparent 70%)',
               opacity: burnIntensity,
-              filter: 'blur(20px)',
+              filter: 'blur(16px)',
               pointerEvents: 'none'
             }}
           />
