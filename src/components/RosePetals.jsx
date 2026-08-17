@@ -2,19 +2,21 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 /**
  * RosePetals Component
- * Slow, gentle, automatic cascading red rose petals behind the letter composer section.
- * Strictly adheres to Rules of Hooks.
+ * Continuous swirling 3D crimson red rose petals drifting across all Ayşenur letter sections.
+ * Automatically flows in real time + reacts dynamically to mouse scrolling.
+ * Rendered at zIndex: 15 (BEHIND the rose petal mountains at zIndex: 25 and composer at zIndex: 30).
+ * 100% compliant with React Rules of Hooks.
  */
-export default function RosePetals({ scrollProgress = 0, targetIndex = 39 }) {
-  // Continuous real-time ambient time ticker (slow and peaceful)
+export default function RosePetals({ scrollProgress = 0, startProgress = 6.5 }) {
+  // Continuous real-time ambient time ticker (flows continuously even without mouse)
   const [autoTime, setAutoTime] = useState(0);
   const reqRef = useRef(null);
   const prevTimeRef = useRef(null);
 
-  // Generate deterministic constellation of 32 rich 3D velvet rose petals (Unconditional Hook)
+  // Generate deterministic constellation of 38 rich 3D velvet rose petals (Unconditional Hook)
   const petals = useMemo(() => {
     const arr = [];
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 38; i++) {
       const seed = Math.sin(i * 997.13 + 43.17) * 10000;
       const rand1 = seed - Math.floor(seed);
       const seed2 = Math.cos(i * 733.81 + 19.42) * 10000;
@@ -25,15 +27,15 @@ export default function RosePetals({ scrollProgress = 0, targetIndex = 39 }) {
       arr.push({
         id: i,
         // Base starting coordinates across viewport (percentage 0-100)
-        startX: (i * 3.1 + rand1 * 25) % 100,
-        startY: -15 + (i * 4.5 + rand2 * 35) % 130,
-        size: 16 + rand3 * 22,
-        speedX: (rand1 - 0.48) * 120,
-        rotSpeedX: 90 + rand3 * 180,
-        rotSpeedY: 120 + rand1 * 200,
-        rotSpeedZ: 80 + rand2 * 150,
-        swayAmp: 20 + rand1 * 35,
-        swayFreq: 1.2 + rand2 * 1.6,
+        startX: (i * 2.7 + rand1 * 26) % 100,
+        startY: -15 + (i * 4.1 + rand2 * 35) % 130,
+        size: 16 + rand3 * 24,
+        speedX: (rand1 - 0.48) * 140,
+        rotSpeedX: 120 + rand3 * 260,
+        rotSpeedY: 150 + rand1 * 300,
+        rotSpeedZ: 100 + rand2 * 200,
+        swayAmp: 24 + rand1 * 38,
+        swayFreq: 1.4 + rand2 * 1.8,
         colorType: i % 4, // different rich rose petal gradients
         scaleZ: 0.75 + rand3 * 0.5
       });
@@ -45,8 +47,8 @@ export default function RosePetals({ scrollProgress = 0, targetIndex = 39 }) {
     const tick = (now) => {
       if (prevTimeRef.current != null) {
         const delta = (now - prevTimeRef.current) / 1000;
-        // Slow, poetic falling speed
-        setAutoTime((prev) => prev + delta * 0.055);
+        // Natural gentle drift speed
+        setAutoTime((prev) => prev + delta * 0.09);
       }
       prevTimeRef.current = now;
       reqRef.current = requestAnimationFrame(tick);
@@ -58,18 +60,19 @@ export default function RosePetals({ scrollProgress = 0, targetIndex = 39 }) {
     };
   }, []);
 
-  // Calculate opacity based on distance to the composer section (targetIndex)
-  const dist = Math.abs(scrollProgress - targetIndex);
+  // Calculate opacity smoothly as user scrolls into Ayşenur sections
+  const distFromStart = scrollProgress - startProgress;
   let opacity = 0;
-  if (dist < 1.2) {
-    opacity = Math.max(0, 1 - dist / 1.1);
+  if (distFromStart > 0) {
+    opacity = Math.min(Math.max(distFromStart / 0.45, 0), 1);
   }
 
   if (opacity <= 0.001) {
     return null;
   }
 
-  const progress = autoTime + scrollProgress * 0.15;
+  // Combined real-time auto-flow + mouse scroll dynamic momentum
+  const progress = autoTime + distFromStart * 0.42;
 
   return (
     <div
@@ -79,7 +82,7 @@ export default function RosePetals({ scrollProgress = 0, targetIndex = 39 }) {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 15,
+        zIndex: 15, // BEHIND Mountains (zIndex: 25) and Composer Box (zIndex: 30)
         overflow: 'hidden',
         perspective: 900,
         opacity,
@@ -123,7 +126,7 @@ export default function RosePetals({ scrollProgress = 0, targetIndex = 39 }) {
       </svg>
 
       {petals.map((petal) => {
-        const cycleProgress = (progress * 0.35 + petal.id * 0.075) % 1;
+        const cycleProgress = (progress * 0.38 + petal.id * 0.072) % 1;
         const currentY = ((petal.startY + cycleProgress * 150) % 140) - 20; // -20vh to 120vh
         const currentX =
           petal.startX +
@@ -157,11 +160,13 @@ export default function RosePetals({ scrollProgress = 0, targetIndex = 39 }) {
               fill="none"
               style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible' }}
             >
+              {/* Organic Rose Petal Path */}
               <path
                 d="M 20 4 C 28 4, 38 12, 38 25 C 38 38, 28 48, 20 48 C 12 48, 2 38, 2 25 C 2 12, 12 4, 20 4 Z"
                 fill={`url(#${fillId})`}
                 opacity="0.94"
               />
+              {/* Subtle Petal Center Ridge / Vein Highlight */}
               <path
                 d="M 20 8 Q 21 26 20 44"
                 stroke="rgba(255, 255, 255, 0.35)"
