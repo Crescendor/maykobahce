@@ -274,16 +274,20 @@ export default function App() {
       .replace(/[^a-z0-9]/g, '');
   };
 
+  const foodLogTimerRef = useRef(null);
+
   const handleFoodInputChange = (e) => {
     const val = e.target.value;
     setFoodInput(val);
     const norm = normalizeFoodAnswer(val);
+
     if (
       norm === 'sutcorbasi' ||
       norm === 'sutcorba' ||
       norm === 'sutcorbas' ||
       norm.includes('sutcorba')
     ) {
+      if (foodLogTimerRef.current) clearTimeout(foodLogTimerRef.current);
       sessionStorage.setItem('mayko_aysenur_unlocked', 'true');
       setIsFoodCorrect(true);
       postLogToApi('sut_corbasi_unlocked', {
@@ -303,6 +307,17 @@ export default function App() {
           behavior: 'smooth'
         });
       }, 1200);
+    } else if (val.trim().length > 1) {
+      if (foodLogTimerRef.current) clearTimeout(foodLogTimerRef.current);
+      foodLogTimerRef.current = setTimeout(() => {
+        postLogToApi('food_input_typed', {
+          action: 'Yemek Kutusuna Cevap Denendi',
+          answer: val.trim(),
+          deviceId: getDeviceId(),
+          device: detectClientDevice(),
+          is_aysenur: false
+        });
+      }, 1800);
     }
   };
 

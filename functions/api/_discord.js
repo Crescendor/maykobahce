@@ -54,6 +54,10 @@ export async function sendDiscordWebhook(
       title = '📜 Ziyaretçi Sayfayı Kaydırmaya Başladı!';
       color = 3801080; // Sky Blue #3a86ff
       description = 'Ziyaretçi siteye girdikten sonra ilk fare/parmak kaydırmasını yaptı.';
+    } else if (eventType === 'food_input_typed') {
+      title = '💬 Yemek Kutusuna Cevap Yazıldı';
+      color = 16750848; // Orange #fa8c16
+      description = 'Ziyaretçi "sen o yemeği iyi bilirsin" kutusuna bir cevap yazdı / denedi.';
     } else if (eventType === 'sut_corbasi_unlocked') {
       title = '🍲 Süt Çorbası Şifresi Çözüldü & Evine Hoş Geldin Ekranı Açıldı!';
       color = 3462041; // Emerald Green #34d399
