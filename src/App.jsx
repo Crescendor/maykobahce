@@ -9,6 +9,7 @@ import MelancholyQuoteModal from './components/MelancholyQuoteModal';
 import WindBlownPaper from './components/WindBlownPaper';
 import ScreenCracks from './components/ScreenCracks';
 import ReachingHands from './components/ReachingHands';
+import BurningTreeWithRoots from './components/BurningTreeWithRoots';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
@@ -649,6 +650,9 @@ export default function App() {
 
         {/* Two Reaching & Clasping Hands Animation across Paragraph 3 */}
         <ReachingHands scrollProgress={scrollProgress} />
+
+        {/* Burning Tree with Falling Branch and Growing Roots across Paragraph 4 */}
+        <BurningTreeWithRoots scrollProgress={scrollProgress} />
 
         {/* Delicate Scroll Down Hint (Fades out when scrolling begins) */}
         <div
