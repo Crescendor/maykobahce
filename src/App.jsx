@@ -11,11 +11,12 @@ import ScreenCracks from './components/ScreenCracks';
 import ReachingHands from './components/ReachingHands';
 import BurningTreeWithRoots from './components/BurningTreeWithRoots';
 import FountainPenWriter from './components/FountainPenWriter';
+import RosePetals from './components/RosePetals';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
 const AdminFloatingToolbar = lazy(() => import('./components/AdminFloatingToolbar'));
-import { Check, X, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, X, Sparkles, ChevronDown } from 'lucide-react';
 import {
   GARDEN_SIZE,
   loadGardenFlowers,
@@ -75,11 +76,147 @@ const LETTER_SECTIONS = [
     isInteractive: true,
     text: 'sen o yemeği iyi bilirsin.'
   },
+  // =========================================================================
+  // EXTENDED AYŞENUR LETTER SECTIONS (Unlocked by "Süt Çorbası")
+  // =========================================================================
   {
-    id: 'p7_aysenur',
-    isIntro: false,
-    isFinale: true,
+    id: 'ays_title',
+    isAysenurHeading: true,
     text: 'Ayşenur, ben seni gerçekten de çok özledim.'
+  },
+  {
+    id: 'ays_1',
+    text: 'Eğer buraya kadar geldiysen, teşekkür ederim.'
+  },
+  {
+    id: 'ays_2',
+    text: 'Sana, seni hayallerimden bile kaybetmekten korktuğum o yerden sesleniyorum. Son cümlenin de ötesinde, kelimelerin artık yetmediği, insanın kendi içinde kaybolduğu bir yerden… Bir çölün ortasında, susuzluğunu bile unutmuşken uzakta bir ışık görür gibi.'
+  },
+  {
+    id: 'ays_3',
+    text: 'Zorlu bir süreç yaşadığını biliyorum Ayşenur. Zorlu bir hayatın, ağır sorumlulukların ve bazen insanın kendi omuzlarının bile taşıyamadığı kadar yükün olduğunu biliyorum. Belki de bu yüzden, sana dair hissettiğim şeyleri hiçbir zaman yalnızca güzel günlere sığdıramadım. Çünkü benim hayatımın en güzel hislerinden bazıları, senin hayatının en zor zamanlarının içinde doğdu. Seni tanımak, sana sarılmak, sesini duymak, bir anlığına bile olsa bütün dünyanın sustuğunu hissetmek… Bunların hepsi benim için hâlâ çok gerçek.'
+  },
+  {
+    id: 'ays_4',
+    text: 'İnsan bazen birini kaybettiğinde, onun hayatındaki yerini değil, kendi hayatında bıraktığı boşluğu fark ediyor. Ben seni özlerken yalnızca seni değil; seninle birlikte olduğum hâlimi de özlüyorum. Birlikte güldüğümüz o küçük anları, hiçbir anlamı olmayan konuşmalarımızı, sesindeki o tanıdık tonu, sana bir şey anlatırken yüzündeki ifadeyi… Hatta bazen hiçbir şey yapmadan yan yana durmayı bile.'
+  },
+  {
+    id: 'ays_5',
+    text: 'Ve bazı insanlar insanın içinde öyle bir yere dokunuyor ki, yoklukları bile varlıkları kadar gerçek oluyor. Sen benim içimde tam da böyle bir yerdesin.'
+  },
+  {
+    id: 'ays_6',
+    text: 'Sana kızdığım, kırıldığım, sustuğum zamanlar oldu. Belki senin de bana karşı aynı duyguları yaşadığın zamanlar oldu. Ama bütün o kırgınlıkların altında değişmeyen tek bir şey vardı: Seni gerçekten sevmiş olmam. Şimdi aramızdaki sessizlikte bunu daha açık görebiliyorum. İçimde kalan en güçlü şey kızgınlık değil, özlem.'
+  },
+  {
+    id: 'ays_7',
+    isEmphasis: true,
+    text: 'Ayşenur, seni özlüyorum.'
+  },
+  {
+    id: 'ays_8',
+    text: 'Hem de bunu kendime itiraf etmemeye çalıştığım anlarda bile. Gün içinde bir şey görüyorum, bir şarkı duyuyorum, aklımdan sana dair küçücük bir an geçiyor ve içimde tarif edemediğim bir eksiklik beliriyor. Sanki hayat devam ediyor ama senin olduğun yer hâlâ olduğu gibi duruyor.'
+  },
+  {
+    id: 'ays_9',
+    text: 'Bazen keşke bazı şeyleri daha farklı yapabilseydik diyorum. Keşke birbirimizi kaybetmek zorunda kalmadan birbirimizi anlayabilseydik. Keşke hayat, ikimizin de en zor zamanlarında karşımıza daha kolay bir yol çıkarabilseydi. Keşke bazı cümleleri söylemeden önce birbirimize biraz daha sarılabilseydik.'
+  },
+  {
+    id: 'ays_10',
+    text: 'Ama geçmişi değiştiremiyorum. Söylenenleri geri alamıyorum. Yaşananları da yok saymak istemiyorum. Çünkü bütün bunların içinde, sana duyduğum sevgi de var. Ve ben o sevgiyi inkâr ederek kendime dürüst olamam.'
+  },
+  {
+    id: 'ays_11',
+    text: 'Senden vazgeçmiş gibi davranmayı öğrenebilirim belki. Susabilirim, bekleyebilirim, kendimi başka şeylere verebilirim. Hayatıma devam edebilirim. Ama kalbime seni özlememeyi emredemiyorum.'
+  },
+  {
+    id: 'ays_12',
+    text: 'Belki şu an bunların hiçbirinin senin için bir anlamı yoktur. Belki şu sıralar kendi içinde çözmeye çalıştığın çok daha büyük şeyler vardır. Belki aramızdaki sessizlik, ikimizin de ne hissettiğini anlamaya çalıştığı bir zamandır. Bilmiyorum.'
+  },
+  {
+    id: 'ays_13',
+    text: 'Ama bildiğim bir şey var: Ben hâlâ seni düşünüyorum. Hâlâ seni merak ediyorum. Hâlâ iyi olmanı istiyorum. Ve bütün bunların arasında, içimde küçücük de olsa bir inanç taşıyorum.'
+  },
+  {
+    id: 'ays_14',
+    isEmphasis: true,
+    text: 'Bu yaşananların bizim hikâyemizin son cümlesi olduğuna inanmıyorum.'
+  },
+  {
+    id: 'ays_15',
+    text: 'Belki bir gün yeniden karşılaşırız. Belki yeniden konuşuruz. Belki o gün birbirimize bugün olduğumuzdan daha farklı bakarız. Belki ikimiz de bazı şeyleri daha iyi anlamış oluruz. Belki her şey eskisi gibi olmaz; belki eskisinden çok daha güzel olur.'
+  },
+  {
+    id: 'ays_16',
+    text: 'Ben o ihtimali hâlâ kalbimin bir köşesinde saklıyorum.'
+  },
+  {
+    id: 'ays_17',
+    text: 'Çünkü seni özlemek bana yalnızca yokluğunu hissettirmiyor. Aynı zamanda, bir gün yeniden karşılaşacağımız ihtimalini de hatırlatıyor.'
+  },
+  {
+    id: 'ays_18',
+    text: 'Ve eğer o gün gerçekten gelirse, senden geçmişte kalan hiçbir hesabı istemek istemiyorum. Sana “neden?” diye sormak da istemiyorum. Sadece karşında durup, bunca şeyin ardından hâlâ içimde sana ait bir yer olduğunu söylemek istiyorum.'
+  },
+  {
+    id: 'ays_19',
+    isShort: true,
+    text: 'Belki sana yeniden sarılmak…'
+  },
+  {
+    id: 'ays_20',
+    isShort: true,
+    text: 'Belki gözlerinin içine bakıp hiçbir şey söylemeden, o anın ikimize de yetmesine izin vermek…'
+  },
+  {
+    id: 'ays_21',
+    isShort: true,
+    text: 'Ve belki de sana sadece şunu söylemek:'
+  },
+  {
+    id: 'ays_22',
+    isEmphasis: true,
+    text: '“Ben seni özlemeyi hiç bırakmadım.”'
+  },
+  {
+    id: 'ays_23',
+    text: 'Bilmiyorum hayat bizi nereye götürecek, Ayşenur. Ama bildiğim bir şey var; ben bu hikâyenin yeniden güzel bir yere varabileceğine inanıyorum.'
+  },
+  {
+    id: 'ays_24',
+    isShort: true,
+    text: 'Belki bugün değil.'
+  },
+  {
+    id: 'ays_25',
+    isShort: true,
+    text: 'Belki yarın da değil.'
+  },
+  {
+    id: 'ays_26',
+    isShort: true,
+    text: 'Ama bir gün…'
+  },
+  {
+    id: 'ays_27',
+    text: 'Eğer yollarımız yeniden kesişirse, ben o günün tesadüf olduğuna inanmayacağım.'
+  },
+  {
+    id: 'ays_28',
+    text: 'Çünkü bazı insanlar hayatımıza sadece gelip geçmek için girmez.'
+  },
+  {
+    id: 'ays_29',
+    text: 'Bazıları, insanın içinde bir yer bırakır.'
+  },
+  {
+    id: 'ays_30',
+    text: 'Sen de benim içimde, hâlâ sana ayrılmış o yerde duruyorsun.'
+  },
+  {
+    id: 'ays_finale',
+    isFinaleHeading: true,
+    text: 'Seni çok özlüyorum ve seni hâlâ çok seviyorum'
   }
 ];
 
@@ -726,24 +863,26 @@ export default function App() {
                       />
                     )}
                   </div>
-                ) : section.id === 'p7_aysenur' ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', position: 'relative' }}>
-                    {/* Top Subtle Return Icon to Scroll Back Up */}
-                    <button
-                      onClick={() => {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      style={styles.aysenurReturnBtn}
-                      title="Başa dön"
-                      aria-label="Başa dön"
-                    >
-                      <ChevronUp size={22} strokeWidth={1.5} />
-                    </button>
-
+                ) : section.isAysenurHeading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
                     <h1 style={styles.aysenurHeading}>
                       {section.text}
                     </h1>
                   </div>
+                ) : section.isFinaleHeading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
+                    <h1 style={styles.aysenurFinaleHeading}>
+                      {section.text}
+                    </h1>
+                  </div>
+                ) : section.isEmphasis ? (
+                  <p style={styles.aysenurEmphasisText}>
+                    {section.text}
+                  </p>
+                ) : section.isShort ? (
+                  <p style={{ ...styles.paragraphText, fontSize: 'clamp(1.25rem, 2.3vw, 1.55rem)', textAlign: 'center' }}>
+                    {section.text}
+                  </p>
                 ) : (
                   <p style={styles.paragraphText}>
                     {section.text}
@@ -765,6 +904,9 @@ export default function App() {
 
         {/* Burning Tree with Falling Branch and Growing Roots across Paragraph 4 */}
         <BurningTreeWithRoots scrollProgress={scrollProgress} />
+
+        {/* Continuous Swirling 3D Crimson Red Rose Petals across all Ayşenur Letter Sections */}
+        <RosePetals scrollProgress={scrollProgress} startProgress={6.5} />
 
         {/* Delicate Scroll Down Hint (Fades out on scroll, reappears slightly on finale) */}
         <div
@@ -981,20 +1123,36 @@ const styles = {
     MozOsxFontSmoothing: 'grayscale',
     opacity: 0.96
   },
-  aysenurReturnBtn: {
-    position: 'absolute',
-    top: 36,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: 'none',
-    border: 'none',
-    color: 'rgba(228, 231, 236, 0.42)',
-    cursor: 'pointer',
-    padding: '10px 16px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'color 0.25s ease, transform 0.25s ease',
-    zIndex: 20
+  aysenurEmphasisText: {
+    fontFamily: "'Cardo', Georgia, serif",
+    fontSize: 'clamp(1.4rem, 2.7vw, 1.85rem)',
+    fontWeight: 400,
+    fontStyle: 'italic',
+    color: '#ffffff',
+    textAlign: 'center',
+    lineHeight: 1.6,
+    letterSpacing: '0.02em',
+    margin: '0 auto',
+    padding: '0 10px',
+    textRendering: 'optimizeLegibility',
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    textShadow: '0 0 16px rgba(255, 255, 255, 0.45)'
+  },
+  aysenurFinaleHeading: {
+    fontFamily: "'Cardo', Georgia, serif",
+    fontSize: 'clamp(1.85rem, 4.4vw, 3.2rem)',
+    fontWeight: 400,
+    fontStyle: 'italic',
+    color: '#ffffff',
+    letterSpacing: '0.035em',
+    lineHeight: 1.35,
+    textAlign: 'center',
+    margin: 0,
+    padding: '0 15px',
+    textRendering: 'optimizeLegibility',
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    textShadow: '0 0 20px rgba(255, 77, 109, 0.35), 0 0 40px rgba(225, 29, 72, 0.2)'
   }
 };
