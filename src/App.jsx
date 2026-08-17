@@ -6,6 +6,7 @@ import FlowerPopup from './components/FlowerPopup';
 import SearchModal from './components/SearchModal';
 import DeleteCodeModal from './components/DeleteCodeModal';
 import MelancholyQuoteModal from './components/MelancholyQuoteModal';
+import WindBlownPaper from './components/WindBlownPaper';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
@@ -637,6 +638,9 @@ export default function App() {
             </div>
           );
         })}
+
+        {/* 3D Wind-Blown Paper Animation across Paragraph 1 */}
+        <WindBlownPaper scrollProgress={scrollProgress} />
 
         {/* Delicate Scroll Down Hint (Fades out when scrolling begins) */}
         <div
