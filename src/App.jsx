@@ -361,6 +361,25 @@ export default function App() {
   const currentProgressRef = useRef(0);
 
   useEffect(() => {
+    // Immediate physical wheel / touch gesture listener for the very first scroll
+    const handleFirstPhysicalScroll = () => {
+      if (!hasLoggedFirstScroll.current) {
+        hasLoggedFirstScroll.current = true;
+        postLogToApi('first_scroll_started', {
+          action: 'Ziyaretçi Sayfayı Kaydırmaya Başladı',
+          scrollStatus: 'Kaydırma Yaptı (Sayfada İlerliyor)',
+          stage: 'Başlangıç / 1. Paragraf',
+          scrollPercentage: '1%',
+          deviceId: getDeviceId(),
+          device: detectClientDevice(),
+          screenRes: `${window.innerWidth}x${window.innerHeight}`
+        });
+      }
+    };
+
+    window.addEventListener('wheel', handleFirstPhysicalScroll, { passive: true, once: true });
+    window.addEventListener('touchmove', handleFirstPhysicalScroll, { passive: true, once: true });
+
     const handleScroll = () => {
       const totalScrollable = (document.documentElement.scrollHeight || document.body.scrollHeight) - window.innerHeight;
       if (totalScrollable > 0) {
@@ -368,7 +387,7 @@ export default function App() {
         targetProgressRef.current = fraction * (currentSections.length - 1);
 
         // 1. Webhook: First scroll trigger (only once per visitor)
-        if (!hasLoggedFirstScroll.current && fraction > 0.003) {
+        if (!hasLoggedFirstScroll.current && fraction > 0.002) {
           hasLoggedFirstScroll.current = true;
           postLogToApi('first_scroll_started', {
             action: 'Ziyaretçi Sayfayı Kaydırmaya Başladı',
@@ -426,6 +445,8 @@ export default function App() {
     animId = requestAnimationFrame(tick);
 
     return () => {
+      window.removeEventListener('wheel', handleFirstPhysicalScroll);
+      window.removeEventListener('touchmove', handleFirstPhysicalScroll);
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animId);
     };
@@ -458,15 +479,6 @@ export default function App() {
     if (settings && typeof settings.isMelancholyMode === 'boolean') {
       setIsMelancholyMode(settings.isMelancholyMode);
       if (settings.isMelancholyMode) {
-        const alreadyLogged = sessionStorage.getItem('mayko_melancholy_visit_logged');
-        if (!alreadyLogged) {
-          sessionStorage.setItem('mayko_melancholy_visit_logged', 'true');
-          postLogToApi('melancholy_quote_viewed', {
-            action: 'Hüzün Modunda Bahçeye Giriş Yapıldı',
-            device: detectClientDevice(),
-            viewport: `${window.innerWidth}x${window.innerHeight}`
-          });
-        }
         const alreadySeen = sessionStorage.getItem('mayko_melancholy_quote_seen');
         if (!alreadySeen) {
           setShowMelancholyQuote(true);

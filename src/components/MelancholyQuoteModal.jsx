@@ -6,14 +6,6 @@ export default function MelancholyQuoteModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const handleProceed = () => {
-    try {
-      postLogToApi('melancholy_quote_viewed', {
-        action: 'Hüzün Modu Karşılama Ekranı Görüldü / Bahçeye Geçildi',
-        device: detectClientDevice(),
-        viewport: `${window.innerWidth}x${window.innerHeight}`,
-        timestamp: new Date().toISOString()
-      });
-    } catch (e) {}
     onClose();
   };
 
