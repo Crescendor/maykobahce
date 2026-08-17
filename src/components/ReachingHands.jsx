@@ -36,10 +36,11 @@ export default function ReachingHands({ scrollProgress = 0 }) {
 
   // Position offsets:
   // Left arm glides in from bottom-left; Right arm glides in from top-right
-  const leftX = (1 - easeReach) * -340;
-  const leftY = (1 - easeReach) * 90;
-  const rightX = (1 - easeReach) * 340;
-  const rightY = (1 - easeReach) * -90;
+  // Offsets are calibrated so at reach = 1.0, the index fingertips touch precisely in the center!
+  const leftX = (1 - easeReach) * -360 + 96;
+  const leftY = (1 - easeReach) * 90 - 18;
+  const rightX = (1 - easeReach) * 360 - 96;
+  const rightY = (1 - easeReach) * -90 - 72;
 
   // Touch glow intensity when fingertips meet at center
   const touchGlow = Math.max(0, (reach - 0.75) / 0.25);
@@ -78,14 +79,14 @@ export default function ReachingHands({ scrollProgress = 0 }) {
             style={{
               position: 'absolute',
               left: '50%',
-              top: '52%',
+              top: '46%',
               transform: 'translate(-50%, -50%)',
-              width: 160,
-              height: 160,
+              width: 140,
+              height: 140,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(220, 235, 255, 0.12) 40%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(220, 235, 255, 0.2) 35%, transparent 70%)',
               opacity: touchGlow,
-              filter: 'blur(12px)',
+              filter: 'blur(10px)',
               pointerEvents: 'none'
             }}
           />
@@ -103,7 +104,7 @@ export default function ReachingHands({ scrollProgress = 0 }) {
             width: '52vw',
             maxWidth: 680,
             height: 300,
-            transform: `translate(${leftX + 45}px, ${leftY}px)`,
+            transform: `translate(${leftX}px, ${leftY}px)`,
             willChange: 'transform',
             filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 16px rgba(210, 235, 255, 0.3))'
           }}
@@ -308,7 +309,7 @@ export default function ReachingHands({ scrollProgress = 0 }) {
             width: '52vw',
             maxWidth: 680,
             height: 300,
-            transform: `translate(${rightX - 45}px, ${rightY}px)`,
+            transform: `translate(${rightX}px, ${rightY}px)`,
             willChange: 'transform',
             filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 16px rgba(210, 235, 255, 0.3))'
           }}
