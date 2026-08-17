@@ -12,6 +12,7 @@ import ReachingHands from './components/ReachingHands';
 import BurningTreeWithRoots from './components/BurningTreeWithRoots';
 import FountainPenWriter from './components/FountainPenWriter';
 import RosePetals from './components/RosePetals';
+import LetterComposerSection from './components/LetterComposerSection';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
@@ -217,6 +218,10 @@ const LETTER_SECTIONS = [
     id: 'ays_finale',
     isFinaleHeading: true,
     text: 'Seni çok özlüyorum ve seni hâlâ çok seviyorum'
+  },
+  {
+    id: 'ays_compose',
+    isComposer: true
   }
 ];
 
@@ -241,6 +246,20 @@ export default function App() {
   const [isFoodCorrect, setIsFoodCorrect] = useState(
     () => sessionStorage.getItem('mayko_aysenur_unlocked') === 'true'
   );
+
+  // Webhook milestone tracking refs (Triggered once per visitor)
+  const hasLoggedFirstScroll = useRef(false);
+  const hasLoggedAysenurReached = useRef(false);
+  const hasLoggedBottomReached = useRef(false);
+
+  const getDeviceId = useCallback(() => {
+    let id = localStorage.getItem('mayko_persistent_device_id');
+    if (!id) {
+      id = 'dev_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
+      localStorage.setItem('mayko_persistent_device_id', id);
+    }
+    return id;
+  }, []);
 
   const normalizeFoodAnswer = (str = '') => {
     return str
@@ -267,9 +286,10 @@ export default function App() {
     ) {
       sessionStorage.setItem('mayko_aysenur_unlocked', 'true');
       setIsFoodCorrect(true);
-      postLogToApi('special_guest_unlocked', {
-        action: 'Ayşenur Özel Mesajı Açıldı ("Evine hoş geldin..")',
+      postLogToApi('sut_corbasi_unlocked', {
+        action: 'Süt Çorbası Şifresi Çözüldü & Evine Hoş Geldin Ekranı Açıldı',
         answer: val,
+        deviceId: getDeviceId(),
         device: detectClientDevice(),
         is_aysenur: true
       });
@@ -330,6 +350,39 @@ export default function App() {
       if (totalScrollable > 0) {
         const fraction = Math.min(Math.max(window.scrollY / totalScrollable, 0), 1);
         targetProgressRef.current = fraction * (currentSections.length - 1);
+
+        // 1. Webhook: First scroll trigger (only once per visitor)
+        if (!hasLoggedFirstScroll.current && fraction > 0.003) {
+          hasLoggedFirstScroll.current = true;
+          postLogToApi('first_scroll_started', {
+            action: 'Ziyaretçi Sayfayı Kaydırmaya Başladı',
+            deviceId: getDeviceId(),
+            device: detectClientDevice(),
+            screenRes: `${window.innerWidth}x${window.innerHeight}`
+          });
+        }
+
+        // 2. Webhook: Ayşenur letter reached (only once per visitor)
+        if (!hasLoggedAysenurReached.current && isFoodCorrect && fraction >= 6.8 / (currentSections.length - 1)) {
+          hasLoggedAysenurReached.current = true;
+          postLogToApi('aysenur_letter_reached', {
+            action: 'Ayşenur Mektubunu Okumaya Başladı',
+            deviceId: getDeviceId(),
+            device: detectClientDevice(),
+            is_aysenur: true
+          });
+        }
+
+        // 3. Webhook: Page bottom reached (only once per visitor)
+        if (!hasLoggedBottomReached.current && isFoodCorrect && fraction >= 0.94) {
+          hasLoggedBottomReached.current = true;
+          postLogToApi('page_bottom_reached', {
+            action: 'Sayfanın En Altına (Gül Dağları & Mektup Alanına) Ulaşıldı',
+            deviceId: getDeviceId(),
+            device: detectClientDevice(),
+            is_aysenur: true
+          });
+        }
       }
     };
 
@@ -351,7 +404,7 @@ export default function App() {
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animId);
     };
-  }, [currentSections.length]);
+  }, [currentSections.length, getDeviceId, isFoodCorrect]);
 
   // Sync Published Meadow Objects, Custom Background & Site Settings from Cloudflare Edge API for all visitors
   const syncMeadowObjects = useCallback(async () => {
@@ -883,6 +936,11 @@ export default function App() {
                   <p style={{ ...styles.paragraphText, fontSize: 'clamp(1.25rem, 2.3vw, 1.55rem)', textAlign: 'center' }}>
                     {section.text}
                   </p>
+                ) : section.isComposer ? (
+                  <LetterComposerSection
+                    scrollProgress={scrollProgress}
+                    sectionIndex={idx}
+                  />
                 ) : (
                   <p style={styles.paragraphText}>
                     {section.text}

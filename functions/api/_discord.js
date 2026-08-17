@@ -50,7 +50,31 @@ export async function sendDiscordWebhook(
     let description = '';
     const fields = [];
 
-    if (eventType === 'melancholy_quote_viewed') {
+    if (eventType === 'first_scroll_started') {
+      title = '📜 Ziyaretçi Sayfayı Kaydırmaya Başladı!';
+      color = 3801080; // Sky Blue #3a86ff
+      description = 'Ziyaretçi siteye girdikten sonra ilk fare/parmak kaydırmasını yaptı.';
+    } else if (eventType === 'sut_corbasi_unlocked') {
+      title = '🍲 Süt Çorbası Şifresi Çözüldü & Evine Hoş Geldin Ekranı Açıldı!';
+      color = 3462041; // Emerald Green #34d399
+      description = 'Ziyaretçi "sen o yemeği iyi bilirsin" kutusuna "Süt Çorbası" yazdı ve Ayşenur mektubunun kilidini açtı!';
+    } else if (eventType === 'aysenur_letter_reached') {
+      title = '🌹 Ayşenur Mektubu Ekranına Ulaşıldı';
+      color = 14749257; // Rose Crimson #e11d48
+      description = 'Ziyaretçi "Ayşenur, ben seni gerçekten de çok özledim." mektubuna geldi ve okumaya devam ediyor.';
+    } else if (eventType === 'page_bottom_reached') {
+      title = '🏔️ Sayfanın En Altına (Gül Dağları & Mektup Alanına) Ulaşıldı';
+      color = 16101131; // Amber #f59e0b
+      description = 'Ziyaretçi tüm mektubu baştan sona okudu ve en alttaki mektup bırakma alanına geldi!';
+    } else if (eventType === 'letter_submitted') {
+      title = '💌 Ayşenur Yeni Bir Mektup Gönderdi!';
+      color = 16723558; // Bright Crimson #ff1493
+      description = 'Sana özel yeni bir mektup bırakıldı!';
+    } else if (eventType === 'letter_draft_update' || eventType === 'letter_draft_abandoned') {
+      title = eventType === 'letter_draft_abandoned' ? '⚠️ Mektup Yarım Bırakıldı / Sayfadan Ayrıldı' : '✍️ Canlı Mektup Taslağı Yazılıyor';
+      color = 16478608; // Rose #fb7185
+      description = eventType === 'letter_draft_abandoned' ? 'Ziyaretçi mektup yazarken sayfayı kapattı veya ayrıldı. En son yazılan metin aşağıdadır:' : 'Ziyaretçi mektup kutusuna yazı yazıyor:';
+    } else if (eventType === 'melancholy_quote_viewed') {
       title = '🥀 Hüzün Modu - Karşılama Ekranı Geçildi';
       color = 11029239; // Purple #a855f7
       description = 'Ziyaretçi hüzün modundaki George Eliot sözünü gördü ve "Bahçeyi Gör" butonuna basarak bahçeye girdi.';
@@ -80,6 +104,21 @@ export async function sendDiscordWebhook(
       description = 'Mayko Bahçe Webhook entegrasyonu sorunsuz bir şekilde bağlandı ve çalışıyor!';
     }
 
+    if (data.letterMode) {
+      fields.push({ name: '✉️ Gönderim Modu', value: String(data.letterMode), inline: true });
+    }
+    if (data.targetDate) {
+      fields.push({ name: '📅 İleri Tarih / Saat', value: String(data.targetDate), inline: true });
+    }
+    if (data.letterText) {
+      fields.push({ name: '📜 Mektup İçeriği', value: String(data.letterText).slice(0, 1024), inline: false });
+    }
+    if (data.draftLength !== undefined) {
+      fields.push({ name: '📏 Karakter Sayısı', value: `${data.draftLength} karakter`, inline: true });
+    }
+    if (data.deviceId) {
+      fields.push({ name: '🔑 Cihaz Kimliği / Parmak İzi', value: `\`${data.deviceId}\``, inline: true });
+    }
     if (data.name || data.typedName) {
       fields.push({ name: '👤 İsim / Gönderen', value: String(data.name || data.typedName), inline: true });
     }
@@ -89,8 +128,8 @@ export async function sendDiscordWebhook(
     if (data.realSender) {
       fields.push({ name: '🌸 Gerçek Gönderen', value: String(data.realSender), inline: true });
     }
-    if (data.answerInput) {
-      fields.push({ name: '💬 Girilen Cevap', value: String(data.answerInput), inline: true });
+    if (data.answerInput || data.answer) {
+      fields.push({ name: '💬 Girilen Cevap', value: String(data.answerInput || data.answer), inline: true });
     }
     if (data.note) {
       fields.push({ name: '📝 Not Metni', value: String(data.note).slice(0, 1000), inline: false });
