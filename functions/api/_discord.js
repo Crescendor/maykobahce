@@ -166,19 +166,24 @@ export async function sendDiscordWebhook(
 
       const isAysenur = (eventType === 'trigger_detected' || eventType === 'trigger_answered' || (data.realSender && data.realSender.includes('Ayşenur'))) ? 'true' : 'false';
 
-      const rawVars = [
         { name: 'message', variable: '{event_message}', value: summaryText || '-' },
         { name: 'event_message', variable: '{event_message}', value: summaryText || '-' },
         { name: 'title', variable: '{title}', value: title || 'Mayko Bahçe' },
         { name: 'event_type', variable: '{event_type}', value: eventType || 'event' },
         { name: 'is_aysenur', variable: '{is_aysenur}', value: isAysenur },
+        { name: 'letter_text', variable: '{letter_text}', value: String(data.letterText || '-') },
+        { name: 'letter', variable: '{letter}', value: String(data.letterText || '-') },
+        { name: 'letter_mode', variable: '{letter_mode}', value: String(data.letterMode || '-') },
+        { name: 'target_date', variable: '{target_date}', value: String(data.targetDate || '-') },
+        { name: 'draft_length', variable: '{draft_length}', value: String(data.draftLength || '-') },
+        { name: 'device_id', variable: '{device_id}', value: String(data.deviceId || '-') },
         { name: 'ip', variable: '{ip}', value: String(data.ip || 'Bilinmiyor') },
         { name: 'location', variable: '{location}', value: String(data.location || 'Bilinmiyor') },
         { name: 'device', variable: '{device}', value: String(data.device || 'Bilinmiyor') },
         { name: 'name', variable: '{name}', value: String(data.name || data.typedName || '-') },
         { name: 'note', variable: '{note}', value: String(data.note || '-') },
         { name: 'instagram', variable: '{instagram}', value: String(data.instagram || data.typedInstagram || '-') },
-        { name: 'answer', variable: '{answer}', value: String(data.answerInput || '-') },
+        { name: 'answer', variable: '{answer}', value: String(data.answerInput || data.answer || '-') },
         { name: 'stage', variable: '{stage}', value: String(data.stage || '-') }
       ];
 

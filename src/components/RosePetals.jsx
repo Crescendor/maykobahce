@@ -1,25 +1,47 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 /**
  * RosePetals Component
  * Continuous swirling crimson red rose petals drifting in 3D across all Ayşenur letter sections.
- * Animates seamlessly and continuously based on scrollProgress.
- * 100% scrubbable backward & forward with mouse wheel.
+ * Automatically flows in real time even when the mouse is stationary!
+ * Mouse scrolling adds extra dynamic velocity to the natural breeze.
  */
-export default function RosePetals({ scrollProgress = 0, startProgress = 6.6 }) {
+export default function RosePetals({ scrollProgress = 0, startProgress = 6.5 }) {
+  // Continuous real-time ambient time ticker (flows automatically without mouse movement!)
+  const [autoTime, setAutoTime] = useState(0);
+  const reqRef = useRef(null);
+  const prevTimeRef = useRef(null);
+
+  useEffect(() => {
+    const tick = (now) => {
+      if (prevTimeRef.current != null) {
+        const delta = (now - prevTimeRef.current) / 1000;
+        // Natural gentle drift speed
+        setAutoTime((prev) => prev + delta * 0.12);
+      }
+      prevTimeRef.current = now;
+      reqRef.current = requestAnimationFrame(tick);
+    };
+
+    reqRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (reqRef.current) cancelAnimationFrame(reqRef.current);
+    };
+  }, []);
+
   // Only active after Ayşenur stage is unlocked and reached
   if (scrollProgress < startProgress) {
     return null;
   }
 
-  // Relative progress since Ayşenur letter started
-  const progress = scrollProgress - startProgress;
-  const overallOpacity = Math.min(Math.max((scrollProgress - startProgress) / 0.5, 0), 1);
+  // Combine automatic ambient time with scroll progress
+  const progress = autoTime + (scrollProgress - startProgress) * 0.45;
+  const overallOpacity = Math.min(Math.max((scrollProgress - startProgress) / 0.4, 0), 1);
 
-  // Generate a deterministic constellation of 34 rich 3D velvet rose petals
+  // Generate a deterministic constellation of 36 rich 3D velvet rose petals
   const petals = useMemo(() => {
     const arr = [];
-    for (let i = 0; i < 34; i++) {
+    for (let i = 0; i < 36; i++) {
       const seed = Math.sin(i * 997.13 + 43.17) * 10000;
       const rand1 = seed - Math.floor(seed);
       const seed2 = Math.cos(i * 733.81 + 19.42) * 10000;
@@ -30,16 +52,15 @@ export default function RosePetals({ scrollProgress = 0, startProgress = 6.6 }) 
       arr.push({
         id: i,
         // Base starting coordinates across viewport (percentage 0-100)
-        startX: (i * 3.1 + rand1 * 25) % 100,
-        startY: -15 + (i * 4.5 + rand2 * 30) % 130,
-        size: 16 + rand3 * 22,
-        speedX: (rand1 - 0.48) * 140,
-        speedY: 70 + rand2 * 120,
-        rotSpeedX: 180 + rand3 * 360,
-        rotSpeedY: 220 + rand1 * 400,
-        rotSpeedZ: 140 + rand2 * 280,
-        swayAmp: 25 + rand1 * 40,
-        swayFreq: 1.8 + rand2 * 2.2,
+        startX: (i * 2.8 + rand1 * 26) % 100,
+        startY: -15 + (i * 4.2 + rand2 * 35) % 130,
+        size: 17 + rand3 * 23,
+        speedX: (rand1 - 0.48) * 150,
+        rotSpeedX: 160 + rand3 * 340,
+        rotSpeedY: 200 + rand1 * 380,
+        rotSpeedZ: 130 + rand2 * 260,
+        swayAmp: 26 + rand1 * 42,
+        swayFreq: 1.6 + rand2 * 2.1,
         colorType: i % 4, // different rich rose petal gradients
         scaleZ: 0.75 + rand3 * 0.5
       });
@@ -98,8 +119,8 @@ export default function RosePetals({ scrollProgress = 0, startProgress = 6.6 }) 
       </svg>
 
       {petals.map((petal) => {
-        // Continuous trajectory based on scroll progress
-        const cycleProgress = (progress * 0.45 + petal.id * 0.075) % 1;
+        // Automatic continuous vertical loop
+        const cycleProgress = (progress * 0.4 + petal.id * 0.072) % 1;
         const currentY = ((petal.startY + cycleProgress * 150) % 140) - 20; // -20vh to 120vh
         const currentX =
           petal.startX +
