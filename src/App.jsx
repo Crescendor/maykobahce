@@ -10,6 +10,7 @@ import WindBlownPaper from './components/WindBlownPaper';
 import ScreenCracks from './components/ScreenCracks';
 import ReachingHands from './components/ReachingHands';
 import BurningTreeWithRoots from './components/BurningTreeWithRoots';
+import FountainPenWriter from './components/FountainPenWriter';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
@@ -632,6 +633,11 @@ export default function App() {
                   <h1 style={styles.introHeading}>
                     {section.text}
                   </h1>
+                ) : section.id === 'p5' ? (
+                  <FountainPenWriter
+                    text={section.text}
+                    scrollProgress={scrollProgress}
+                  />
                 ) : (
                   <p style={styles.paragraphText}>
                     {section.text}
