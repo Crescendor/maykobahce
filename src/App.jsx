@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import MeadowCanvas from './components/MeadowCanvas';
 import GardenHUD from './components/GardenHUD';
 import FlowerDrawerModal from './components/FlowerDrawerModal';
@@ -10,7 +10,7 @@ import MelancholyQuoteModal from './components/MelancholyQuoteModal';
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
 const AdminFloatingToolbar = lazy(() => import('./components/AdminFloatingToolbar'));
-import { Check, X, Sparkles } from 'lucide-react';
+import { Check, X, Sparkles, ChevronDown } from 'lucide-react';
 import {
   GARDEN_SIZE,
   loadGardenFlowers,
@@ -32,6 +32,39 @@ import {
   postLogToApi,
   detectClientDevice
 } from './utils/gardenEngine';
+
+const LETTER_SECTIONS = [
+  {
+    id: 'intro',
+    isIntro: true,
+    text: 'Neyse'
+  },
+  {
+    id: 'p1',
+    isIntro: false,
+    text: 'belki bu satırlar hiçbir zaman sana ulaşmayacak, belki de ulaştığında kalbinin kıyısına bile değmeden rüzgârda kaybolacak. yine de yazıyorum; çünkü içimde fırtınalar koparan bu kırgınlığı da, seni her an yeniden çağıran bu devasa özlemi de artık tek başıma taşımakta zorlanıyorum.'
+  },
+  {
+    id: 'p2',
+    isIntro: false,
+    text: 'sana kırgınım. sadece aramızdaki mesafe için değil; zamanın aramıza ördüğü o sessiz ve soğuk duvarlar için, bitmemiş cümlelerin gölgesinde terk edildiğim için kırgınım. sol tarafımda taşıdığım o cam kırıkları, ne zaman adını hatırlasam canımı yakıyor. kırılan bir şeyin ilk günkü gibi durmayacağını bile bile, o kırıkların arasından sızan ışığa bakıp duruyorum. kalbim seni affetmek ile sana kırılmak arasında sıkışıp kaldı; ama ne gariptir ki, en çok da kırıldığı yerden yine sana uzanmak istiyor.'
+  },
+  {
+    id: 'p3',
+    isIntro: false,
+    text: 'çünkü özlem, kırgınlıktan daha büyük bir gölge gibi kaplıyor ruhumu. sesinin zihnimde bıraktığı yankıyı, gözlerinin dokunduğu anlardaki o sessiz huzuru arıyorum. bir insanın hem en çok incindiği hem de en çok sığınmak istediği limanın aynı kişi olması nasıl bir çelişkidir, bilmiyorum. sen benim hem acım hem de iyileşmek istediğim tek yersin.'
+  },
+  {
+    id: 'p4',
+    isIntro: false,
+    text: 'eğer bir gün bu mektubu okursan bil ki, sana kızgın değilim; sadece özlemenin ağır yükü altında bükülmüş bir ruhun feryadıdır bu. bir fırtına koptu, ağacımızın dalları kırıldı belki; ama kökleri hâlen o toprağın derinliklerinde seni bekliyor.'
+  },
+  {
+    id: 'p5',
+    isIntro: false,
+    text: 'sen neredesin, nasılsın bilmiyorum ama ben hâlâ kaldığım o son cümlede, seni içimde taşımaya devam ediyorum.'
+  }
+];
 
 export default function App() {
   const [flowers, setFlowers] = useState([]);
@@ -81,6 +114,40 @@ export default function App() {
     } catch (e) {}
     return null;
   });
+
+  // Scroll-Driven Animation State
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const targetProgressRef = useRef(0);
+  const currentProgressRef = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScrollable = (document.documentElement.scrollHeight || document.body.scrollHeight) - window.innerHeight;
+      if (totalScrollable > 0) {
+        const fraction = Math.min(Math.max(window.scrollY / totalScrollable, 0), 1);
+        targetProgressRef.current = fraction * (LETTER_SECTIONS.length - 1);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    let animId;
+    const tick = () => {
+      const diff = targetProgressRef.current - currentProgressRef.current;
+      if (Math.abs(diff) > 0.0001) {
+        currentProgressRef.current += diff * 0.14;
+        setScrollProgress(currentProgressRef.current);
+      }
+      animId = requestAnimationFrame(tick);
+    };
+    animId = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
 
   // Sync Published Meadow Objects, Custom Background & Site Settings from Cloudflare Edge API for all visitors
   const syncMeadowObjects = useCallback(async () => {
@@ -138,7 +205,7 @@ export default function App() {
     }
     const token = localStorage.getItem('mayko_admin_token') || '';
     await publishSiteSettingsToApi({ isMelancholyMode: newMode }, token);
-    showToast(newMode ? '🥀 Hüzün Modu açıldı (Siyah-Beyaz Bahçe)' : '🌸 Hüzün Modu kapatıldı (Renkli Bahçe)');
+    showToast(newMode ? '🥀 Hüzün Modu açıldı' : '🌸 Hüzün Modu kapatıldı');
   };
 
   const saveMeadowObjects = (objs) => {
@@ -524,12 +591,64 @@ export default function App() {
 
 
   return (
-    <div style={styles.container}>
-      {/* Centered Minimalist "Neyse" */}
-      <div style={styles.minimalistWrapper}>
-        <h1 style={styles.minimalistText}>
-          Neyse
-        </h1>
+    <div style={styles.pageScrollTrack}>
+      {/* Fixed Fullscreen Sticky Stage */}
+      <div style={styles.fixedViewport}>
+        {LETTER_SECTIONS.map((section, idx) => {
+          const dist = scrollProgress - idx;
+          const absDist = Math.abs(dist);
+
+          let opacity = 0;
+          let translateY = 0;
+          let blur = 0;
+          let pointerEvents = 'none';
+
+          if (absDist < 0.6) {
+            opacity = Math.max(0, Math.pow(Math.cos((absDist / 0.6) * (Math.PI / 2)), 1.5));
+            translateY = dist * -32;
+            blur = Math.max(0, (absDist - 0.16) * 3.5);
+            if (absDist < 0.35) pointerEvents = 'auto';
+          }
+
+          if (opacity <= 0) return null;
+
+          return (
+            <div
+              key={section.id}
+              style={{
+                ...styles.sectionContainer,
+                opacity,
+                transform: `translateY(${translateY}px)`,
+                filter: blur > 0.05 ? `blur(${blur.toFixed(1)}px)` : 'none',
+                pointerEvents
+              }}
+            >
+              <div style={styles.contentBox}>
+                {section.isIntro ? (
+                  <h1 style={styles.introHeading}>
+                    {section.text}
+                  </h1>
+                ) : (
+                  <p style={styles.paragraphText}>
+                    {section.text}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Delicate Scroll Down Hint (Fades out when scrolling begins) */}
+        <div
+          style={{
+            ...styles.scrollHint,
+            opacity: Math.max(0, 1 - scrollProgress / 0.25),
+            pointerEvents: 'none'
+          }}
+        >
+          <span style={styles.scrollHintText}>kaydırın</span>
+          <ChevronDown size={15} style={{ animation: 'bounceSubtle 2s infinite' }} />
+        </div>
       </div>
 
       {/* Secret Admin Dashboard (/burak or #burak) */}
@@ -569,7 +688,13 @@ export default function App() {
 }
 
 const styles = {
-  container: {
+  // Height creates the scroll timeline length (125vh per stage)
+  pageScrollTrack: {
+    width: '100%',
+    height: `${LETTER_SECTIONS.length * 125}vh`,
+    backgroundColor: '#0f1115'
+  },
+  fixedViewport: {
     position: 'fixed',
     inset: 0,
     width: '100vw',
@@ -582,15 +707,22 @@ const styles = {
     justifyContent: 'center',
     userSelect: 'none'
   },
-  minimalistWrapper: {
+  sectionContainer: {
+    position: 'absolute',
+    inset: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    textAlign: 'center',
-    padding: '24px',
-    animation: 'fadeIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+    padding: '24px 20px',
+    transition: 'filter 0.1s ease-out',
+    willChange: 'opacity, transform, filter'
   },
-  minimalistText: {
+  contentBox: {
+    maxWidth: 720,
+    width: '100%',
+    margin: '0 auto'
+  },
+  introHeading: {
     fontFamily: "'Cardo', Georgia, serif",
     fontSize: 'clamp(4.2rem, 9.5vw, 7.5rem)',
     fontWeight: 400,
@@ -598,13 +730,46 @@ const styles = {
     color: '#e4e7ec',
     letterSpacing: '0.04em',
     lineHeight: 1.1,
+    textAlign: 'center',
     margin: 0,
     padding: 0,
     textRendering: 'optimizeLegibility',
     WebkitFontSmoothing: 'antialiased',
     MozOsxFontSmoothing: 'grayscale',
-    opacity: 0.95,
-    transition: 'opacity 0.5s ease'
+    opacity: 0.95
+  },
+  paragraphText: {
+    fontFamily: "'Cardo', Georgia, serif",
+    fontSize: 'clamp(1.18rem, 2.1vw, 1.48rem)',
+    fontWeight: 400,
+    fontStyle: 'italic',
+    color: '#e2e5eb',
+    textAlign: 'left',
+    lineHeight: 1.9,
+    letterSpacing: '0.015em',
+    margin: 0,
+    padding: '0 10px',
+    textRendering: 'optimizeLegibility',
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    opacity: 0.94
+  },
+  scrollHint: {
+    position: 'absolute',
+    bottom: 28,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    color: 'rgba(228, 231, 236, 0.42)',
+    transition: 'opacity 0.3s ease'
+  },
+  scrollHintText: {
+    fontFamily: "'Cardo', Georgia, serif",
+    fontSize: '0.78rem',
+    letterSpacing: '0.14em',
+    textTransform: 'lowercase',
+    fontStyle: 'italic'
   },
   toast: {
     position: 'fixed',
