@@ -294,14 +294,15 @@ export default function App() {
         is_aysenur: true
       });
 
-      // Smoothly scroll down to the finale "Ayşenur, ben seni gerçekten de çok özledim" stage
+      // Smoothly advance just to Section 7 ("Ayşenur, ben seni gerçekten de çok özledim.")
       setTimeout(() => {
         const totalScrollable = (document.documentElement.scrollHeight || document.body.scrollHeight) - window.innerHeight;
+        const targetScrollY = (7 / (LETTER_SECTIONS.length - 1)) * totalScrollable;
         window.scrollTo({
-          top: totalScrollable + 900,
+          top: targetScrollY,
           behavior: 'smooth'
         });
-      }, 1300);
+      }, 1200);
     }
   };
 
@@ -963,8 +964,8 @@ export default function App() {
         {/* Burning Tree with Falling Branch and Growing Roots across Paragraph 4 */}
         <BurningTreeWithRoots scrollProgress={scrollProgress} />
 
-        {/* Continuous Swirling 3D Crimson Red Rose Petals across all Ayşenur Letter Sections (Falling behind mountains) */}
-        <RosePetals scrollProgress={scrollProgress} startProgress={6.5} />
+        {/* Slow Cascading 3D Crimson Red Rose Petals exclusively at the Letter Composer Page (Falling behind mountains) */}
+        <RosePetals scrollProgress={scrollProgress} targetIndex={currentSections.length - 1} />
 
         {/* Delicate Scroll Down Hint (Fades out on scroll, reappears slightly on finale) */}
         <div
