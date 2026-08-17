@@ -68,6 +68,12 @@ const LETTER_SECTIONS = [
     id: 'p5',
     isIntro: false,
     text: 'sen neredesin, nasılsın bilmiyorum ama ben hâlâ kaldığım o son cümlede, seni içimde taşımaya devam ediyorum.'
+  },
+  {
+    id: 'p6_food',
+    isIntro: false,
+    isInteractive: true,
+    text: 'sen o yemeği iyi bilirsin.'
   }
 ];
 
@@ -86,6 +92,46 @@ export default function App() {
   // Melancholy / Black & White Mode State
   const [isMelancholyMode, setIsMelancholyMode] = useState(false);
   const [showMelancholyQuote, setShowMelancholyQuote] = useState(false);
+
+  // Special Guest Interactive Food Answer ("Süt Çorbası") State
+  const [foodInput, setFoodInput] = useState('');
+  const [isAysenurUnlocked, setIsAysenurUnlocked] = useState(
+    () => sessionStorage.getItem('mayko_aysenur_unlocked') === 'true'
+  );
+
+  const normalizeFoodAnswer = (str = '') => {
+    return str
+      .trim()
+      .toLowerCase()
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]/g, '');
+  };
+
+  const handleFoodInputChange = (e) => {
+    const val = e.target.value;
+    setFoodInput(val);
+    const norm = normalizeFoodAnswer(val);
+    if (
+      norm === 'sutcorbasi' ||
+      norm === 'sutcorba' ||
+      norm === 'sutcorbas' ||
+      norm.includes('sutcorba')
+    ) {
+      sessionStorage.setItem('mayko_aysenur_unlocked', 'true');
+      setIsAysenurUnlocked(true);
+      postLogToApi('special_guest_unlocked', {
+        action: 'Ayşenur Özel Mesajı Açıldı ("sen o yemeği iyi bilirsin")',
+        answer: val,
+        device: detectClientDevice(),
+        is_aysenur: true
+      });
+    }
+  };
 
   // Persist admin auth across sessions
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(
@@ -594,6 +640,44 @@ export default function App() {
     showToast('Çiçeğiniz bahçeden başarıyla silindi! 🌿');
   };
 
+  // If unlocked with the secret food answer ("Süt Çorbası"), render new start screen
+  if (isAysenurUnlocked) {
+    return (
+      <div style={styles.aysenurContainer} className="animate-fade-in">
+        <div style={styles.aysenurContentWrapper}>
+          <h1 style={styles.aysenurHeading}>
+            Ayşenur, ben seni gerçekten de çok özledim.
+          </h1>
+        </div>
+
+        {/* Secret Admin Dashboard (/burak or #burak) */}
+        <Suspense fallback={null}>
+          {isAdminOpen && (
+            <AdminDashboardModal
+              isOpen={isAdminOpen}
+              onClose={() => {
+                setIsAdminOpen(false);
+                if (window.location.hash === '#burak' || window.location.hash === '#/burak') {
+                  window.history.replaceState(null, '', window.location.pathname);
+                }
+              }}
+              flowers={flowers}
+              onDeleteFlower={handleDeleteFlower}
+              onAdminAuth={handleAdminAuth}
+              onPatchFlower={handlePatchFlower}
+              onFocusFlower={(flower) => {
+                setSelectedFlower(flower);
+              }}
+              customBg={customBg}
+              onUpdateCustomBg={handleUpdateCustomBg}
+              isMelancholyMode={isMelancholyMode}
+              onToggleMelancholyMode={handleToggleMelancholyMode}
+            />
+          )}
+        </Suspense>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.pageScrollTrack}>
@@ -638,6 +722,22 @@ export default function App() {
                     text={section.text}
                     scrollProgress={scrollProgress}
                   />
+                ) : section.id === 'p6_food' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
+                    <p style={{ ...styles.paragraphText, textAlign: 'center', padding: 0 }}>
+                      {section.text}
+                    </p>
+                    <input
+                      type="text"
+                      value={foodInput}
+                      onChange={handleFoodInputChange}
+                      placeholder=""
+                      style={styles.foodInput}
+                      autoComplete="off"
+                      spellCheck={false}
+                      autoFocus
+                    />
+                  </div>
                 ) : (
                   <p style={styles.paragraphText}>
                     {section.text}
@@ -808,5 +908,56 @@ const styles = {
     textAlign: 'center',
     zIndex: 2000,
     boxShadow: 'var(--shadow-glass)'
+  },
+  foodInput: {
+    width: '100%',
+    maxWidth: 280,
+    padding: '12px 24px',
+    backgroundColor: '#0a0b0e',
+    color: '#f8fafc',
+    fontFamily: "'Cardo', Georgia, serif",
+    fontSize: '1.15rem',
+    textAlign: 'center',
+    borderRadius: '9999px',
+    border: '1px solid rgba(255, 255, 255, 0.45)',
+    outline: 'none',
+    boxShadow: '0 0 20px rgba(255, 255, 255, 0.06), inset 0 2px 4px rgba(0, 0, 0, 0.6)',
+    transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+    letterSpacing: '0.04em'
+  },
+  aysenurContainer: {
+    position: 'fixed',
+    inset: 0,
+    width: '100vw',
+    height: '100vh',
+    overflow: 'hidden',
+    backgroundColor: '#0f1115',
+    backgroundImage: 'radial-gradient(ellipse at center, #15181f 0%, #0a0b0e 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    userSelect: 'none',
+    padding: '24px'
+  },
+  aysenurContentWrapper: {
+    maxWidth: 960,
+    width: '100%',
+    textAlign: 'center',
+    animation: 'fadeIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+  },
+  aysenurHeading: {
+    fontFamily: "'Cardo', Georgia, serif",
+    fontSize: 'clamp(2.4rem, 5.8vw, 4.5rem)',
+    fontWeight: 400,
+    fontStyle: 'normal',
+    color: '#e4e7ec',
+    letterSpacing: '0.03em',
+    lineHeight: 1.25,
+    margin: 0,
+    padding: 0,
+    textRendering: 'optimizeLegibility',
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    opacity: 0.96
   }
 };
