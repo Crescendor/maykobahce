@@ -591,7 +591,7 @@ const styles = {
     animation: 'fadeIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards'
   },
   minimalistText: {
-    fontFamily: "'EB Garamond', Garamond, Georgia, serif",
+    fontFamily: "'Cardo', Georgia, serif",
     fontSize: 'clamp(4.2rem, 9.5vw, 7.5rem)',
     fontWeight: 400,
     fontStyle: 'normal',
