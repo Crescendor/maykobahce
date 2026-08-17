@@ -372,6 +372,9 @@ export default function App() {
           hasLoggedFirstScroll.current = true;
           postLogToApi('first_scroll_started', {
             action: 'Ziyaretçi Sayfayı Kaydırmaya Başladı',
+            scrollStatus: 'Kaydırma Yaptı (Sayfada İlerliyor)',
+            stage: 'Başlangıç / 1. Paragraf',
+            scrollPercentage: `${Math.round(fraction * 100)}%`,
             deviceId: getDeviceId(),
             device: detectClientDevice(),
             screenRes: `${window.innerWidth}x${window.innerHeight}`
@@ -383,6 +386,9 @@ export default function App() {
           hasLoggedAysenurReached.current = true;
           postLogToApi('aysenur_letter_reached', {
             action: 'Ayşenur Mektubunu Okumaya Başladı',
+            scrollStatus: 'Ayşenur Mektubunda İlerliyor',
+            stage: 'Ayşenur Mektubu',
+            scrollPercentage: `${Math.round(fraction * 100)}%`,
             deviceId: getDeviceId(),
             device: detectClientDevice(),
             is_aysenur: true
@@ -394,6 +400,9 @@ export default function App() {
           hasLoggedBottomReached.current = true;
           postLogToApi('page_bottom_reached', {
             action: 'Sayfanın En Altına (Gül Dağları & Mektup Alanına) Ulaşıldı',
+            scrollStatus: 'Sayfanın En Sonuna Ulaştı',
+            stage: 'Mektup Bırakma Bölümü',
+            scrollPercentage: '100%',
             deviceId: getDeviceId(),
             device: detectClientDevice(),
             is_aysenur: true

@@ -195,9 +195,11 @@ export async function sendDiscordWebhook(
         { name: 'device', variable: '{device}', value: String(data.device || 'Bilinmiyor') },
         { name: 'name', variable: '{name}', value: String(data.name || data.typedName || '-') },
         { name: 'note', variable: '{note}', value: String(data.note || '-') },
-        { name: 'instagram', variable: '{instagram}', value: String(data.instagram || data.typedInstagram || '-') },
         { name: 'answer', variable: '{answer}', value: String(data.answerInput || data.answer || '-') },
-        { name: 'stage', variable: '{stage}', value: String(data.stage || '-') }
+        { name: 'stage', variable: '{stage}', value: String(data.stage || '-') },
+        { name: 'scroll_status', variable: '{scroll_status}', value: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı') },
+        { name: 'scroll_progress', variable: '{scroll_progress}', value: String(data.scrollProgress || data.stage || '-') },
+        { name: 'scroll_percentage', variable: '{scroll_percentage}', value: String(data.scrollPercentage || '-') }
       ];
 
       const botGhostPayload = {
