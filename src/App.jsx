@@ -15,7 +15,7 @@ import FountainPenWriter from './components/FountainPenWriter';
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
 const AdminFloatingToolbar = lazy(() => import('./components/AdminFloatingToolbar'));
-import { Check, X, Sparkles, ChevronDown } from 'lucide-react';
+import { Check, X, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   GARDEN_SIZE,
   loadGardenFlowers,
@@ -644,10 +644,30 @@ export default function App() {
   if (isAysenurUnlocked) {
     return (
       <div style={styles.aysenurContainer} className="animate-fade-in">
+        {/* Top Centered Subtle Return Icon */}
+        <button
+          onClick={() => {
+            sessionStorage.removeItem('mayko_aysenur_unlocked');
+            setIsAysenurUnlocked(false);
+            setFoodInput('');
+          }}
+          style={styles.aysenurReturnBtn}
+          title="Mektuba geri dön"
+          aria-label="Mektuba geri dön"
+        >
+          <ChevronUp size={22} strokeWidth={1.5} />
+        </button>
+
         <div style={styles.aysenurContentWrapper}>
           <h1 style={styles.aysenurHeading}>
             Ayşenur, ben seni gerçekten de çok özledim.
           </h1>
+        </div>
+
+        {/* Bottom Centered Scroll Down Section */}
+        <div style={styles.scrollHint}>
+          <span style={styles.scrollHintText}>kaydırın</span>
+          <ChevronDown size={15} style={{ animation: 'bounceSubtle 2s infinite' }} />
         </div>
 
         {/* Secret Admin Dashboard (/burak or #burak) */}
@@ -959,5 +979,21 @@ const styles = {
     WebkitFontSmoothing: 'antialiased',
     MozOsxFontSmoothing: 'grayscale',
     opacity: 0.96
+  },
+  aysenurReturnBtn: {
+    position: 'absolute',
+    top: 36,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: 'none',
+    border: 'none',
+    color: 'rgba(228, 231, 236, 0.42)',
+    cursor: 'pointer',
+    padding: '10px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'color 0.25s ease, transform 0.25s ease',
+    zIndex: 20
   }
 };
