@@ -74,6 +74,12 @@ const LETTER_SECTIONS = [
     isIntro: false,
     isInteractive: true,
     text: 'sen o yemeği iyi bilirsin.'
+  },
+  {
+    id: 'p7_aysenur',
+    isIntro: false,
+    isFinale: true,
+    text: 'Ayşenur, ben seni gerçekten de çok özledim.'
   }
 ];
 
@@ -95,7 +101,7 @@ export default function App() {
 
   // Special Guest Interactive Food Answer ("Süt Çorbası") State
   const [foodInput, setFoodInput] = useState('');
-  const [isAysenurUnlocked, setIsAysenurUnlocked] = useState(
+  const [isFoodCorrect, setIsFoodCorrect] = useState(
     () => sessionStorage.getItem('mayko_aysenur_unlocked') === 'true'
   );
 
@@ -123,13 +129,22 @@ export default function App() {
       norm.includes('sutcorba')
     ) {
       sessionStorage.setItem('mayko_aysenur_unlocked', 'true');
-      setIsAysenurUnlocked(true);
+      setIsFoodCorrect(true);
       postLogToApi('special_guest_unlocked', {
-        action: 'Ayşenur Özel Mesajı Açıldı ("sen o yemeği iyi bilirsin")',
+        action: 'Ayşenur Özel Mesajı Açıldı ("Evine hoş geldin..")',
         answer: val,
         device: detectClientDevice(),
         is_aysenur: true
       });
+
+      // Smoothly scroll down to the finale "Ayşenur, ben seni gerçekten de çok özledim" stage
+      setTimeout(() => {
+        const totalScrollable = (document.documentElement.scrollHeight || document.body.scrollHeight) - window.innerHeight;
+        window.scrollTo({
+          top: totalScrollable + 900,
+          behavior: 'smooth'
+        });
+      }, 1300);
     }
   };
 
@@ -167,6 +182,7 @@ export default function App() {
   });
 
   // Scroll-Driven Animation State
+  const currentSections = isFoodCorrect ? LETTER_SECTIONS : LETTER_SECTIONS.slice(0, 7);
   const [scrollProgress, setScrollProgress] = useState(0);
   const targetProgressRef = useRef(0);
   const currentProgressRef = useRef(0);
@@ -176,7 +192,7 @@ export default function App() {
       const totalScrollable = (document.documentElement.scrollHeight || document.body.scrollHeight) - window.innerHeight;
       if (totalScrollable > 0) {
         const fraction = Math.min(Math.max(window.scrollY / totalScrollable, 0), 1);
-        targetProgressRef.current = fraction * (LETTER_SECTIONS.length - 1);
+        targetProgressRef.current = fraction * (currentSections.length - 1);
       }
     };
 
@@ -198,7 +214,7 @@ export default function App() {
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animId);
     };
-  }, []);
+  }, [currentSections.length]);
 
   // Sync Published Meadow Objects, Custom Background & Site Settings from Cloudflare Edge API for all visitors
   const syncMeadowObjects = useCallback(async () => {
@@ -640,70 +656,16 @@ export default function App() {
     showToast('Çiçeğiniz bahçeden başarıyla silindi! 🌿');
   };
 
-  // If unlocked with the secret food answer ("Süt Çorbası"), render new start screen
-  if (isAysenurUnlocked) {
-    return (
-      <div style={styles.aysenurContainer} className="animate-fade-in">
-        {/* Top Centered Subtle Return Icon */}
-        <button
-          onClick={() => {
-            sessionStorage.removeItem('mayko_aysenur_unlocked');
-            setIsAysenurUnlocked(false);
-            setFoodInput('');
-          }}
-          style={styles.aysenurReturnBtn}
-          title="Mektuba geri dön"
-          aria-label="Mektuba geri dön"
-        >
-          <ChevronUp size={22} strokeWidth={1.5} />
-        </button>
-
-        <div style={styles.aysenurContentWrapper}>
-          <h1 style={styles.aysenurHeading}>
-            Ayşenur, ben seni gerçekten de çok özledim.
-          </h1>
-        </div>
-
-        {/* Bottom Centered Scroll Down Section */}
-        <div style={styles.scrollHint}>
-          <span style={styles.scrollHintText}>kaydırın</span>
-          <ChevronDown size={15} style={{ animation: 'bounceSubtle 2s infinite' }} />
-        </div>
-
-        {/* Secret Admin Dashboard (/burak or #burak) */}
-        <Suspense fallback={null}>
-          {isAdminOpen && (
-            <AdminDashboardModal
-              isOpen={isAdminOpen}
-              onClose={() => {
-                setIsAdminOpen(false);
-                if (window.location.hash === '#burak' || window.location.hash === '#/burak') {
-                  window.history.replaceState(null, '', window.location.pathname);
-                }
-              }}
-              flowers={flowers}
-              onDeleteFlower={handleDeleteFlower}
-              onAdminAuth={handleAdminAuth}
-              onPatchFlower={handlePatchFlower}
-              onFocusFlower={(flower) => {
-                setSelectedFlower(flower);
-              }}
-              customBg={customBg}
-              onUpdateCustomBg={handleUpdateCustomBg}
-              isMelancholyMode={isMelancholyMode}
-              onToggleMelancholyMode={handleToggleMelancholyMode}
-            />
-          )}
-        </Suspense>
-      </div>
-    );
-  }
-
   return (
-    <div style={styles.pageScrollTrack}>
+    <div
+      style={{
+        ...styles.pageScrollTrack,
+        height: `${currentSections.length * 160}vh`
+      }}
+    >
       {/* Fixed Fullscreen Sticky Stage */}
       <div style={styles.fixedViewport}>
-        {LETTER_SECTIONS.map((section, idx) => {
+        {currentSections.map((section, idx) => {
           const dist = scrollProgress - idx;
           const absDist = Math.abs(dist);
 
@@ -747,16 +709,40 @@ export default function App() {
                     <p style={{ ...styles.paragraphText, textAlign: 'center', padding: 0 }}>
                       {section.text}
                     </p>
-                    <input
-                      type="text"
-                      value={foodInput}
-                      onChange={handleFoodInputChange}
-                      placeholder=""
-                      style={styles.foodInput}
-                      autoComplete="off"
-                      spellCheck={false}
-                      autoFocus
-                    />
+                    {isFoodCorrect ? (
+                      <div style={styles.welcomeHomeMessage} className="animate-fade-in">
+                        Evine hoş geldin..
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        value={foodInput}
+                        onChange={handleFoodInputChange}
+                        placeholder=""
+                        style={styles.foodInput}
+                        autoComplete="off"
+                        spellCheck={false}
+                        autoFocus
+                      />
+                    )}
+                  </div>
+                ) : section.id === 'p7_aysenur' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', position: 'relative' }}>
+                    {/* Top Subtle Return Icon to Scroll Back Up */}
+                    <button
+                      onClick={() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      style={styles.aysenurReturnBtn}
+                      title="Başa dön"
+                      aria-label="Başa dön"
+                    >
+                      <ChevronUp size={22} strokeWidth={1.5} />
+                    </button>
+
+                    <h1 style={styles.aysenurHeading}>
+                      {section.text}
+                    </h1>
                   </div>
                 ) : (
                   <p style={styles.paragraphText}>
@@ -780,11 +766,16 @@ export default function App() {
         {/* Burning Tree with Falling Branch and Growing Roots across Paragraph 4 */}
         <BurningTreeWithRoots scrollProgress={scrollProgress} />
 
-        {/* Delicate Scroll Down Hint (Fades out when scrolling begins) */}
+        {/* Delicate Scroll Down Hint (Fades out on scroll, reappears slightly on finale) */}
         <div
           style={{
             ...styles.scrollHint,
-            opacity: Math.max(0, 1 - scrollProgress / 0.25),
+            opacity:
+              scrollProgress < 0.3
+                ? Math.max(0, 1 - scrollProgress / 0.25)
+                : isFoodCorrect && scrollProgress > currentSections.length - 1.45
+                ? Math.min(Math.max((scrollProgress - (currentSections.length - 1.4)) / 0.35, 0), 1)
+                : 0,
             pointerEvents: 'none'
           }}
         >
@@ -944,6 +935,16 @@ const styles = {
     boxShadow: '0 0 20px rgba(255, 255, 255, 0.06), inset 0 2px 4px rgba(0, 0, 0, 0.6)',
     transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
     letterSpacing: '0.04em'
+  },
+  welcomeHomeMessage: {
+    fontFamily: "'Cardo', Georgia, serif",
+    fontSize: 'clamp(1.4rem, 2.6vw, 1.85rem)',
+    fontStyle: 'italic',
+    color: '#e4e7ec',
+    letterSpacing: '0.04em',
+    textAlign: 'center',
+    padding: '12px 24px',
+    textShadow: '0 0 16px rgba(255, 255, 255, 0.45)'
   },
   aysenurContainer: {
     position: 'fixed',
