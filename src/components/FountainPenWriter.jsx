@@ -15,8 +15,8 @@ export default function FountainPenWriter({
   const cursorRef = useRef(null);
   const [penPos, setPenPos] = useState({ x: 0, y: 0, visible: false });
 
-  // Paragraph 5 active writing range (between 4.2 and 5.0)
-  const writeProgress = Math.min(Math.max((scrollProgress - 4.22) / 0.75, 0), 1);
+  // Paragraph 5 active writing range: starts after section enters (4.32 -> 5.0)
+  const writeProgress = Math.min(Math.max((scrollProgress - 4.32) / 0.68, 0), 1);
 
   // Character slice calculation
   const charCount = Math.floor(writeProgress * text.length);
@@ -25,7 +25,7 @@ export default function FountainPenWriter({
 
   // Update live pen nib tip position to follow the writing cursor
   useEffect(() => {
-    if (!cursorRef.current || !containerRef.current || writeProgress <= 0.01) {
+    if (!cursorRef.current || !containerRef.current || writeProgress <= 0.005) {
       setPenPos((prev) => ({ ...prev, visible: false }));
       return;
     }
@@ -40,10 +40,13 @@ export default function FountainPenWriter({
   }, [charCount, writeProgress]);
 
   // Overall section opacity as approaching stage 5
-  const sectionOpacity = Math.min(Math.max((scrollProgress - 4.15) / 0.4, 0), 1);
+  const sectionOpacity = Math.min(Math.max((scrollProgress - 4.12) / 0.35, 0), 1);
 
-  // Pen lift angle when writing is fully complete
-  const isFinished = writeProgress >= 0.99;
+  // Fade out the hand and fountain pen completely when the sentence is done writing!
+  let penOpacity = 1;
+  if (writeProgress >= 0.94) {
+    penOpacity = Math.max(0, 1 - (writeProgress - 0.94) / 0.06);
+  }
 
   return (
     <div
@@ -92,19 +95,20 @@ export default function FountainPenWriter({
         <span style={{ opacity: 0 }}>{hiddenText}</span>
       </p>
 
-      {/* Hand Holding Vintage Fountain Pen (Dolma Kalem) */}
-      {penPos.visible && (
+      {/* Hand Holding Vintage Fountain Pen (Dolma Kalem) - Fades out on completion */}
+      {penPos.visible && penOpacity > 0.01 && (
         <div
           style={{
             position: 'absolute',
             left: penPos.x,
             top: penPos.y,
-            transform: `translate(-14px, -170px) rotate(${isFinished ? -8 : 0}deg)`,
+            opacity: penOpacity,
+            transform: 'translate(-14px, -170px)',
             transformOrigin: '14px 170px',
-            transition: 'transform 0.15s ease-out',
+            transition: 'opacity 0.2s ease-out',
             pointerEvents: 'none',
             zIndex: 60,
-            willChange: 'left, top, transform',
+            willChange: 'left, top, transform, opacity',
             filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.8)) drop-shadow(0 4px 14px rgba(0, 0, 0, 0.7))'
           }}
         >
