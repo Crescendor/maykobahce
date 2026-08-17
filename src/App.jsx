@@ -963,8 +963,8 @@ export default function App() {
         {/* Burning Tree with Falling Branch and Growing Roots across Paragraph 4 */}
         <BurningTreeWithRoots scrollProgress={scrollProgress} />
 
-        {/* Continuous Swirling 3D Crimson Red Rose Petals across all Ayşenur Letter Sections */}
-        <RosePetals scrollProgress={scrollProgress} startProgress={6.5} />
+        {/* Slow Cascading 3D Crimson Red Rose Petals at the Bottom Letter Composer Section */}
+        <RosePetals scrollProgress={scrollProgress} targetIndex={currentSections.length - 1} />
 
         {/* Delicate Scroll Down Hint (Fades out on scroll, reappears slightly on finale) */}
         <div
