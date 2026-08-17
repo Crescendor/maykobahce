@@ -401,20 +401,38 @@ export default function App() {
           });
         }
 
-        // Section Milestone Tracking (Tracks 1., 2., 3., 4., 5., 6. paragraphs)
+        // Section Milestone Tracking (Tracks intro paragraphs and all 32 Ayşenur letter paragraphs)
         const currentIdx = Math.round(targetProgressRef.current);
         if (currentIdx > 0 && !loggedSectionsRef.current.has(currentIdx)) {
           loggedSectionsRef.current.add(currentIdx);
           const sec = currentSections[currentIdx];
-          if (sec && currentIdx <= 6) {
+          if (sec) {
+            const isAys = currentIdx >= 7;
+            const aysIndex = currentIdx - 6;
+            const stageLabel = isAys
+              ? sec.isComposer
+                ? '🌹 En Alt: Gül Dağları & Mektup Bırakma Bölümü'
+                : sec.isAysenurHeading
+                ? '🌹 Başlık: "Ayşenur, ben seni gerçekten de çok özledim."'
+                : `🌹 Ayşenur Mektubu ${aysIndex}. Paragraf: "${(sec.text || '').slice(0, 42)}..."`
+              : sec.isInteractive
+              ? '6. Bölüm: "sen o yemeği iyi bilirsin."'
+              : `${currentIdx}. Paragraf: "${(sec.text || '').slice(0, 42)}..."`;
+
+            const statusLabel = isAys
+              ? sec.isComposer
+                ? 'Sayfanın En Sonuna Ulaştı'
+                : `Ayşenur Mektubunu Okuyor (${aysIndex}/${currentSections.length - 7})`
+              : `${currentIdx}. Paragrafta Geziniyor`;
+
             postLogToApi('section_reached', {
-              action: `Ziyaretçi ${currentIdx}. Paragrafa Geldi`,
-              scrollStatus: `${currentIdx}. Paragrafta Geziniyor`,
-              stage: sec.isInteractive ? '6. Bölüm: "sen o yemeği iyi bilirsin."' : `${currentIdx}. Paragraf: "${sec.text.slice(0, 40)}..."`,
+              action: `Ziyaretçi ${isAys ? 'Ayşenur Mektubunda ' + aysIndex + '. Paragrafa' : currentIdx + '. Paragrafa'} Geldi`,
+              scrollStatus: statusLabel,
+              stage: stageLabel,
               scrollPercentage: `${Math.round((currentIdx / (currentSections.length - 1)) * 100)}%`,
               deviceId: getDeviceId(),
               device: detectClientDevice(),
-              is_aysenur: false
+              is_aysenur: isAys
             });
           }
         }
@@ -425,7 +443,7 @@ export default function App() {
           postLogToApi('aysenur_letter_reached', {
             action: 'Ayşenur Mektubunu Okumaya Başladı',
             scrollStatus: 'Ayşenur Mektubunda İlerliyor',
-            stage: 'Ayşenur Mektubu',
+            stage: '🌹 Başlık: "Ayşenur, ben seni gerçekten de çok özledim."',
             scrollPercentage: `${Math.round(fraction * 100)}%`,
             deviceId: getDeviceId(),
             device: detectClientDevice(),
@@ -439,7 +457,7 @@ export default function App() {
           postLogToApi('page_bottom_reached', {
             action: 'Sayfanın En Altına (Gül Dağları & Mektup Alanına) Ulaşıldı',
             scrollStatus: 'Sayfanın En Sonuna Ulaştı',
-            stage: 'Mektup Bırakma Bölümü',
+            stage: '🌹 En Alt: Gül Dağları & Mektup Bırakma Bölümü',
             scrollPercentage: '100%',
             deviceId: getDeviceId(),
             device: detectClientDevice(),
