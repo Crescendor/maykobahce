@@ -524,139 +524,13 @@ export default function App() {
 
 
   return (
-    <div className={`app-container ${isMelancholyMode ? 'melancholy-mode' : ''}`}>
-      {/* Admin Floating Left Photoshop-style Toolbar */}
-      <Suspense fallback={null}>
-        {isAdminAuthenticated && (
-          <AdminFloatingToolbar
-            isAdminAuthenticated={isAdminAuthenticated}
-            adminTool={adminTool}
-            setAdminTool={setAdminTool}
-            onOpenDashboard={() => setIsAdminOpen(true)}
-          />
-        )}
-      </Suspense>
-
-      {/* Interactive Meadow Canvas */}
-      <MeadowCanvas
-        flowers={flowers}
-        selectedFlower={selectedFlower}
-        onSelectFlower={handleSelectFlower}
-        isPlantingMode={isPlantingMode}
-        pendingPlantPosition={pendingPlantPosition}
-        onPlantAtPosition={handlePlantAtPosition}
-        viewportTarget={viewportTarget}
-        onViewportChange={(tf) => setCurrentScale(tf.scale)}
-        isAdminAuthenticated={isAdminAuthenticated}
-        adminTool={adminTool}
-        onUpdateFlowerLocalPos={handleUpdateFlowerLocalPos}
-        onUpdateFlowerPosition={handleUpdateFlowerPosition}
-        onDeleteFlower={handleDeleteFlower}
-        customBg={customBg}
-        isMelancholyMode={isMelancholyMode}
-      />
-
-      {/* Floating HUD Controls */}
-      <GardenHUD
-        flowerCount={flowers.length}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onResetView={handleResetView}
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onStartPlanting={() => {
-          setPendingPlantPosition(null);
-          setIsPlantingMode(true);
-        }}
-        isPlantingMode={isPlantingMode}
-        onCancelPlanting={() => setIsPlantingMode(false)}
-        isAdminAuthenticated={isAdminAuthenticated}
-        onOpenAdmin={() => setIsAdminOpen(true)}
-        isMelancholyMode={isMelancholyMode}
-      />
-
-      {/* Flag Confirmation Overlay Bar */}
-      {pendingPlantPosition && (
-        <div style={styles.flagConfirmBar} className="animate-slide-up glass-panel">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '1.4rem' }}>🚩</span>
-            <div>
-              <p style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ffffff' }}>
-                Dikim Konumu Seçildi!
-              </p>
-              <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)' }}>
-                Çiçeği buraya dikmek için onaylayın veya konumu değiştirin.
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button
-              type="button"
-              className="btn-secondary"
-              style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem', color: '#ffffff', background: 'rgba(255,255,255,0.15)' }}
-              onClick={() => setPendingPlantPosition(null)}
-            >
-              <X size={16} /> İptal / Konum Değiştir
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
-              onClick={handleConfirmFlagLocation}
-            >
-              <Check size={16} /> Burada Dikimi Başlat
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Melancholy Mode Entry Quote Modal */}
-      <MelancholyQuoteModal
-        isOpen={showMelancholyQuote}
-        onClose={() => {
-          setShowMelancholyQuote(false);
-          sessionStorage.setItem('mayko_melancholy_quote_seen', 'true');
-        }}
-      />
-
-      {/* Touch Flower Drawer Modal */}
-      <FlowerDrawerModal
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        onSaveFlower={handleSaveFlower}
-        targetPosition={targetPosition}
-      />
-
-      {/* Flower Detail Popup */}
-      <FlowerPopup
-        flower={selectedFlower}
-        onClose={() => {
-          setSelectedFlower(null);
-          window.history.replaceState(null, '', window.location.pathname);
-        }}
-        onDeleteFlower={handleDeleteFlower}
-      />
-
-      {/* Delete Code Display Modal */}
-      <DeleteCodeModal
-        isOpen={Boolean(newlyPlantedFlower)}
-        flower={newlyPlantedFlower}
-        onClose={() => {
-          const target = newlyPlantedFlower;
-          setNewlyPlantedFlower(null);
-          if (target) {
-            handleSelectFlower(target);
-          }
-        }}
-      />
-
-      {/* Search Modal */}
-      <SearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        flowers={flowers}
-        onSelectFlower={handleSelectFlower}
-      />
+    <div style={styles.container}>
+      {/* Centered Minimalist "Neyse" */}
+      <div style={styles.minimalistWrapper}>
+        <h1 style={styles.minimalistText}>
+          Neyse
+        </h1>
+      </div>
 
       {/* Secret Admin Dashboard (/burak or #burak) */}
       <Suspense fallback={null}>
@@ -675,7 +549,6 @@ export default function App() {
             onPatchFlower={handlePatchFlower}
             onFocusFlower={(flower) => {
               setSelectedFlower(flower);
-              setViewportTarget({ x: flower.x, y: flower.y, scale: 1.5 });
             }}
             customBg={customBg}
             onUpdateCustomBg={handleUpdateCustomBg}
@@ -696,26 +569,49 @@ export default function App() {
 }
 
 const styles = {
-  flagConfirmBar: {
+  container: {
     position: 'fixed',
-    bottom: 95,
-    left: 18,
-    right: 18,
-    maxWidth: 480,
-    margin: '0 auto',
-    borderRadius: 22,
-    padding: '14px 18px',
-    zIndex: 1050,
-    border: '2px solid #10b981',
-    background: 'rgba(10, 25, 18, 0.92)'
+    inset: 0,
+    width: '100vw',
+    height: '100vh',
+    overflow: 'hidden',
+    backgroundColor: '#0f1115',
+    backgroundImage: 'radial-gradient(ellipse at center, #15181f 0%, #0a0b0e 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    userSelect: 'none'
+  },
+  minimalistWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    padding: '24px',
+    animation: 'fadeIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+  },
+  minimalistText: {
+    fontFamily: "'EB Garamond', Garamond, Georgia, serif",
+    fontSize: 'clamp(4.2rem, 9.5vw, 7.5rem)',
+    fontWeight: 400,
+    fontStyle: 'normal',
+    color: '#e4e7ec',
+    letterSpacing: '0.04em',
+    lineHeight: 1.1,
+    margin: 0,
+    padding: 0,
+    textRendering: 'optimizeLegibility',
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    opacity: 0.95,
+    transition: 'opacity 0.5s ease'
   },
   toast: {
     position: 'fixed',
-    bottom: 95,
-    left: 18,
-    right: 18,
+    bottom: 30,
+    left: '50%',
+    transform: 'translateX(-50%)',
     maxWidth: 420,
-    margin: '0 auto',
     padding: '14px 20px',
     borderRadius: 18,
     background: 'rgba(239, 68, 68, 0.95)',
