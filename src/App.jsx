@@ -359,6 +359,7 @@ export default function App() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const targetProgressRef = useRef(0);
   const currentProgressRef = useRef(0);
+  const loggedSectionsRef = useRef(new Set());
 
   useEffect(() => {
     // Immediate physical wheel / touch gesture listener for the very first scroll
@@ -398,6 +399,24 @@ export default function App() {
             device: detectClientDevice(),
             screenRes: `${window.innerWidth}x${window.innerHeight}`
           });
+        }
+
+        // Section Milestone Tracking (Tracks 1., 2., 3., 4., 5., 6. paragraphs)
+        const currentIdx = Math.round(targetProgressRef.current);
+        if (currentIdx > 0 && !loggedSectionsRef.current.has(currentIdx)) {
+          loggedSectionsRef.current.add(currentIdx);
+          const sec = currentSections[currentIdx];
+          if (sec && currentIdx <= 6) {
+            postLogToApi('section_reached', {
+              action: `Ziyaretçi ${currentIdx}. Paragrafa Geldi`,
+              scrollStatus: `${currentIdx}. Paragrafta Geziniyor`,
+              stage: sec.isInteractive ? '6. Bölüm: "sen o yemeği iyi bilirsin."' : `${currentIdx}. Paragraf: "${sec.text.slice(0, 40)}..."`,
+              scrollPercentage: `${Math.round((currentIdx / (currentSections.length - 1)) * 100)}%`,
+              deviceId: getDeviceId(),
+              device: detectClientDevice(),
+              is_aysenur: false
+            });
+          }
         }
 
         // 2. Webhook: Ayşenur letter reached (only once per visitor)

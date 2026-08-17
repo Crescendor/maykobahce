@@ -54,6 +54,10 @@ export async function sendDiscordWebhook(
       title = '📜 Ziyaretçi Sayfayı Kaydırmaya Başladı!';
       color = 3801080; // Sky Blue #3a86ff
       description = 'Ziyaretçi siteye girdikten sonra ilk fare/parmak kaydırmasını yaptı.';
+    } else if (eventType === 'section_reached') {
+      title = '📖 Ziyaretçi Yeni Bir Paragrafa Ulaştı';
+      color = 5338094; // Cyan #516beee
+      description = 'Ziyaretçi sayfayı kaydırarak ilerliyor:';
     } else if (eventType === 'food_input_typed') {
       title = '💬 Yemek Kutusuna Cevap Yazıldı';
       color = 16750848; // Orange #fa8c16
