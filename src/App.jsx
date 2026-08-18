@@ -13,6 +13,7 @@ import BurningTreeWithRoots from './components/BurningTreeWithRoots';
 import FountainPenWriter from './components/FountainPenWriter';
 import RosePetals from './components/RosePetals';
 import LetterComposerSection from './components/LetterComposerSection';
+import AmbientAudioPlayer from './components/AmbientAudioPlayer';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
@@ -1158,6 +1159,9 @@ export default function App() {
           ⚠️ {toastMsg}
         </div>
       )}
+
+      {/* Persistent Background Ambient Audio Player (YouTube Loop: 6fBXmhBpFGE) */}
+      <AmbientAudioPlayer />
     </div>
   );
 }
