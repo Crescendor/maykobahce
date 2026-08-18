@@ -82,6 +82,11 @@ export async function sendDiscordWebhook(
       title = eventType === 'letter_draft_abandoned' ? '⚠️ Mektup Yarım Bırakıldı / Sayfadan Ayrıldı' : '✍️ Canlı Mektup Taslağı Yazılıyor';
       color = 16478608; // Rose #fb7185
       description = eventType === 'letter_draft_abandoned' ? 'Ziyaretçi mektup yazarken sayfayı kapattı veya ayrıldı. En son yazılan metin aşağıdadır:' : 'Ziyaretçi mektup kutusuna yazı yazıyor:';
+    } else if (eventType === 'visitor_left_page') {
+      const isAys = data.is_aysenur === true || data.is_aysenur === 'true';
+      title = isAys ? '🚪🌹 Ayşenur Sayfadan Ayrıldı / Sekmeyi Kapattı' : '🚪 Ziyaretçi Sayfadan Ayrıldı';
+      color = isAys ? 14749257 : 9740472; // Crimson or Slate Gray
+      description = `Ziyaretçi sayfayı kapattı veya ayrıldı.\n⏱️ **Sitede Kaldığı Süre:** ${data.duration || 'Bilinmiyor'}\n📍 **Terk Ettiği Yer:** ${data.stage || 'Bilinmiyor'}`;
     } else if (eventType === 'melancholy_quote_viewed') {
       title = '🥀 Hüzün Modu - Karşılama Ekranı Geçildi';
       color = 11029239; // Purple #a855f7
@@ -213,6 +218,7 @@ export async function sendDiscordWebhook(
         { name: 'note', variable: '{note}', value: String(data.note || '-') },
         { name: 'answer', variable: '{answer}', value: String(data.answerInput || data.answer || '-') },
         { name: 'stage', variable: '{stage}', value: String(data.stage || '-') },
+        { name: 'duration', variable: '{duration}', value: String(data.duration || '-') },
         { name: 'scroll_status', variable: '{scroll_status}', value: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı') },
         { name: 'scroll_progress', variable: '{scroll_progress}', value: String(data.scrollProgress || data.stage || '-') },
         { name: 'scroll_percentage', variable: '{scroll_percentage}', value: String(data.scrollPercentage || '-') }
@@ -224,6 +230,7 @@ export async function sendDiscordWebhook(
         event_type: eventType || 'event',
         answer: String(data.answerInput || data.answer || '-'),
         stage: String(data.stage || '-'),
+        duration: String(data.duration || '-'),
         scroll_status: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı'),
         scroll_percentage: String(data.scrollPercentage || '-'),
         letter_text: String(data.letterText || '-'),

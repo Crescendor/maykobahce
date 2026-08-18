@@ -361,6 +361,12 @@ export default function App() {
   const currentProgressRef = useRef(0);
   const loggedSectionsRef = useRef(new Set());
 
+  // Session & Exit Analytics Refs
+  const sessionStartTimeRef = useRef(Date.now());
+  const currentStageLabelRef = useRef('Başlangıç / 1. Paragraf');
+  const currentScrollPercentRef = useRef('0%');
+  const hasSentExitLogRef = useRef(false);
+
   useEffect(() => {
     // Immediate physical wheel / touch gesture listener for the very first scroll
     const handleFirstPhysicalScroll = () => {
@@ -419,6 +425,9 @@ export default function App() {
               ? '6. Bölüm: "sen o yemeği iyi bilirsin."'
               : `${currentIdx}. Paragraf: "${(sec.text || '').slice(0, 42)}..."`;
 
+            currentStageLabelRef.current = stageLabel;
+            currentScrollPercentRef.current = `${Math.round((currentIdx / (currentSections.length - 1)) * 100)}%`;
+
             const statusLabel = isAys
               ? sec.isComposer
                 ? 'Sayfanın En Sonuna Ulaştı'
@@ -454,6 +463,8 @@ export default function App() {
         // 3. Webhook: Page bottom reached (only once per visitor)
         if (!hasLoggedBottomReached.current && isFoodCorrect && fraction >= 0.94) {
           hasLoggedBottomReached.current = true;
+          currentStageLabelRef.current = '🌹 En Alt: Gül Dağları & Mektup Bırakma Bölümü';
+          currentScrollPercentRef.current = '100%';
           postLogToApi('page_bottom_reached', {
             action: 'Sayfanın En Altına (Gül Dağları & Mektup Alanına) Ulaşıldı',
             scrollStatus: 'Sayfanın En Sonuna Ulaştı',
@@ -488,6 +499,63 @@ export default function App() {
       cancelAnimationFrame(animId);
     };
   }, [currentSections.length, getDeviceId, isFoodCorrect]);
+
+  // Universal Page Exit Tracker (Sends notification when ANY visitor leaves or closes the page)
+  useEffect(() => {
+    const handleExit = () => {
+      if (hasLoggedFirstScroll.current && !hasSentExitLogRef.current) {
+        hasSentExitLogRef.current = true;
+        const durationMs = Date.now() - sessionStartTimeRef.current;
+        const totalSec = Math.round(durationMs / 1000);
+        const mins = Math.floor(totalSec / 60);
+        const secs = totalSec % 60;
+        const durationStr = mins > 0 ? `${mins} dakika ${secs} saniye` : `${secs} saniye`;
+
+        const isAys = isFoodCorrect || (currentProgressRef.current >= 6.5);
+        const exitPayload = {
+          action: isAys ? 'Ayşenur Sayfayı Kapattı / Ayrıldı' : 'Ziyaretçi Sayfayı Kapattı / Ayrıldı',
+          stage: currentStageLabelRef.current,
+          scrollPercentage: currentScrollPercentRef.current,
+          scrollStatus: `Siteden Ayrıldı (Kaldığı Yer: ${currentStageLabelRef.current})`,
+          duration: durationStr,
+          answer: foodInput || '-',
+          deviceId: getDeviceId(),
+          device: detectClientDevice(),
+          is_aysenur: isAys
+        };
+
+        if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+          try {
+            const blob = new Blob([JSON.stringify({
+              eventType: 'visitor_left_page',
+              data: exitPayload,
+              timestamp: new Date().toISOString()
+            })], { type: 'application/json' });
+            navigator.sendBeacon('/api/flower-logs', blob);
+            return;
+          } catch (e) {}
+        }
+
+        postLogToApi('visitor_left_page', exitPayload);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        handleExit();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleExit);
+    window.addEventListener('pagehide', handleExit);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleExit);
+      window.removeEventListener('pagehide', handleExit);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [foodInput, getDeviceId, isFoodCorrect]);
 
   // Sync Published Meadow Objects, Custom Background & Site Settings from Cloudflare Edge API for all visitors
   const syncMeadowObjects = useCallback(async () => {
