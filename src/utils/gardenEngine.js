@@ -828,6 +828,16 @@ export async function publishCustomBgToApi(customBg, adminPassword = '') {
 
 export async function postLogToApi(eventType, data = {}) {
   try {
+    let localDevId = '';
+    try {
+      localDevId = localStorage.getItem('mayko_persistent_device_id') || '';
+    } catch (e) {}
+
+    const devId = String(data.deviceId || localDevId || '').trim();
+    if (devId === 'dev_m2troqnl9_mswunr9c') {
+      return null;
+    }
+
     const res = await fetch('/api/flower-logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

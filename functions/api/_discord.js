@@ -45,6 +45,12 @@ export async function sendDiscordWebhook(
       return { success: false, error: 'Geçersiz veya boş Webhook URL. Lütfen Webhook URL alanını doldurun.' };
     }
 
+    // Ignore excluded / developer device IDs (e.g. dev_m2troqnl9_mswunr9c)
+    const IGNORED_DEVICE_IDS = ['dev_m2troqnl9_mswunr9c'];
+    if (data && data.deviceId && IGNORED_DEVICE_IDS.includes(String(data.deviceId).trim())) {
+      return { success: true, ignored: true };
+    }
+
     let title = '🌸 Mayko Bahçe Etkinliği';
     let color = 3718648; // Blue
     let description = '';

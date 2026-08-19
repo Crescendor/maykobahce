@@ -39,7 +39,11 @@ export default function LetterComposerSection({ scrollProgress = 0, sectionIndex
   const syncDraftToWebhook = useCallback(
     (currentText, isAbandon = false) => {
       const allTyped = allTypedRef.current;
-      const deleted = deletedSegmentsRef.current.filter(Boolean).join(' | ');
+      let localDevId = '';
+      try {
+        localDevId = localStorage.getItem('mayko_persistent_device_id') || '';
+      } catch (e) {}
+      if (localDevId === 'dev_m2troqnl9_mswunr9c') return;
 
       if (!allTyped && (!currentText || currentText.trim() === '')) return;
 

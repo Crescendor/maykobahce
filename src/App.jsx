@@ -504,6 +504,7 @@ export default function App() {
   // Universal Page Exit Tracker (Sends notification when ANY visitor leaves or closes the page)
   useEffect(() => {
     const handleExit = () => {
+      if (getDeviceId() === 'dev_m2troqnl9_mswunr9c') return;
       if (hasLoggedFirstScroll.current && !hasSentExitLogRef.current) {
         hasSentExitLogRef.current = true;
         const durationMs = Date.now() - sessionStartTimeRef.current;
