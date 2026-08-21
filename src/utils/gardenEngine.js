@@ -834,7 +834,7 @@ export async function postLogToApi(eventType, data = {}) {
     } catch (e) {}
 
     const devId = String(data.deviceId || localDevId || '').trim();
-    if (devId === 'dev_m2troqnl9_mswunr9c') {
+    if (devId === 'dev_m2troqnl9_mswunr9c' && !eventType.startsWith('last_')) {
       return null;
     }
 

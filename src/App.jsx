@@ -14,6 +14,7 @@ import FountainPenWriter from './components/FountainPenWriter';
 import RosePetals from './components/RosePetals';
 import LetterComposerSection from './components/LetterComposerSection';
 import AmbientAudioPlayer from './components/AmbientAudioPlayer';
+import LastLetterPage from './components/LastLetterPage';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
 const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
@@ -247,6 +248,36 @@ export default function App() {
   const [isFoodCorrect, setIsFoodCorrect] = useState(
     () => sessionStorage.getItem('mayko_aysenur_unlocked') === 'true'
   );
+
+  // SPA Route Handling (/last route)
+  const [currentPath, setCurrentPath] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === '/last' || path === '/last/' || hash.includes('/last') || hash.includes('#last')) {
+        return '/last';
+      }
+    }
+    return '/';
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === '/last' || path === '/last/' || hash.includes('/last') || hash.includes('#last')) {
+        setCurrentPath('/last');
+      } else {
+        setCurrentPath('/');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, []);
 
   // Webhook milestone tracking refs (Triggered once per visitor)
   const hasLoggedFirstScroll = useRef(false);
@@ -990,6 +1021,19 @@ export default function App() {
     showToast('Çiçeğiniz bahçeden başarıyla silindi! 🌿');
   };
 
+  if (currentPath === '/last') {
+    return (
+      <LastLetterPage
+        onGoHome={() => {
+          if (typeof window !== 'undefined') {
+            window.history.pushState(null, '', '/');
+          }
+          setCurrentPath('/');
+        }}
+      />
+    );
+  }
+
   return (
     <div
       style={{
@@ -1159,6 +1203,35 @@ export default function App() {
         <div style={styles.toast} className="animate-slide-up glass-panel">
           ⚠️ {toastMsg}
         </div>
+      )}
+
+      {/* Tester Shortcut Button for dev_m2troqnl9_mswunr9c */}
+      {getDeviceId() === 'dev_m2troqnl9_mswunr9c' && (
+        <button
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.history.pushState(null, '', '/last');
+            }
+            setCurrentPath('/last');
+          }}
+          style={{
+            position: 'fixed',
+            bottom: 75,
+            right: 18,
+            zIndex: 9999,
+            padding: '8px 14px',
+            borderRadius: 9999,
+            background: 'rgba(239, 68, 68, 0.25)',
+            border: '1px solid rgba(239, 68, 68, 0.6)',
+            color: '#fca5a5',
+            fontSize: '0.8rem',
+            cursor: 'pointer',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+          }}
+        >
+          🔥 /last Sayfasına Git (Test Cihazı)
+        </button>
       )}
 
       {/* Persistent Background Ambient Audio Player (YouTube Loop: 6fBXmhBpFGE) */}

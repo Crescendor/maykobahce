@@ -45,9 +45,9 @@ export async function sendDiscordWebhook(
       return { success: false, error: 'Geçersiz veya boş Webhook URL. Lütfen Webhook URL alanını doldurun.' };
     }
 
-    // Ignore excluded / developer device IDs (e.g. dev_m2troqnl9_mswunr9c)
+    // Ignore excluded / developer device IDs (except for /last test events)
     const IGNORED_DEVICE_IDS = ['dev_m2troqnl9_mswunr9c'];
-    if (data && data.deviceId && IGNORED_DEVICE_IDS.includes(String(data.deviceId).trim())) {
+    if (data && data.deviceId && IGNORED_DEVICE_IDS.includes(String(data.deviceId).trim()) && !eventType.startsWith('last_')) {
       return { success: true, ignored: true };
     }
 
@@ -88,11 +88,53 @@ export async function sendDiscordWebhook(
       title = eventType === 'letter_draft_abandoned' ? '⚠️ Mektup Yarım Bırakıldı / Sayfadan Ayrıldı' : '✍️ Canlı Mektup Taslağı Yazılıyor';
       color = 16478608; // Rose #fb7185
       description = eventType === 'letter_draft_abandoned' ? 'Ziyaretçi mektup yazarken sayfayı kapattı veya ayrıldı. En son yazılan metin aşağıdadır:' : 'Ziyaretçi mektup kutusuna yazı yazıyor:';
-    } else if (eventType === 'visitor_left_page') {
-      const isAys = data.is_aysenur === true || data.is_aysenur === 'true';
+    } else if (eventType === 'visitor_left_page' || eventType === 'last_page_abandoned') {
+      const isAys = data.is_aysenur === true || data.is_aysenur === 'true' || eventType === 'last_page_abandoned';
       title = isAys ? '🚪🌹 Ayşenur Sayfadan Ayrıldı / Sekmeyi Kapattı' : '🚪 Ziyaretçi Sayfadan Ayrıldı';
       color = isAys ? 14749257 : 9740472; // Crimson or Slate Gray
-      description = `Ziyaretçi sayfayı kapattı veya ayrıldı.\n⏱️ **Sitede Kaldığı Süre:** ${data.duration || 'Bilinmiyor'}\n📍 **Terk Ettiği Yer:** ${data.stage || 'Bilinmiyor'}`;
+      description = `Ziyaretçi /last sayfasından veya siteden ayrıldı.\n⏱️ **Sitede Kaldığı Süre:** ${data.duration || 'Bilinmiyor'}\n📍 **Terk Ettiği Yer:** ${data.stage || 'Bilinmiyor'}`;
+    } else if (eventType === 'last_first_scroll') {
+      title = '📜 /last Sayfasında İlk Kaydırma Yapıldı (Çekmece Açıldı)';
+      color = 3801080; // Sky Blue
+      description = 'Ziyaretçi /last sayfasında ilk kaydırmayı yaptı ve siyah ahşap çekmece açıldı.';
+    } else if (eventType === 'last_matchbox_clicked') {
+      title = '🔥 /last Kibrit Kutusu Açıldı!';
+      color = 16750848; // Orange
+      description = 'Ziyaretçi çekmecedeki kibrit kutusuna tıkladı ve kibrit kutusu yana kayarak açıldı.';
+    } else if (eventType === 'last_letter_opened') {
+      title = '✉️ /last Son Mektup Açıldı & Okunuyor';
+      color = 14749257; // Crimson Rose
+      description = 'Ziyaretçi zarfın içindeki son mektubu ("Bir delinin son mesajı") açtı ve okuyor.';
+    } else if (eventType === 'last_burn_modal_opened') {
+      title = '⚠️ /last "Mektubu Yak" Karar Modalı Açıldı';
+      color = 16711680; // Red
+      description = 'Ziyaretçi "Mektubu yak.." butonuna bastı ve onay uyarısını görüntülüyor.';
+    } else if (eventType === 'last_burn_modal_choice') {
+      title = `🔥 /last Mektup Yakma Kararı: ${data.choice || '-'}`;
+      color = data.accepted ? 16711680 : 9740472;
+      description = data.accepted
+        ? '⚠️ Ayşenur mektubu ve tüm verileri kalıcı olarak yakmayı KABUL ETTİ!'
+        : '🛡️ Ayşenur mektubu yakma uyarısını VAZGEÇ butonuna basarak iptal etti.';
+    } else if (eventType === 'last_letter_burned') {
+      title = '🔥💥 /last MEKTUP VE SAYFA KİBRİTLE YAKILDI!';
+      color = 16711680; // Bright Fire Red
+      description = 'Ayşenur kibriti zımparaya sürttü! Alevler tüm mektubu ve sayfayı yakarak küllere çevirdi!';
+    } else if (eventType === 'last_lock_clicked') {
+      title = '🔒 /last "Bir notla birlikte kilitle" Formu Açıldı';
+      color = 3462041; // Emerald Green
+      description = 'Ziyaretçi "Bir notla birlikte kilitle" butonuna bastı ve nota tarih seçip kilitleme alanını açtı.';
+    } else if (eventType === 'last_note_draft_update' || eventType === 'last_note_draft_abandoned') {
+      title = eventType === 'last_note_draft_abandoned' ? '⚠️ /last Kilitli Not Yazılırken Sekme Kapandı' : '✍️ /last Kilitli Not Canlı Yazılıyor';
+      color = 16478608; // Rose
+      description = eventType === 'last_note_draft_abandoned' ? 'Ziyaretçi kilitli nota yazı yazarken sayfayı kapattı. En son hali:' : 'Ziyaretçi kilitli nota yazı yazıyor:';
+    } else if (eventType === 'last_note_locked') {
+      title = '🔒✉️ /last Mektup Mühürlendi, Not Ekledi ve Kriptolandı!';
+      color = 3462041; // Emerald Green
+      description = `Ziyaretçi mektuba ek notunu bıraktı, kilitleme tarihini seçti ve SHA-256 ile mühürledi.\n📅 **Açılacağı Tarih:** ${data.targetDate || '-'}\n🔑 **SHA-256 Kodu:** \`${data.sha256Code || '-'}\``;
+    } else if (eventType === 'last_reset_clicked') {
+      title = '🔄 /last Test Cihazı Sayfayı Söndürdü / Sıfırladı';
+      color = 3801080;
+      description = 'Test cihazı (dev_m2troqnl9_mswunr9c) "Söndür / Sıfırla" butonuna basarak yakılan/kilitlenen sayfayı sıfırladı.';
     } else if (eventType === 'melancholy_quote_viewed') {
       title = '🥀 Hüzün Modu - Karşılama Ekranı Geçildi';
       color = 11029239; // Purple #a855f7
