@@ -4,134 +4,6 @@ import AmbientAudioPlayer from './AmbientAudioPlayer';
 import { postLogToApi } from '../utils/gardenEngine';
 
 /**
- * GPU-Accelerated 60fps 4-Edge CSS Flame & Ember Border Engine
- * Provides butter-smooth 60fps performance across all devices (zero lag/stuttering)
- * using CSS hardware acceleration and GPU-composited layers.
- */
-function GpuFireBordersEngine({ active }) {
-  if (!active) return null;
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        pointerEvents: 'none',
-        zIndex: 99990,
-        contain: 'strict'
-      }}
-    >
-      {/* Top 4-Edge Flame Wave */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 38,
-          background: 'linear-gradient(180deg, rgba(255, 60, 0, 0.95) 0%, rgba(255, 140, 0, 0.6) 60%, rgba(255, 40, 0, 0) 100%)',
-          boxShadow: '0 8px 35px rgba(255, 70, 0, 0.9), inset 0 2px 10px rgba(255, 230, 180, 0.8)',
-          animation: 'gpuFlameFlickerTop 1.4s ease-in-out infinite alternate',
-          willChange: 'transform, opacity'
-        }}
-      />
-
-      {/* Bottom 4-Edge Flame Wave */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 48,
-          background: 'linear-gradient(0deg, rgba(255, 60, 0, 0.95) 0%, rgba(255, 140, 0, 0.65) 60%, rgba(255, 40, 0, 0) 100%)',
-          boxShadow: '0 -10px 45px rgba(255, 70, 0, 0.95), inset 0 -2px 12px rgba(255, 230, 180, 0.8)',
-          animation: 'gpuFlameFlickerBottom 1.6s ease-in-out infinite alternate',
-          willChange: 'transform, opacity'
-        }}
-      />
-
-      {/* Left 4-Edge Flame Wave */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          width: 32,
-          background: 'linear-gradient(90deg, rgba(255, 60, 0, 0.9) 0%, rgba(255, 130, 0, 0.5) 60%, rgba(255, 40, 0, 0) 100%)',
-          boxShadow: '8px 0 35px rgba(255, 70, 0, 0.85)',
-          animation: 'gpuFlameFlickerLeft 1.5s ease-in-out infinite alternate',
-          willChange: 'transform, opacity'
-        }}
-      />
-
-      {/* Right 4-Edge Flame Wave */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          right: 0,
-          width: 32,
-          background: 'linear-gradient(270deg, rgba(255, 60, 0, 0.9) 0%, rgba(255, 130, 0, 0.5) 60%, rgba(255, 40, 0, 0) 100%)',
-          boxShadow: '-8px 0 35px rgba(255, 70, 0, 0.85)',
-          animation: 'gpuFlameFlickerRight 1.7s ease-in-out infinite alternate',
-          willChange: 'transform, opacity'
-        }}
-      />
-
-      {/* Lightweight Floating Ember Sparks (GPU Composited) */}
-      {[...Array(14)].map((_, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            bottom: -20,
-            left: `${(i * 7.5 + 4) % 96}%`,
-            width: (i % 3) + 2,
-            height: (i % 3) + 2,
-            borderRadius: '50%',
-            background: '#ffbe3b',
-            boxShadow: '0 0 10px #ff5500, 0 0 18px #ffaa00',
-            animation: `gpuEmberRise ${2.5 + (i % 4) * 0.7}s cubic-bezier(0.25, 1, 0.5, 1) ${i * 0.2}s infinite`,
-            willChange: 'transform, opacity'
-          }}
-        />
-      ))}
-
-      <style>{`
-        @keyframes gpuFlameFlickerTop {
-          0% { transform: scaleY(1); opacity: 0.88; }
-          50% { transform: scaleY(1.15) translateY(-2px); opacity: 0.98; }
-          100% { transform: scaleY(0.92); opacity: 0.85; }
-        }
-        @keyframes gpuFlameFlickerBottom {
-          0% { transform: scaleY(1); opacity: 0.92; }
-          50% { transform: scaleY(1.2) translateY(2px); opacity: 1; }
-          100% { transform: scaleY(0.95); opacity: 0.88; }
-        }
-        @keyframes gpuFlameFlickerLeft {
-          0% { transform: scaleX(1); opacity: 0.85; }
-          50% { transform: scaleX(1.18); opacity: 0.98; }
-          100% { transform: scaleX(0.9); opacity: 0.82; }
-        }
-        @keyframes gpuFlameFlickerRight {
-          0% { transform: scaleX(1); opacity: 0.85; }
-          50% { transform: scaleX(1.18); opacity: 0.98; }
-          100% { transform: scaleX(0.9); opacity: 0.82; }
-        }
-        @keyframes gpuEmberRise {
-          0% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
-          50% { transform: translate3d(${(Math.random() > 0.5 ? 1 : -1) * 20}px, -45vh, 0) scale(1.3); opacity: 0.8; }
-          100% { transform: translate3d(${(Math.random() > 0.5 ? -15 : 15)}px, -95vh, 0) scale(0.3); opacity: 0; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-/**
  * LastLetterPage Component (/last)
  * Special emotional ending page:
  * - "Neyse" intro (100% pixel-identical to home page typography).
@@ -140,7 +12,7 @@ function GpuFireBordersEngine({ active }) {
  * - Matchbox click slides open matchbox tray and unfolds Handwritten Letter.
  * - Striker strip at TOP of letter paper labeled prominently.
  * - "Mektubu yak.." -> Modal -> Drag matchstick across striker.
- * - User's exact CSS DOM paper-burn animation (.burn, .flame x10, .highlight).
+ * - 15-second continuous center paper burn expanding from the middle without shrinking.
  * - 10-Minute Farewell Screen Timer -> Full Pitch Black Silent Darkness.
  * - "Bir notla birlikte kilitle" -> Live keylogged note form + DateTimePicker -> SHA-256 seal.
  * - Full BotGhost/Discord webhook tracking for all actions.
@@ -562,10 +434,7 @@ export default function LastLetterPage({ onGoHome }) {
       {/* Background Music Loop */}
       <AmbientAudioPlayer />
 
-      {/* GPU-Accelerated 60fps 4-Edge CSS Flame & Ember Border Engine */}
-      <GpuFireBordersEngine active={isBurningActive && !isBurned} />
-
-      {/* User's Exact CSS Paper Hole Burn FX Overlay */}
+      {/* 15-Second Continuous Center Expanding Burn Hole Overlay */}
       {matchIgnited && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="content" style={{ width: '100vw', height: '100vh', position: 'relative' }}>
