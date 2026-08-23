@@ -393,6 +393,51 @@ body::-webkit-scrollbar,
   }
 }
 
+/* ─── Realistic Radial Hole Burn Animation ─────────────────────── */
+.realistic-hole-burn {
+  position: fixed;
+  height: 0;
+  width: 0;
+  background-color: #050507;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 99999;
+  border: 3px solid #fffb5c;
+  animation: burnGrowHole 4.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  box-shadow:
+    inset 0 0 10px 4px #fffb5c,
+    inset 0 0 16px 8px rgba(243, 108, 0, 0.8),
+    0 0 20px 8px #fffb5c,
+    0 0 45px 25px rgba(241, 124, 4, 0.75),
+    0 0 30px 30px #1c0901eb,
+    inset 0 0 40px 30px #c4720f80;
+}
+
+@keyframes burnGrowHole {
+  0% {
+    width: 0px;
+    height: 0px;
+    opacity: 1;
+    border-color: #fffb5c;
+  }
+  85% {
+    width: 260vmax;
+    height: 260vmax;
+    opacity: 1;
+    border-color: #ff9900;
+  }
+  100% {
+    width: 280vmax;
+    height: 280vmax;
+    opacity: 1;
+    border-color: #000000;
+    box-shadow: none;
+  }
+}
+
 /* ─── Melancholy (Hüzün / Siyah Beyaz) Global Mode ──────────────── */
 .melancholy-mode {
   filter: grayscale(100%) contrast(108%) brightness(92%);

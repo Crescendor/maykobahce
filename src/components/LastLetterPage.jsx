@@ -521,36 +521,150 @@ export default function LastLetterPage({ onGoHome }) {
       <AmbientAudioPlayer />
 
       {/* GPU-Accelerated 60fps 4-Edge CSS Flame & Ember Border Engine */}
-      <GpuFireBordersEngine active={isBurningActive} />
+      <GpuFireBordersEngine active={isBurningActive && !isBurned} />
 
-      {/* Tester Reset Floating Control */}
-      {isTester && (
-        <button
-          onClick={handleResetTester}
-          style={{
-            position: 'fixed',
-            top: 20,
-            left: 20,
-            zIndex: 100000,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 14px',
-            borderRadius: 9999,
-            background: 'rgba(239, 68, 68, 0.25)',
-            border: '1px solid rgba(239, 68, 68, 0.6)',
-            color: '#fca5a5',
-            fontSize: '0.82rem',
-            cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+      {/* Realistic CSS Radial Hole Burn-Grow Hole Overlay */}
+      {matchIgnited && (
+        <div
+          className="realistic-hole-burn"
+          onAnimationEnd={() => {
+            setIsBurned(true);
+            try {
+              localStorage.setItem('mayko_last_burned', 'true');
+            } catch (e) {}
           }}
-        >
-          <RotateCcw size={14} /> Söndür / Sıfırla (Test Cihazı)
-        </button>
+        />
       )}
 
-      {/* Main Page Content (Glows with charcoal fire embers when burning) */}
+      {/* Permanent Farewell Message Screen (Appears after burn finishes) */}
+      {isBurned ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: '#050507',
+            backgroundImage: 'radial-gradient(circle at center, #0f0b0c 0%, #030304 100%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px 24px',
+            textAlign: 'center',
+            zIndex: 100000,
+            overflowY: 'auto',
+            animation: 'fadeInSlow 2s ease-out forwards'
+          }}
+        >
+          {/* Main Emotional Farewell Lines */}
+          <div style={{ maxWidth: 680, width: '100%', marginBottom: 40 }}>
+            <h2
+              style={{
+                fontFamily: "'Cardo', Georgia, serif",
+                fontSize: 'clamp(1.6rem, 3.8vw, 2.4rem)',
+                fontWeight: 400,
+                color: '#f3f4f6',
+                lineHeight: 1.6,
+                marginBottom: 20,
+                letterSpacing: '0.02em'
+              }}
+            >
+              Hayatımdan gelip geçtiğin için çok teşekkürler..
+            </h2>
+
+            <p
+              style={{
+                fontFamily: "'Cardo', Georgia, serif",
+                fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
+                fontWeight: 400,
+                fontStyle: 'italic',
+                color: '#cbd5e1',
+                lineHeight: 1.7,
+                marginBottom: 28,
+                opacity: 0.9
+              }}
+            >
+              Sana dair her şeyim silinecek, ancak seni asla unutmayacağım.
+            </p>
+
+            <h3
+              style={{
+                fontFamily: "'Cardo', Georgia, serif",
+                fontSize: 'clamp(2rem, 4.5vw, 3rem)',
+                fontWeight: 400,
+                color: '#ef4444',
+                letterSpacing: '0.06em',
+                margin: '12px 0 0 0',
+                textShadow: '0 0 25px rgba(239, 68, 68, 0.4)'
+              }}
+            >
+              Elveda
+            </h3>
+          </div>
+
+          {/* System Deletion Console Summary Lines */}
+          <div
+            style={{
+              maxWidth: 620,
+              width: '100%',
+              background: 'rgba(10, 11, 15, 0.85)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 14,
+              padding: '24px 28px',
+              textAlign: 'left',
+              fontFamily: "'Courier New', Courier, monospace",
+              fontSize: 'clamp(0.82rem, 1.8vw, 0.95rem)',
+              color: '#94a3b8',
+              lineHeight: 1.9,
+              boxShadow: '0 15px 40px rgba(0,0,0,0.85)',
+              backdropFilter: 'blur(12px)'
+            }}
+          >
+            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
+              ✓ Tüm galeri öğeleri silindi..
+            </div>
+            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
+              ✓ Tüm mesajlaşmalar silindi..
+            </div>
+            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
+              ✓ Görüşme kayıtları silindi..
+            </div>
+            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
+              ✓ Numaralar silindi..
+            </div>
+            <div style={{ color: '#f59e0b', marginBottom: 12, wordBreak: 'break-all', lineHeight: 1.6 }}>
+              ✓ b**********n@gmail.com ve l***********d@gmail.com adresinde tüm "Ayşenur" işaretli ürünler silindi..
+            </div>
+            <div style={{ color: '#6ee7b7', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, fontStyle: 'italic' }}>
+              ⚡ Sitenin silinmesi için Cloudflare Worker üzerinden komut gönderildi.
+            </div>
+          </div>
+
+          {/* Tester Floating Control over Farewell Screen */}
+          {isTester && (
+            <button
+              onClick={handleResetTester}
+              style={{
+                marginTop: 32,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 9999,
+                background: 'rgba(239, 68, 68, 0.25)',
+                border: '1px solid rgba(239, 68, 68, 0.6)',
+                color: '#fca5a5',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 18px rgba(239, 68, 68, 0.35)'
+              }}
+            >
+              <RotateCcw size={16} /> Söndür / Sıfırla (Test Cihazı)
+            </button>
+          )}
+        </div>
+      ) : (
+        /* Main Page Content (Glows with charcoal fire embers when burning) */
       <div
         style={{
           position: 'absolute',
@@ -1161,10 +1275,11 @@ export default function LastLetterPage({ onGoHome }) {
                   Vazgeç
                 </button>
               </div>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <style>{`
         @keyframes unfoldLetter {
