@@ -38,16 +38,16 @@ export default function LastLetterPage({ onGoHome }) {
   const [burnModalOpen, setBurnModalOpen] = useState(false);
   const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(isTester);
 
-  // Burn & Fire State
-  const [isBurningActive, setIsBurningActive] = useState(false);
-  const [isBurned, setIsBurned] = useState(() => {
-    if (isTester) return false;
+  // Burn & Fire State - Clear all previous local storage burn records completely as requested
+  useEffect(() => {
     try {
-      return localStorage.getItem('mayko_last_burned') === 'true';
-    } catch (e) {
-      return false;
-    }
-  });
+      localStorage.removeItem('mayko_last_burned');
+      localStorage.removeItem('mayko_burned_at');
+    } catch (e) {}
+  }, []);
+
+  const [isBurningActive, setIsBurningActive] = useState(false);
+  const [isBurned, setIsBurned] = useState(false);
 
   // 10-Minute Farewell Timer Engine
   const getBurnedRemainingMs = () => {
