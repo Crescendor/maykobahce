@@ -82,14 +82,12 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       try {
         eventTarget.seekTo(125, true); // 2:05
         eventTarget.playVideo();
-        // Unmute immediately or on first micro-gesture
-        setTimeout(() => {
-          try {
-            if (typeof eventTarget.unMute === 'function') eventTarget.unMute();
-            eventTarget.setVolume(25);
-          } catch (e) {}
-        }, 100);
-        setHasStarted(true);
+        // Check if video is playing unmuted
+        try {
+          if (eventTarget.isMuted && !eventTarget.isMuted()) {
+            setHasStarted(true);
+          }
+        } catch (e) {}
       } catch (e) {}
     };
 
@@ -121,10 +119,6 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
           },
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
-              try {
-                if (typeof event.target.unMute === 'function') event.target.unMute();
-                event.target.setVolume(25);
-              } catch (e) {}
               setHasStarted(true);
             }
           }
