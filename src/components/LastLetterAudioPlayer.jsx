@@ -5,9 +5,9 @@ import { Volume2, Volume1, VolumeX } from 'lucide-react';
  * LastLetterAudioPlayer Component
  * Specialized YouTube Audio Engine for /last page:
  * - YouTube Video ID: NBQbekrHnsY
- * - Autoplays on entry at volume 25%.
- * - Phase 1: Starts at 2:05 (125s) with smooth playback until 2:48 (168s) where it smooth-fades out to 0% & pauses.
- * - Guarantees onPhase1Complete callback triggers at 2:48 (168s) to unlock action buttons.
+ * - Autoplays immediately on page entry at volume 25%.
+ * - Phase 1: Starts at 2:05 (125s), plays until 2:48 (168s) where it smooth-fades out to 0% & pauses.
+ * - Triggers onPhase1Complete callback at 2:48 (168s) or after 43s safety timer to unlock action buttons.
  * - Stops audio when isLocked is true.
  * - Phase 2 (When mektup yakma accepted): Starts at 2:49 (169s) with 2s smooth fade-in, plays through until end of song (no loop).
  */
@@ -18,13 +18,12 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
   const timeCheckIntervalRef = useRef(null);
   const isPhase1EndedRef = useRef(false);
   const isPhase2StartedRef = useRef(false);
-  const hasSeekedInitialRef = useRef(false);
 
   const [volume, setVolume] = useState(25);
   const [isHovered, setIsHovered] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Silky Smooth Exponential Volume Fader (50ms interval)
+  // Silky Smooth Volume Fader
   const fadeVolume = (targetVol, durationMs, onComplete) => {
     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
     if (!playerRef.current || typeof playerRef.current.getVolume !== 'function') {
@@ -42,7 +41,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       const easeFactor = targetVol < startVol
         ? Math.pow(1 - progress, 2)
         : Math.sin((progress * Math.PI) / 2);
-      
+
       const currentVol = targetVol < startVol
         ? Math.round(startVol * easeFactor)
         : Math.round(startVol + (targetVol - startVol) * easeFactor);
@@ -63,39 +62,21 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     }, 50);
   };
 
-  // 1. Guaranteed 43-Second Fallback Safety Timer (125s -> 168s = 43 seconds exact)
+  // 1. Guaranteed 43-Second Fallback Safety Timer (125s -> 168s = 43s duration)
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
       if (!isPhase1EndedRef.current) {
         isPhase1EndedRef.current = true;
         if (onPhase1Complete) onPhase1Complete();
       }
-    }, 43000); // 43 Seconds exact duration of Phase 1
+    }, 43000);
 
     return () => clearTimeout(safetyTimer);
   }, [onPhase1Complete]);
 
-  // 2. Initialize YouTube Player Immediately on Entry
+  // 2. YouTube IFrame API Initialization (Matching AmbientAudioPlayer structure)
   useEffect(() => {
     let isCancelled = false;
-
-    const startAudioEngine = (eventTarget) => {
-      if (hasSeekedInitialRef.current) return;
-      hasSeekedInitialRef.current = true;
-      try {
-        if (typeof eventTarget.unMute === 'function') eventTarget.unMute();
-        eventTarget.setVolume(25);
-        eventTarget.seekTo(125, true); // 2:05 (125. saniye)
-        const promise = eventTarget.playVideo();
-        if (promise !== undefined && typeof promise.then === 'function') {
-          promise.then(() => {
-            setHasStarted(true);
-          }).catch(() => {});
-        } else {
-          setHasStarted(true);
-        }
-      } catch (e) {}
-    };
 
     const onYouTubeIframeAPIReady = () => {
       if (isCancelled || playerRef.current) return;
@@ -106,18 +87,26 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
         videoId: videoId,
         playerVars: {
           autoplay: 1,
+          loop: 0,
+          playlist: videoId,
           controls: 0,
           showinfo: 0,
           rel: 0,
-          loop: 0,
           modestbranding: 1,
           playsinline: 1,
-          start: 125, // 2:05 (125. saniye)
+          disablekb: 1,
+          fs: 0,
+          start: 125, // 2:05
           origin: window.location.origin
         },
         events: {
           onReady: (event) => {
-            startAudioEngine(event.target);
+            try {
+              event.target.setVolume(25);
+              event.target.seekTo(125, true); // 2:05
+              event.target.playVideo();
+              setHasStarted(true);
+            } catch (e) {}
           },
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
@@ -138,7 +127,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       onYouTubeIframeAPIReady();
     }
 
-    // Universal Autoplay Policy Unlock (Mouse Move, Pointer, Touch, Scroll, Key)
+    // Universal Autoplay Policy Fallback (Triggers on first mouse move, scroll, key, click, touch)
     const unlockAutoplay = () => {
       if (playerRef.current && typeof playerRef.current.playVideo === 'function' && !isPhase1EndedRef.current) {
         try {
@@ -159,9 +148,9 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       if (timeCheckIntervalRef.current) clearInterval(timeCheckIntervalRef.current);
       events.forEach(evt => window.removeEventListener(evt, unlockAutoplay));
     };
-  }, []);
+  }, [videoId]);
 
-  // Monitor playback time for 2:48 (168s) smooth fade-out pause & button unlock
+  // 3. Monitor playback time for 2:48 (168s) smooth fade-out pause & button unlock
   useEffect(() => {
     timeCheckIntervalRef.current = setInterval(() => {
       if (!playerRef.current || typeof playerRef.current.getCurrentTime !== 'function') return;
@@ -198,7 +187,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     };
   }, [onPhase1Complete]);
 
-  // Handle Phase 2 (When mektup yakma is accepted -> Start from 2:49 / 169s with 2s fade-in)
+  // 4. Handle Phase 2 (When mektup yakma is accepted -> Start from 2:49 / 169s with 2s fade-in)
   useEffect(() => {
     if (isBurningActive && !isPhase2StartedRef.current) {
       isPhase2StartedRef.current = true;
@@ -214,7 +203,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     }
   }, [isBurningActive]);
 
-  // Handle Note Lock (Stops music when note is locked)
+  // 5. Handle Note Lock (Stops music when note is locked)
   useEffect(() => {
     if (isLocked && playerRef.current && typeof playerRef.current.pauseVideo === 'function') {
       try {
