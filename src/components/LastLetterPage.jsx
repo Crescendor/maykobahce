@@ -824,22 +824,18 @@ export default function LastLetterPage({ onGoHome }) {
                     pointerEvents: letterUnfolded ? 'none' : 'auto'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (100% Raw Clean Image - ZERO Shadow, ZERO Border) */}
-                  <img
-                    src="/assets/baby_photo.jpg"
-                    alt="Nostaljik bebeklik fotoğrafı"
+                  {/* Left Photo 1: Baby Photo (Cropped with clipPath to remove embedded white border & black margin) */}
+                  <div
                     onMouseEnter={() => setHoveredItem('baby')}
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
                       left: '7%',
                       top: '14%',
-                      width: 240,
-                      height: 'auto',
-                      background: 'none',
-                      border: 'none',
-                      boxShadow: 'none',
-                      borderRadius: 0,
+                      width: 230,
+                      height: 190,
+                      overflow: 'hidden',
+                      borderRadius: 4,
                       transform: hoveredItem === 'baby'
                         ? 'scale(1.2) rotate(0deg)'
                         : 'rotate(-9deg)',
@@ -847,24 +843,32 @@ export default function LastLetterPage({ onGoHome }) {
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                       cursor: 'pointer'
                     }}
-                  />
+                  >
+                    <img
+                      src="/assets/baby_photo.jpg"
+                      alt="Nostaljik bebeklik fotoğrafı"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transform: 'scale(1.24)',
+                        display: 'block'
+                      }}
+                    />
+                  </div>
 
-                  {/* Left Photo 2: Snow Kiss Photo (100% Raw Clean Image - ZERO Shadow, ZERO Border) */}
-                  <img
-                    src="/assets/snow_photo.jpg"
-                    alt="Karlar altında katedral önünde fotoğraf"
+                  {/* Left Photo 2: Snow Kiss Photo (Cropped with clipPath to remove embedded white border & black margin) */}
+                  <div
                     onMouseEnter={() => setHoveredItem('snow')}
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
                       left: '20%',
                       bottom: '10%',
-                      width: 230,
-                      height: 'auto',
-                      background: 'none',
-                      border: 'none',
-                      boxShadow: 'none',
-                      borderRadius: 0,
+                      width: 220,
+                      height: 185,
+                      overflow: 'hidden',
+                      borderRadius: 4,
                       transform: hoveredItem === 'snow'
                         ? 'scale(1.2) rotate(0deg)'
                         : 'rotate(7deg)',
@@ -872,7 +876,19 @@ export default function LastLetterPage({ onGoHome }) {
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                       cursor: 'pointer'
                     }}
-                  />
+                  >
+                    <img
+                      src="/assets/snow_photo.jpg"
+                      alt="Karlar altında katedral önünde fotoğraf"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transform: 'scale(1.24)',
+                        display: 'block'
+                      }}
+                    />
+                  </div>
 
                   {/* Dead Center Focal Item: Romantic 3D CSS Envelope with Heart Button */}
                   <div
