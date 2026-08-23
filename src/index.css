@@ -393,198 +393,149 @@ body::-webkit-scrollbar,
   }
 }
 
-/* ─── Paper Hole Burn Animation & Flame FX (15s Center Expansion) ─── */
-.content {
+/* ─── User CSS Glitter Fire Blend & Creeping Drawer Fire FX ─────── */
+:root {
+  --glitter: url("https://assets.codepen.io/13471/silver-glitter-background.png");
+}
+
+.fire {
   position: relative;
-  height: 100vh;
-  width: 100vw;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-.burn {
+.fire::before,
+.fire::after {
+  content: "";
   position: absolute;
-  height: 0px;
-  width: 0px;
-  background-color: #050507;
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation: 15s burn-grow linear forwards;
-  border: 3px solid #FFFB5C;
-  box-shadow:
-    inset 0px 0px 12px 4px #FFFB5C,
-    inset 0px 0px 18px 10px rgba(243, 108, 0, 0.8),
-    0px 0px 24px 10px #FFFB5C,
-    0px 0px 50px 30px rgba(241, 124, 4, 0.8),
-    0px 0px 35px 35px #1c0901eb,
-    inset 0px 0px 45px 35px #c4720f80;
+  inset: 0;
+  pointer-events: none;
 }
 
-@keyframes burn-grow {
+.fire::before {
+  content: "";
+  background-image: var(--glitter), var(--glitter),
+    linear-gradient(
+      0deg,
+      white 0px,
+      #ff8951 5px,
+      #dcbc169c 30%,
+      transparent 70%
+    ),
+    radial-gradient(ellipse at bottom, transparent 30%, black 60%);
+  background-size: 350px 500px, 400px 650px, 100% 100%, 100% 100%;
+  background-blend-mode: hard-light, color-dodge, multiply;
+  background-position: center 0px, center 0px, 50% 100%, center center;
+  background-repeat: repeat, repeat, repeat, no-repeat;
+  mix-blend-mode: color-dodge;
+  filter: brightness(3.7) blur(7px) contrast(6);
+  animation: fire 1.75s linear infinite;
+  box-shadow: inset 0 -40px 50px -60px #63bbc5;
+}
+
+@keyframes fire {
   0% {
-    width: 0px;
-    height: 0px;
-    opacity: 1;
-    border-color: #fffb5c;
-  }
-  92% {
-    width: 250vmax;
-    height: 250vmax;
-    opacity: 1;
-    border-color: #ff8800;
+    background-position: center 0px, center 0px, 50% 100%, center center;
   }
   100% {
-    width: 280vmax;
-    height: 280vmax;
+    background-position: center -500px, center -650px, 50% 100%, center center;
+  }
+}
+
+/* 4-Edge Creeping Fire Overlay around Drawer */
+.creeping-drawer-fire {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(255, 137, 81, 0.95), inset 0 0 50px rgba(220, 188, 22, 0.85);
+  animation: creepInward 4.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.creeping-drawer-fire::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--glitter), var(--glitter),
+    linear-gradient(
+      0deg,
+      white 0px,
+      #ff8951 5px,
+      #dcbc169c 30%,
+      transparent 70%
+    ),
+    radial-gradient(ellipse at center, transparent 35%, black 75%);
+  background-size: 350px 500px, 400px 650px, 100% 100%, 100% 100%;
+  background-blend-mode: hard-light, color-dodge, multiply;
+  background-position: center 0px, center 0px, 50% 100%, center center;
+  background-repeat: repeat, repeat, repeat, no-repeat;
+  mix-blend-mode: color-dodge;
+  filter: brightness(3.7) blur(7px) contrast(6);
+  animation: fire 1.75s linear infinite;
+}
+
+@keyframes creepInward {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.98);
+  }
+  100% {
     opacity: 1;
-    border-color: #000000;
-    box-shadow: none;
+    transform: scale(1.02);
   }
 }
 
-.burn .flame {
-  background-color: #fffc98;
-  position: absolute;
-  box-shadow: 0px 0px 10px 4px #FFFB5C;
+/* Fade out transition for Drawer & Letter when consumed by fire */
+.fade-out-burn {
+  animation: fadeOutBurn 4.5s ease-in-out forwards;
 }
 
-.burn .flame:nth-of-type(1) {
-  border-radius: 50% 0;
-  animation: 15s flame-1 linear forwards;
-  transform-origin: bottom left;
-  opacity: 0;
-}
-
-@keyframes flame-1 {
+@keyframes fadeOutBurn {
   0% {
-    opacity: 1; height: 0px; width: 0px; left: 8%; bottom: 76%;
-    box-shadow: 0px 0px 0px 0px #FFFB5C; background-color: #fffc98;
+    opacity: 1;
+    filter: brightness(1) contrast(1);
   }
-  20% { height: 25px; width: 25px; transform: rotate(-15deg); }
-  60% {
-    height: 50px; width: 50px; left: 5%; bottom: 76%;
-    box-shadow: 0px 0px 18px 12px #FFFB5C; transform: rotate(-40deg); opacity: 1;
+  50% {
+    opacity: 0.5;
+    filter: brightness(1.5) contrast(1.4) sepia(0.6);
   }
-  85% { opacity: 0; }
-  100% { opacity: 0; }
+  100% {
+    opacity: 0;
+    filter: brightness(0.1) contrast(2.5) sepia(1);
+  }
 }
 
-.burn .flame:nth-of-type(2) {
-  border-radius: 50% 0; animation: 15s flame-2 linear forwards; transform-origin: bottom left; opacity: 0;
+/* Screen Border Fire Frame for Farewell Message Screen */
+.farewell-fire-border {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
 }
-@keyframes flame-2 {
-  0% { height: 0px; width: 0px; left: 31%; top: 2%; opacity: 1; }
-  35% { height: 40px; width: 40px; top: -13%; transform: rotate(-2deg); }
-  80% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.burn .flame:nth-of-type(3) {
-  border-radius: 50% 0; animation: 15s flame-3 linear forwards; transform-origin: bottom left; opacity: 0;
-}
-@keyframes flame-3 {
-  0% { height: 0px; width: 0px; left: 40%; top: -6%; opacity: 1; }
-  40% { height: 45px; width: 45px; top: -10%; transform: rotate(15deg); }
-  80% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.burn .flame:nth-of-type(4) {
-  border-radius: 0 50%; animation: 15s flame-4 linear forwards; transform-origin: bottom right; opacity: 0;
-}
-@keyframes flame-4 {
-  0% { height: 0px; width: 0px; right: 20%; top: 5%; opacity: 1; }
-  45% { height: 40px; width: 40px; right: 20%; top: 5%; transform: rotate(20deg); }
-  85% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.burn .flame:nth-of-type(5) {
-  border-radius: 0 50%; animation: 15s flame-5 linear forwards; transform-origin: bottom right; opacity: 0;
-}
-@keyframes flame-5 {
-  0% { height: 0px; width: 0px; left: 98%; top: 38%; opacity: 1; }
-  50% { height: 40px; width: 40px; left: 90%; transform: rotate(15deg); }
-  85% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.burn .flame:nth-of-type(6) {
-  border-radius: 0 50%; animation: 15s flame-6 linear forwards; transform-origin: bottom right; opacity: 0;
-}
-@keyframes flame-6 {
-  0% { height: 0px; width: 0px; left: 96%; top: 35%; opacity: 1; }
-  45% { height: 45px; width: 45px; left: 90%; transform: rotate(45deg); }
-  85% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.burn .flame:nth-of-type(7) {
-  border-radius: 0 50%; animation: 15s flame-7 linear forwards; transform-origin: bottom right; opacity: 0;
-}
-@keyframes flame-7 {
-  0% { height: 0px; width: 0px; left: 63%; top: 91%; opacity: 1; }
-  40% { height: 40px; width: 40px; left: 60%; top: 84%; transform: rotate(70deg); }
-  80% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.burn .flame:nth-of-type(8) {
-  border-radius: 0 50%; animation: 15s flame-8 linear forwards; transform-origin: bottom right; opacity: 0;
-}
-@keyframes flame-8 {
-  0% { height: 0px; width: 0px; left: 69%; top: 80%; opacity: 1; }
-  45% { height: 45px; width: 45px; left: 66%; top: 74%; transform: rotate(80deg); }
-  85% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.burn .flame:nth-of-type(9) {
-  border-radius: 0 50%; animation: 15s flame-9 linear forwards; transform-origin: bottom right; opacity: 0;
-}
-@keyframes flame-9 {
-  0% { height: 0px; width: 0px; left: 23%; top: 85%; opacity: 1; }
-  45% { height: 40px; width: 40px; left: 23%; top: 87%; transform: rotate(65deg); }
-  85% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.burn .flame:nth-of-type(10) {
-  border-radius: 0 50%; animation: 15s flame-10 linear forwards; transform-origin: bottom right; opacity: 0;
-}
-@keyframes flame-10 {
-  0% { height: 0px; width: 0px; top: 57%; left: 0%; opacity: 1; }
-  45% { height: 35px; width: 35px; top: 57%; left: -7%; transform: rotate(10deg); }
-  85% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-.highlight {
+.farewell-fire-border::before {
+  content: "";
   position: absolute;
-  border-radius: 50%;
-  height: 500px;
-  width: 500px;
-  top: calc(50% - 250px);
-  left: calc(50% - 250px);
-  box-shadow: 0px 0px 91px 120px transparent;
-  animation: 15s grow-highlight linear forwards;
-}
-
-@keyframes grow-highlight {
-  0% {
-    height: 0px; width: 0px; top: 50%; left: 50%;
-    box-shadow: 0px 0px 71px 101px #dcaa71;
-  }
-  60% { box-shadow: 0px 0px 91px 120px #dcaa71; }
-  85% {
-    height: 500px; width: 500px; top: calc(50% - 250px); left: calc(50% - 250px);
-    box-shadow: 0px 0px 91px 120px transparent;
-  }
-  100% { opacity: 0; }
+  inset: 0;
+  background-image: var(--glitter), var(--glitter),
+    linear-gradient(
+      0deg,
+      white 0px,
+      #ff8951 5px,
+      #dcbc169c 30%,
+      transparent 70%
+    ),
+    radial-gradient(ellipse at center, transparent 40%, black 85%);
+  background-size: 350px 500px, 400px 650px, 100% 100%, 100% 100%;
+  background-blend-mode: hard-light, color-dodge, multiply;
+  background-position: center 0px, center 0px, 50% 100%, center center;
+  background-repeat: repeat, repeat, repeat, no-repeat;
+  mix-blend-mode: color-dodge;
+  filter: brightness(3.2) blur(6px) contrast(5);
+  animation: fire 1.75s linear infinite;
+  box-shadow: inset 0 0 80px 40px rgba(255, 137, 81, 0.7);
 }
 
 /* ─── Melancholy (Hüzün / Siyah Beyaz) Global Mode ──────────────── */

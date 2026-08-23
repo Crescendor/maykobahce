@@ -12,7 +12,9 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Matchbox click slides open matchbox tray and unfolds Handwritten Letter.
  * - Striker strip at TOP of letter paper labeled prominently.
  * - "Mektubu yak.." -> Modal -> Drag matchstick across striker.
- * - 15-second continuous center paper burn expanding from the middle without shrinking.
+ * - User CSS Glitter Fire Blend animation creeping inward from 4 edges of drawer.
+ * - Drawer and Handwritten Letter fade out smoothly into fire.
+ * - Farewell Message Screen framed with 4-edge Glitter Fire border animation.
  * - 10-Minute Farewell Screen Timer -> Full Pitch Black Silent Darkness.
  * - "Bir notla birlikte kilitle" -> Live keylogged note form + DateTimePicker -> SHA-256 seal.
  * - Full BotGhost/Discord webhook tracking for all actions.
@@ -434,37 +436,6 @@ export default function LastLetterPage({ onGoHome }) {
       {/* Background Music Loop */}
       <AmbientAudioPlayer />
 
-      {/* 15-Second Continuous Center Expanding Burn Hole Overlay */}
-      {matchIgnited && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="content" style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-            <div
-              className="burn"
-              onAnimationEnd={() => {
-                setIsBurned(true);
-                try {
-                  const now = Date.now();
-                  localStorage.setItem('mayko_last_burned', 'true');
-                  localStorage.setItem('mayko_burned_at', String(now));
-                } catch (e) {}
-              }}
-            >
-              <div className="flame" />
-              <div className="flame" />
-              <div className="flame" />
-              <div className="flame" />
-              <div className="flame" />
-              <div className="flame" />
-              <div className="flame" />
-              <div className="flame" />
-              <div className="flame" />
-              <div className="flame" />
-            </div>
-            <div className="highlight" />
-          </div>
-        </div>
-      )}
-
       {/* Tester Reset Floating Control (Always Accessible for Tester) */}
       {isTester && (
         <button
@@ -504,8 +475,9 @@ export default function LastLetterPage({ onGoHome }) {
           }}
         />
       ) : isBurned ? (
-        /* Permanent 10-Minute Farewell Message Screen */
+        /* Permanent 10-Minute Farewell Message Screen framed with User CSS Glitter Fire Borders */
         <div
+          className="farewell-fire-border fire"
           style={{
             position: 'fixed',
             inset: 0,
@@ -537,7 +509,8 @@ export default function LastLetterPage({ onGoHome }) {
               border: '1px solid rgba(255, 255, 255, 0.1)',
               color: '#94a3b8',
               fontSize: '0.8rem',
-              fontFamily: 'monospace'
+              fontFamily: 'monospace',
+              zIndex: 100001
             }}
           >
             <Clock size={14} style={{ color: '#ef4444' }} />
@@ -545,7 +518,7 @@ export default function LastLetterPage({ onGoHome }) {
           </div>
 
           {/* Main Emotional Farewell Lines */}
-          <div style={{ maxWidth: 680, width: '100%', marginBottom: 36, marginTop: 40 }}>
+          <div style={{ maxWidth: 680, width: '100%', marginBottom: 36, marginTop: 40, zIndex: 100001 }}>
             <h2
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
@@ -605,7 +578,8 @@ export default function LastLetterPage({ onGoHome }) {
               color: '#94a3b8',
               lineHeight: 1.9,
               boxShadow: '0 15px 40px rgba(0,0,0,0.85)',
-              backdropFilter: 'blur(12px)'
+              backdropFilter: 'blur(12px)',
+              zIndex: 100001
             }}
           >
             <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
@@ -726,6 +700,9 @@ export default function LastLetterPage({ onGoHome }) {
               overflow: 'hidden'
             }}
           >
+            {/* User CSS 4-Edge Creeping Fire Overlay on Drawer */}
+            {matchIgnited && <div className="creeping-drawer-fire fire" />}
+
             {/* Metallic Wooden Drawer Lid & Handle */}
             <div
               style={{
@@ -740,8 +717,19 @@ export default function LastLetterPage({ onGoHome }) {
               }}
             />
 
-            {/* Inner Wooden Compartment */}
+            {/* Inner Wooden Compartment (Fades out when ignited) */}
             <div
+              className={matchIgnited ? 'fade-out-burn' : ''}
+              onAnimationEnd={() => {
+                if (matchIgnited) {
+                  setIsBurned(true);
+                  try {
+                    const now = Date.now();
+                    localStorage.setItem('mayko_last_burned', 'true');
+                    localStorage.setItem('mayko_burned_at', String(now));
+                  } catch (e) {}
+                }
+              }}
               style={{
                 position: 'relative',
                 width: '100%',
