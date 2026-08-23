@@ -821,9 +821,7 @@ export default function LastLetterPage({ onGoHome }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    filter: letterUnfolded ? 'blur(12px) brightness(0.4)' : 'none',
-                    pointerEvents: letterUnfolded ? 'none' : 'auto',
-                    transition: 'filter 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+                    pointerEvents: letterUnfolded ? 'none' : 'auto'
                   }}
                 >
                   {/* Left Photo 1: Baby Photo (100% Raw Clean Image - ZERO Shadow, ZERO Border) */}
@@ -971,7 +969,7 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
               )}
 
-              {/* Unfolded Handwritten Letter Overlay (Floats Over Blurred Drawer Background, Clean Paper & Hover Zoom) */}
+              {/* Unfolded Handwritten Letter Layout with Left & Right Side Buttons */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
@@ -979,142 +977,128 @@ export default function LastLetterPage({ onGoHome }) {
                     inset: 0,
                     zIndex: 40,
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 14,
-                    padding: '12px 14px',
-                    animation: 'unfoldLetter 0.5s ease-out',
-                    overflow: 'hidden'
+                    gap: 28,
+                    padding: '16px 24px',
+                    animation: 'unfoldLetter 0.5s ease-out'
                   }}
                 >
-                  {/* Clean Handwritten Letter Paper Image (Hover Zoom Enabled, NO Dark Container Box) */}
+                  {/* Left Side Button: "Mektubu Sakla" */}
+                  <div style={{ display: 'flex', alignItems: 'center', zIndex: 50 }}>
+                    <button
+                      onClick={handleOpenLockMode}
+                      disabled={showStriker || matchIgnited || isBurningActive}
+                      style={{
+                        padding: '13px 20px',
+                        borderRadius: 9999,
+                        background: (showStriker || matchIgnited || isBurningActive)
+                          ? 'rgba(100, 100, 100, 0.15)'
+                          : 'rgba(52, 211, 153, 0.18)',
+                        border: (showStriker || matchIgnited || isBurningActive)
+                          ? '1px solid rgba(255, 255, 255, 0.15)'
+                          : '1px solid rgba(52, 211, 153, 0.55)',
+                        color: (showStriker || matchIgnited || isBurningActive) ? '#94a3b8' : '#6ee7b7',
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        cursor: (showStriker || matchIgnited || isBurningActive) ? 'not-allowed' : 'pointer',
+                        opacity: (showStriker || matchIgnited || isBurningActive) ? 0.35 : 1,
+                        pointerEvents: (showStriker || matchIgnited || isBurningActive) ? 'none' : 'auto',
+                        backdropFilter: 'blur(8px)',
+                        transition: 'all 0.25s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <Lock size={16} /> Mektubu Sakla
+                    </button>
+                  </div>
+
+                  {/* Center Item: Clean Handwritten Letter Paper (Hover Zoom Enabled, ZERO Dark Container Overlay) */}
                   <div
                     onMouseEnter={() => setIsLetterHovered(true)}
                     onMouseLeave={() => setIsLetterHovered(false)}
                     style={{
                       position: 'relative',
+                      maxWidth: isLetterHovered ? 640 : 550,
                       width: '100%',
-                      maxWidth: isLetterHovered ? 620 : 550,
                       transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                       cursor: 'zoom-in',
                       display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center'
+                      justifyContent: 'center'
                     }}
                   >
-                    {/* Embedded Match Striker Strip (Appears ONLY when "Mektubu yak.." is clicked) */}
-                    {showStriker && (
-                      <div
-                        ref={strikerRef}
-                        style={{
-                          position: 'relative',
-                          width: '90%',
-                          height: 36,
-                          margin: '0 auto 10px auto',
-                          background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
-                          borderRadius: 6,
-                          border: '2px solid rgba(255, 140, 40, 0.9)',
-                          boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.9), 0 0 16px rgba(255, 100, 20, 0.65)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#ffedd5',
-                          fontSize: '0.8rem',
-                          letterSpacing: '0.12em',
-                          fontStyle: 'italic',
-                          fontWeight: 'bold',
-                          animation: 'fadeInSlow 0.4s ease-out'
-                        }}
-                      >
-                        🔥 KİBRİT ZIMPARASI (Sağdaki kibriti buraya sürtün)
-                      </div>
-                    )}
-
                     <img
                       src="/assets/final_letter_paper.jpg"
                       alt="Bir delinin son mesajı: Ayşenur"
                       style={{
                         width: '100%',
                         height: 'auto',
-                        maxHeight: isLetterHovered ? '76vh' : '65vh',
+                        maxHeight: isLetterHovered ? '78vh' : '66vh',
                         objectFit: 'contain',
-                        borderRadius: 8,
+                        borderRadius: 6,
                         boxShadow: isBurningActive
-                          ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
+                          ? '0 0 50px rgba(255, 100, 20, 0.95)'
                           : isLetterHovered
-                            ? '0 24px 60px rgba(0,0,0,0.95), 0 0 35px rgba(255, 200, 150, 0.25)'
-                            : '0 12px 35px rgba(0,0,0,0.85)',
-                        border: isBurningActive
-                          ? '1px solid rgba(255, 120, 30, 0.6)'
-                          : '1px solid rgba(255,255,255,0.15)',
+                            ? '0 20px 50px rgba(0,0,0,0.9)'
+                            : '0 10px 30px rgba(0,0,0,0.8)',
                         transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                         display: 'block'
                       }}
                     />
                   </div>
 
-                  {/* Compact Smaller Action Buttons Below Letter (Disabled when burn is active) */}
-                  <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 420, justifyContent: 'center', marginTop: 2 }}>
-                    <button
-                      onClick={handleOpenBurnModal}
-                      disabled={showStriker || matchIgnited || isBurningActive}
-                      style={{
-                        flex: 1,
-                        padding: '9px 14px',
-                        borderRadius: 9999,
-                        background: (showStriker || matchIgnited || isBurningActive)
-                          ? 'rgba(100, 100, 100, 0.15)'
-                          : 'rgba(239, 68, 68, 0.18)',
-                        border: (showStriker || matchIgnited || isBurningActive)
-                          ? '1px solid rgba(255, 255, 255, 0.15)'
-                          : '1px solid rgba(239, 68, 68, 0.55)',
-                        color: (showStriker || matchIgnited || isBurningActive) ? '#94a3b8' : '#fca5a5',
-                        fontSize: '0.84rem',
-                        fontWeight: 500,
-                        cursor: (showStriker || matchIgnited || isBurningActive) ? 'not-allowed' : 'pointer',
-                        opacity: (showStriker || matchIgnited || isBurningActive) ? 0.35 : 1,
-                        pointerEvents: (showStriker || matchIgnited || isBurningActive) ? 'none' : 'auto',
-                        backdropFilter: 'blur(8px)',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6
-                      }}
-                    >
-                      <Flame size={15} /> Mektubu yak..
-                    </button>
-
-                    <button
-                      onClick={handleOpenLockMode}
-                      disabled={showStriker || matchIgnited || isBurningActive}
-                      style={{
-                        flex: 1,
-                        padding: '9px 14px',
-                        borderRadius: 9999,
-                        background: (showStriker || matchIgnited || isBurningActive)
-                          ? 'rgba(100, 100, 100, 0.15)'
-                          : 'rgba(52, 211, 153, 0.15)',
-                        border: (showStriker || matchIgnited || isBurningActive)
-                          ? '1px solid rgba(255, 255, 255, 0.15)'
-                          : '1px solid rgba(52, 211, 153, 0.45)',
-                        color: (showStriker || matchIgnited || isBurningActive) ? '#94a3b8' : '#6ee7b7',
-                        fontSize: '0.84rem',
-                        fontWeight: 500,
-                        cursor: (showStriker || matchIgnited || isBurningActive) ? 'not-allowed' : 'pointer',
-                        opacity: (showStriker || matchIgnited || isBurningActive) ? 0.35 : 1,
-                        pointerEvents: (showStriker || matchIgnited || isBurningActive) ? 'none' : 'auto',
-                        backdropFilter: 'blur(8px)',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6
-                      }}
-                    >
-                      <Lock size={15} /> Bir notla birlikte kilitle
-                    </button>
+                  {/* Right Side Button: "Mektubu Yak" (Transforms into Kibrit Zımparası when clicked!) */}
+                  <div style={{ display: 'flex', alignItems: 'center', zIndex: 50 }}>
+                    {showStriker ? (
+                      <div
+                        ref={strikerRef}
+                        style={{
+                          padding: '14px 22px',
+                          borderRadius: 14,
+                          background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
+                          border: '2px solid rgba(255, 140, 40, 0.95)',
+                          boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.9), 0 0 22px rgba(255, 100, 20, 0.75)',
+                          color: '#ffedd5',
+                          fontSize: '0.86rem',
+                          letterSpacing: '0.08em',
+                          fontStyle: 'italic',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          whiteSpace: 'nowrap',
+                          animation: 'fadeInSlow 0.4s ease-out'
+                        }}
+                      >
+                        🔥 KİBRİT ZIMPARASI (Kibriti buraya sürtebilirsin)
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleOpenBurnModal}
+                        disabled={matchIgnited || isBurningActive}
+                        style={{
+                          padding: '13px 20px',
+                          borderRadius: 9999,
+                          background: 'rgba(239, 68, 68, 0.18)',
+                          border: '1px solid rgba(239, 68, 68, 0.55)',
+                          color: '#fca5a5',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          backdropFilter: 'blur(8px)',
+                          transition: 'all 0.25s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        <Flame size={16} /> Mektubu Yak
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1264,7 +1248,7 @@ export default function LastLetterPage({ onGoHome }) {
             </div>
           </div>
 
-          {/* Real Draggable Matchstick & Ignited Flame on Match Head */}
+          {/* Real Large Draggable Matchstick & Ignited Flame on Match Head */}
           {isStrikingMatch && (
             <div
               ref={matchstickRef}
@@ -1272,11 +1256,11 @@ export default function LastLetterPage({ onGoHome }) {
               onTouchStart={handleMatchMouseDown}
               style={{
                 position: 'fixed',
-                bottom: 80 + matchPos.y * -1,
+                bottom: 120 + matchPos.y * -1,
                 left: `calc(50% + ${matchPos.x}px)`,
                 transform: 'translateX(-50%)',
-                width: 32,
-                height: 170,
+                width: 48,
+                height: 240,
                 zIndex: 99999,
                 cursor: 'grab',
                 display: 'flex',
@@ -1289,12 +1273,12 @@ export default function LastLetterPage({ onGoHome }) {
                 <div
                   style={{
                     position: 'absolute',
-                    top: -26,
-                    width: 34,
-                    height: 48,
+                    top: -36,
+                    width: 48,
+                    height: 64,
                     borderRadius: '50% 50% 35% 35%',
                     background: 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffcc00 35%, #ff4400 75%, rgba(255, 68, 0, 0) 100%)',
-                    boxShadow: '0 0 35px #ffcc00, 0 0 65px #ff4400, 0 -10px 25px #ffffff',
+                    boxShadow: '0 0 45px #ffcc00, 0 0 80px #ff4400, 0 -12px 30px #ffffff',
                     animation: 'matchFlameGlow 0.2s ease-in-out infinite alternate',
                     zIndex: 2,
                     pointerEvents: 'none'
@@ -1302,18 +1286,18 @@ export default function LastLetterPage({ onGoHome }) {
                 />
               )}
 
-              {/* Real Matchstick Image (Red tip at top) */}
+              {/* Real Matchstick Image (Large & Thick) */}
               <img
                 src="/assets/matchstick.png"
                 alt="Kibrit Çöpü"
                 style={{
-                  width: 28,
-                  height: 170,
+                  width: 44,
+                  height: 240,
                   objectFit: 'contain',
                   display: 'block',
                   filter: matchIgnited
-                    ? 'drop-shadow(0 0 15px rgba(255, 120, 20, 0.9))'
-                    : 'drop-shadow(0 4px 10px rgba(0,0,0,0.7))',
+                    ? 'drop-shadow(0 0 20px rgba(255, 120, 20, 0.95))'
+                    : 'drop-shadow(0 6px 15px rgba(0,0,0,0.8))',
                   pointerEvents: 'none'
                 }}
               />
