@@ -822,7 +822,7 @@ export default function LastLetterPage({ onGoHome }) {
                     justifyContent: 'center'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (Direct Clean Image, NO Extra Border/Frame) */}
+                  {/* Left Photo 1: Baby Photo (Natural Size) */}
                   <img
                     src="/assets/baby_photo.jpg"
                     alt="Nostaljik bebeklik fotoğrafı"
@@ -830,15 +830,15 @@ export default function LastLetterPage({ onGoHome }) {
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      left: '5%',
-                      top: '12%',
-                      width: 275,
+                      left: '7%',
+                      top: '14%',
+                      width: 240,
                       height: 'auto',
                       background: 'transparent',
                       border: 'none',
                       boxShadow: 'none',
                       transform: hoveredItem === 'baby'
-                        ? 'scale(1.25) rotate(0deg)'
+                        ? 'scale(1.2) rotate(0deg)'
                         : 'rotate(-9deg)',
                       zIndex: hoveredItem === 'baby' ? 50 : 10,
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -846,7 +846,7 @@ export default function LastLetterPage({ onGoHome }) {
                     }}
                   />
 
-                  {/* Left Photo 2: Snow Kiss Photo (Direct Clean Image, NO Extra Border/Frame) */}
+                  {/* Left Photo 2: Snow Kiss Photo (Natural Size) */}
                   <img
                     src="/assets/snow_photo.jpg"
                     alt="Karlar altında katedral önünde fotoğraf"
@@ -854,15 +854,15 @@ export default function LastLetterPage({ onGoHome }) {
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      left: '18%',
-                      bottom: '8%',
-                      width: 270,
+                      left: '20%',
+                      bottom: '10%',
+                      width: 230,
                       height: 'auto',
                       background: 'transparent',
                       border: 'none',
                       boxShadow: 'none',
                       transform: hoveredItem === 'snow'
-                        ? 'scale(1.25) rotate(0deg)'
+                        ? 'scale(1.2) rotate(0deg)'
                         : 'rotate(7deg)',
                       zIndex: hoveredItem === 'snow' ? 50 : 12,
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -901,36 +901,37 @@ export default function LastLetterPage({ onGoHome }) {
                     </section>
                   </div>
 
-                  {/* Right Object 1: IQOS Device (Mint Green - Big, Thick, Prominent Stick) */}
+                  {/* Right Object 1: IQOS Device (Mint Green - Natural Tall Stick) */}
                   <img
                     src="/assets/iqos_device.png"
                     alt="IQOS Iluma Cihazı"
                     style={{
                       position: 'absolute',
-                      right: '16%',
-                      top: '2%',
-                      width: 220,
-                      height: 'auto',
+                      right: '18%',
+                      top: '4%',
+                      width: 140,
+                      height: 420,
+                      objectFit: 'contain',
                       transform: 'rotate(12deg)',
-                      filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.88))',
+                      filter: 'drop-shadow(0 14px 30px rgba(0,0,0,0.85))',
                       zIndex: 14,
                       pointerEvents: 'none'
                     }}
                   />
 
-                  {/* Right Object 2: TEREA Pack (Prominent Size) */}
+                  {/* Right Object 2: TEREA Pack (Natural Pack Size) */}
                   <img
                     src="/assets/terea_pack.png"
                     alt="TEREA IQOS Paketi"
                     style={{
                       position: 'absolute',
-                      right: '2%',
-                      top: '24%',
-                      width: 320,
+                      right: '4%',
+                      top: '26%',
+                      width: 230,
                       height: 'auto',
                       borderRadius: 4,
                       transform: 'rotate(-7deg)',
-                      filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.88))',
+                      filter: 'drop-shadow(0 14px 30px rgba(0,0,0,0.85))',
                       zIndex: 15,
                       pointerEvents: 'none'
                     }}
@@ -940,12 +941,12 @@ export default function LastLetterPage({ onGoHome }) {
                   <div
                     style={{
                       position: 'absolute',
-                      right: '24%',
-                      bottom: '12%',
-                      width: 175,
-                      height: 115,
+                      right: '25%',
+                      bottom: '14%',
+                      width: 145,
+                      height: 98,
                       transform: 'rotate(-10deg)',
-                      filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.75))',
+                      filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.75))',
                       pointerEvents: 'none',
                       zIndex: 10
                     }}
@@ -964,38 +965,42 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
               )}
 
-              {/* Unfolded Handwritten Letter (Crystal Clear, Large & Fully Readable) */}
+              {/* Unfolded Handwritten Letter (100% Perfectly Fits Screen Height & Fully Readable) */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
                     position: 'relative',
                     width: '100%',
                     height: '100%',
-                    maxHeight: '94%',
-                    overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 16,
-                    padding: '16px 12px 40px 12px',
-                    animation: 'unfoldLetter 0.5s ease-out'
+                    justifyContent: 'center',
+                    gap: 12,
+                    padding: '10px 12px 20px 12px',
+                    animation: 'unfoldLetter 0.5s ease-out',
+                    overflow: 'hidden'
                   }}
                 >
-                  {/* Handwritten Letter Image Container (Large, Crisp & Perfectly Readable 680px) */}
+                  {/* Handwritten Letter Image Container (Proportionally Scaled to Fit Entire Document) */}
                   <div
                     style={{
                       position: 'relative',
                       width: '100%',
-                      maxWidth: 680,
-                      borderRadius: 12,
+                      maxWidth: 540,
+                      maxHeight: '64vh',
+                      borderRadius: 10,
                       overflow: 'hidden',
                       boxShadow: isBurningActive
                         ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
-                        : '0 14px 50px rgba(0,0,0,0.95)',
+                        : '0 10px 35px rgba(0,0,0,0.85)',
                       border: isBurningActive
                         ? '1px solid rgba(255, 120, 30, 0.6)'
                         : '1px solid rgba(255,255,255,0.12)',
-                      transition: 'box-shadow 0.5s ease'
+                      transition: 'box-shadow 0.5s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
                     }}
                   >
                     {/* Embedded Match Striker Strip (Appears ONLY when "Mektubu yak.." is clicked) */}
@@ -1005,8 +1010,8 @@ export default function LastLetterPage({ onGoHome }) {
                         style={{
                           position: 'relative',
                           width: '90%',
-                          height: 38,
-                          margin: '14px auto 14px auto',
+                          height: 36,
+                          margin: '10px auto 10px auto',
                           background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
                           borderRadius: 6,
                           border: '2px solid rgba(255, 140, 40, 0.9)',
@@ -1032,13 +1037,15 @@ export default function LastLetterPage({ onGoHome }) {
                       style={{
                         width: '100%',
                         height: 'auto',
+                        maxHeight: '64vh',
+                        objectFit: 'contain',
                         display: 'block'
                       }}
                     />
                   </div>
 
                   {/* Action Buttons Below Letter */}
-                  <div style={{ display: 'flex', gap: 14, width: '100%', maxWidth: 580, justifyContent: 'center', marginTop: 6 }}>
+                  <div style={{ display: 'flex', gap: 14, width: '100%', maxWidth: 520, justifyContent: 'center', marginTop: 4 }}>
                     <button
                       onClick={handleOpenBurnModal}
                       style={{
