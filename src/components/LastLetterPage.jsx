@@ -822,21 +822,21 @@ export default function LastLetterPage({ onGoHome }) {
                     justifyContent: 'center'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (Polaroid Frame Matching Image 2) */}
-                  <div
+                  {/* Left Photo 1: Baby Photo (Direct Clean Image, NO Extra Border/Frame) */}
+                  <img
+                    src="/assets/baby_photo.jpg"
+                    alt="Nostaljik bebeklik fotoğrafı"
                     onMouseEnter={() => setHoveredItem('baby')}
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      left: '6%',
+                      left: '5%',
                       top: '12%',
                       width: 275,
-                      background: '#f7f4ed',
-                      padding: '12px 12px 38px 12px',
-                      borderRadius: 3,
-                      boxShadow: hoveredItem === 'baby'
-                        ? '0 20px 45px rgba(0,0,0,0.85)'
-                        : '0 12px 32px rgba(0,0,0,0.65)',
+                      height: 'auto',
+                      background: 'transparent',
+                      border: 'none',
+                      boxShadow: 'none',
                       transform: hoveredItem === 'baby'
                         ? 'scale(1.25) rotate(0deg)'
                         : 'rotate(-9deg)',
@@ -844,29 +844,23 @@ export default function LastLetterPage({ onGoHome }) {
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                       cursor: 'pointer'
                     }}
-                  >
-                    <img
-                      src="/assets/baby_photo.jpg"
-                      alt="Nostaljik bebeklik fotoğrafı"
-                      style={{ width: '100%', height: 215, objectFit: 'cover', borderRadius: 2, display: 'block' }}
-                    />
-                  </div>
+                  />
 
-                  {/* Left Photo 2: Snow Kiss Photo (Polaroid Frame Matching Image 3) */}
-                  <div
+                  {/* Left Photo 2: Snow Kiss Photo (Direct Clean Image, NO Extra Border/Frame) */}
+                  <img
+                    src="/assets/snow_photo.jpg"
+                    alt="Karlar altında katedral önünde fotoğraf"
                     onMouseEnter={() => setHoveredItem('snow')}
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      left: '17%',
+                      left: '18%',
                       bottom: '8%',
                       width: 270,
-                      background: '#f7f4ed',
-                      padding: '12px 12px 38px 12px',
-                      borderRadius: 3,
-                      boxShadow: hoveredItem === 'snow'
-                        ? '0 20px 45px rgba(0,0,0,0.85)'
-                        : '0 12px 32px rgba(0,0,0,0.65)',
+                      height: 'auto',
+                      background: 'transparent',
+                      border: 'none',
+                      boxShadow: 'none',
                       transform: hoveredItem === 'snow'
                         ? 'scale(1.25) rotate(0deg)'
                         : 'rotate(7deg)',
@@ -874,13 +868,7 @@ export default function LastLetterPage({ onGoHome }) {
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                       cursor: 'pointer'
                     }}
-                  >
-                    <img
-                      src="/assets/snow_photo.jpg"
-                      alt="Karlar altında katedral önünde fotoğraf"
-                      style={{ width: '100%', height: 205, objectFit: 'cover', borderRadius: 2, display: 'block' }}
-                    />
-                  </div>
+                  />
 
                   {/* Dead Center Focal Item: Romantic 3D CSS Envelope with Heart Button */}
                   <div
@@ -978,7 +966,7 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
               )}
 
-              {/* Unfolded Large Handwritten Letter (100% Full Text Unclipped View) */}
+              {/* Unfolded Large Handwritten Letter (Full Size & Width, NO Bottom Narrowing) */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
@@ -989,18 +977,18 @@ export default function LastLetterPage({ onGoHome }) {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 16,
-                    padding: '12px 10px 40px 10px',
+                    gap: 20,
+                    padding: '20px 16px 50px 16px',
                     animation: 'unfoldLetter 0.6s ease-out'
                   }}
                 >
-                  {/* Handwritten Letter Image Container (Scaled to 100% Fit Entire Document Text) */}
+                  {/* Handwritten Letter Image Container (Full Unclipped 720px Width View) */}
                   <div
                     style={{
                       position: 'relative',
-                      width: '100%',
-                      maxWidth: 580,
-                      borderRadius: 10,
+                      width: '96%',
+                      maxWidth: 720,
+                      borderRadius: 12,
                       overflow: 'hidden',
                       boxShadow: isBurningActive
                         ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
