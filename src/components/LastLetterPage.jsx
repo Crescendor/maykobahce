@@ -872,7 +872,7 @@ export default function LastLetterPage({ onGoHome }) {
                     justifyContent: 'center'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (Massive Polaroid Photo) */}
+                  {/* Left Photo 1: Baby Photo (Clean Polaroid, NO Black Background/Shadow) */}
                   <img
                     src="/assets/baby_photo.jpg"
                     alt="Nostaljik bebeklik fotoğrafı"
@@ -880,16 +880,15 @@ export default function LastLetterPage({ onGoHome }) {
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      left: '1%',
-                      top: '4%',
-                      width: 410,
+                      left: '3%',
+                      top: '14%',
+                      width: 250,
                       height: 'auto',
-                      borderRadius: 4,
-                      boxShadow: hoveredItem === 'baby'
-                        ? '0 28px 55px rgba(0,0,0,0.95), 0 0 35px rgba(255, 255, 255, 0.4)'
-                        : '0 15px 40px rgba(0,0,0,0.85)',
+                      background: 'transparent',
+                      boxShadow: 'none',
+                      border: 'none',
                       transform: hoveredItem === 'baby'
-                        ? 'scale(1.22) rotate(0deg)'
+                        ? 'scale(1.3) rotate(0deg)'
                         : 'rotate(-9deg)',
                       zIndex: hoveredItem === 'baby' ? 50 : 10,
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -897,7 +896,7 @@ export default function LastLetterPage({ onGoHome }) {
                     }}
                   />
 
-                  {/* Left Photo 2: Snow Kiss Photo (Massive Polaroid Photo) */}
+                  {/* Left Photo 2: Snow Kiss Photo (Clean Polaroid, NO Black Background/Shadow) */}
                   <img
                     src="/assets/snow_photo.jpg"
                     alt="Karlar altında katedral önünde fotoğraf"
@@ -905,16 +904,15 @@ export default function LastLetterPage({ onGoHome }) {
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      left: '20%',
-                      bottom: '2%',
-                      width: 390,
+                      left: '21%',
+                      bottom: '10%',
+                      width: 240,
                       height: 'auto',
-                      borderRadius: 4,
-                      boxShadow: hoveredItem === 'snow'
-                        ? '0 28px 55px rgba(0,0,0,0.95), 0 0 35px rgba(255, 255, 255, 0.4)'
-                        : '0 15px 40px rgba(0,0,0,0.85)',
+                      background: 'transparent',
+                      boxShadow: 'none',
+                      border: 'none',
                       transform: hoveredItem === 'snow'
-                        ? 'scale(1.22) rotate(0deg)'
+                        ? 'scale(1.3) rotate(0deg)'
                         : 'rotate(7deg)',
                       zIndex: hoveredItem === 'snow' ? 50 : 12,
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -932,36 +930,36 @@ export default function LastLetterPage({ onGoHome }) {
                   >
                     <section className="cssletter">
                       <div className={`envelope ${envelopeActive ? 'active' : ''}`}>
-                        {/* Visible Peeking Handwritten Letter inside Envelope Slot (Draggable Upwards to Open!) */}
+                        {/* Visible Peeking Handwritten Letter Paper inside Envelope Slot */}
                         <div
                           onMouseDown={handleLetterDragStart}
                           onTouchStart={handleLetterDragStart}
                           onClick={handleEnvelopeClick}
                           style={{
                             position: 'absolute',
-                            top: envelopeActive ? -180 : -45,
+                            top: envelopeActive ? -180 : -35,
                             left: '50%',
                             transform: `translateX(-50%) translateY(${letterDragY}px)`,
-                            width: '86%',
-                            height: 140,
+                            width: '88%',
+                            height: 135,
                             background: 'linear-gradient(180deg, #fefce8 0%, #fef3c7 100%)',
                             borderRadius: '8px 8px 0 0',
                             border: '1.5px solid rgba(217, 119, 6, 0.4)',
-                            boxShadow: '0 -6px 20px rgba(0,0,0,0.4)',
+                            boxShadow: '0 -4px 15px rgba(0,0,0,0.25)',
                             zIndex: 2,
                             cursor: 'grab',
                             transition: isDraggingLetter ? 'none' : 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            padding: '8px 10px',
+                            padding: '6px 10px',
                             overflow: 'hidden'
                           }}
                         >
-                          <div style={{ fontSize: '0.82rem', fontFamily: "'Dancing Script', Georgia, serif", color: '#92400e', fontWeight: 'bold' }}>
+                          <div style={{ fontSize: '0.8rem', fontFamily: "'Dancing Script', Georgia, serif", color: '#92400e', fontWeight: 'bold' }}>
                             📜 Bir delinin son mesajı: Ayşenur
                           </div>
-                          <div style={{ fontSize: '0.68rem', fontStyle: 'italic', color: '#b45309', marginTop: 2 }}>
+                          <div style={{ fontSize: '0.65rem', fontStyle: 'italic', color: '#b45309', marginTop: 2 }}>
                             (Yukarı sürükleyerek veya tıklayarak açın)
                           </div>
                           <img
@@ -996,12 +994,12 @@ export default function LastLetterPage({ onGoHome }) {
                   <div
                     style={{
                       position: 'absolute',
-                      right: '33%',
-                      top: '14%',
-                      width: 195,
-                      height: 130,
+                      right: '32%',
+                      top: '18%',
+                      width: 145,
+                      height: 98,
                       transform: 'rotate(-9deg)',
-                      filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.85))',
+                      filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.75))',
                       pointerEvents: 'none',
                       zIndex: 10
                     }}
@@ -1018,38 +1016,38 @@ export default function LastLetterPage({ onGoHome }) {
                     />
                   </div>
 
-                  {/* Right Object 2: IQOS Device (Mint Green - MASSIVE REALISTIC LIFE SIZE) */}
+                  {/* Right Object 2: IQOS Device (Mint Green - TALL & SLIM REALISTIC STICK SIZE) */}
                   <img
                     src="/assets/iqos_device.png"
                     alt="IQOS Iluma Cihazı"
                     style={{
                       position: 'absolute',
-                      right: '16%',
-                      top: '1%',
-                      width: 210,
-                      height: 600,
+                      right: '17%',
+                      top: '2%',
+                      width: 115,
+                      height: 520,
                       objectFit: 'contain',
                       transform: 'rotate(11deg)',
-                      filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.88))',
+                      filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.85))',
                       zIndex: 14,
                       pointerEvents: 'none'
                     }}
                   />
 
-                  {/* Right Object 3: TEREA Pack (MASSIVE REALISTIC LIFE SIZE) */}
+                  {/* Right Object 3: TEREA Pack (Moderate Balanced Size) */}
                   <img
                     src="/assets/terea_pack.png"
                     alt="TEREA IQOS Paketi"
                     style={{
                       position: 'absolute',
-                      right: '1%',
-                      top: '25%',
-                      width: 340,
-                      height: 240,
+                      right: '3%',
+                      top: '30%',
+                      width: 180,
+                      height: 125,
                       objectFit: 'contain',
                       borderRadius: 4,
                       transform: 'rotate(-6deg)',
-                      filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.88))',
+                      filter: 'drop-shadow(0 12px 28px rgba(0,0,0,0.8))',
                       zIndex: 15,
                       pointerEvents: 'none'
                     }}
@@ -1057,29 +1055,29 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
               )}
 
-              {/* Unfolded Large Handwritten Letter */}
+              {/* Unfolded Large Handwritten Letter (100% Full Text Visibility, Optimized for MacBook 1440x900) */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
                     position: 'relative',
                     width: '100%',
-                    maxHeight: '94%',
+                    height: '100%',
                     overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: 18,
-                    padding: 14,
+                    padding: '16px 12px 30px 12px',
                     animation: 'unfoldLetter 0.6s ease-out'
                   }}
                 >
-                  {/* Stable Handwritten Letter Image Container */}
+                  {/* Handwritten Letter Image Container (100% Unclipped View) */}
                   <div
                     style={{
                       position: 'relative',
                       width: '100%',
-                      maxWidth: 620,
-                      borderRadius: 10,
+                      maxWidth: 680,
+                      borderRadius: 12,
                       overflow: 'hidden',
                       boxShadow: isBurningActive
                         ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
@@ -1121,7 +1119,7 @@ export default function LastLetterPage({ onGoHome }) {
                     <img
                       src="/assets/final_letter_paper.jpg"
                       alt="Bir delinin son mesajı: Ayşenur"
-                      style={{ width: '100%', display: 'block' }}
+                      style={{ width: '100%', height: 'auto', display: 'block' }}
                     />
                   </div>
 
