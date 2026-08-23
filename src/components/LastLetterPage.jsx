@@ -901,38 +901,36 @@ export default function LastLetterPage({ onGoHome }) {
                     </section>
                   </div>
 
-                  {/* Right Object 1: IQOS Device (Mint Green - 4X BIGGER TALL REALISTIC STICK) */}
+                  {/* Right Object 1: IQOS Device (Mint Green - Big, Thick, Prominent Stick) */}
                   <img
                     src="/assets/iqos_device.png"
                     alt="IQOS Iluma Cihazı"
                     style={{
                       position: 'absolute',
-                      right: '20%',
-                      top: '4%',
-                      width: 150,
-                      height: 520,
-                      objectFit: 'contain',
+                      right: '16%',
+                      top: '2%',
+                      width: 220,
+                      height: 'auto',
                       transform: 'rotate(12deg)',
-                      filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.85))',
+                      filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.88))',
                       zIndex: 14,
                       pointerEvents: 'none'
                     }}
                   />
 
-                  {/* Right Object 2: TEREA Pack (1.5X BIGGER) */}
+                  {/* Right Object 2: TEREA Pack (Prominent Size) */}
                   <img
                     src="/assets/terea_pack.png"
                     alt="TEREA IQOS Paketi"
                     style={{
                       position: 'absolute',
-                      right: '3%',
+                      right: '2%',
                       top: '24%',
-                      width: 300,
-                      height: 200,
-                      objectFit: 'contain',
+                      width: 320,
+                      height: 'auto',
                       borderRadius: 4,
                       transform: 'rotate(-7deg)',
-                      filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.85))',
+                      filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.88))',
                       zIndex: 15,
                       pointerEvents: 'none'
                     }}
@@ -942,10 +940,10 @@ export default function LastLetterPage({ onGoHome }) {
                   <div
                     style={{
                       position: 'absolute',
-                      right: '25%',
-                      bottom: '14%',
-                      width: 165,
-                      height: 110,
+                      right: '24%',
+                      bottom: '12%',
+                      width: 175,
+                      height: 115,
                       transform: 'rotate(-10deg)',
                       filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.75))',
                       pointerEvents: 'none',
@@ -966,42 +964,38 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
               )}
 
-              {/* Unfolded Handwritten Letter (Compact Fit, 100% Entire Letter Visible on Screen at Once) */}
+              {/* Unfolded Handwritten Letter (Crystal Clear, Large & Fully Readable) */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
                     position: 'relative',
                     width: '100%',
                     height: '100%',
+                    maxHeight: '94%',
+                    overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 12,
-                    padding: '8px 12px',
-                    animation: 'unfoldLetter 0.5s ease-out',
-                    overflow: 'hidden'
+                    gap: 16,
+                    padding: '16px 12px 40px 12px',
+                    animation: 'unfoldLetter 0.5s ease-out'
                   }}
                 >
-                  {/* Handwritten Letter Image Container (Compact 510px Fit) */}
+                  {/* Handwritten Letter Image Container (Large, Crisp & Perfectly Readable 680px) */}
                   <div
                     style={{
                       position: 'relative',
                       width: '100%',
-                      maxWidth: 510,
-                      maxHeight: '62vh',
-                      borderRadius: 10,
+                      maxWidth: 680,
+                      borderRadius: 12,
                       overflow: 'hidden',
                       boxShadow: isBurningActive
                         ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
-                        : '0 10px 35px rgba(0,0,0,0.85)',
+                        : '0 14px 50px rgba(0,0,0,0.95)',
                       border: isBurningActive
                         ? '1px solid rgba(255, 120, 30, 0.6)'
                         : '1px solid rgba(255,255,255,0.12)',
-                      transition: 'box-shadow 0.5s ease',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center'
+                      transition: 'box-shadow 0.5s ease'
                     }}
                   >
                     {/* Embedded Match Striker Strip (Appears ONLY when "Mektubu yak.." is clicked) */}
@@ -1011,8 +1005,8 @@ export default function LastLetterPage({ onGoHome }) {
                         style={{
                           position: 'relative',
                           width: '90%',
-                          height: 36,
-                          margin: '10px auto 10px auto',
+                          height: 38,
+                          margin: '14px auto 14px auto',
                           background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
                           borderRadius: 6,
                           border: '2px solid rgba(255, 140, 40, 0.9)',
@@ -1038,15 +1032,13 @@ export default function LastLetterPage({ onGoHome }) {
                       style={{
                         width: '100%',
                         height: 'auto',
-                        maxHeight: '62vh',
-                        objectFit: 'contain',
                         display: 'block'
                       }}
                     />
                   </div>
 
                   {/* Action Buttons Below Letter */}
-                  <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 480, justifyContent: 'center', marginTop: 4 }}>
+                  <div style={{ display: 'flex', gap: 14, width: '100%', maxWidth: 580, justifyContent: 'center', marginTop: 6 }}>
                     <button
                       onClick={handleOpenBurnModal}
                       style={{
