@@ -4,17 +4,53 @@ import AmbientAudioPlayer from './AmbientAudioPlayer';
 import { postLogToApi } from '../utils/gardenEngine';
 
 /**
+ * SCSS Particle Fire Engine Component (User Animation)
+ * Renders 50 varied particle flames along the bottom of the viewport:
+ * background-image: radial-gradient(rgb(255,80,0) 20%, rgba(255,80,0,0) 70%);
+ * mix-blend-mode: screen;
+ * animation: rise $dur ease-in infinite;
+ * Flames never get erased or interrupted during page transitions or on the farewell screen!
+ */
+function ParticleFireEngine({ active }) {
+  if (!active) return null;
+
+  // Generate 50 particles with varied sizes, positions, delays, and durations
+  const particles = Array.from({ length: 50 }, (_, i) => {
+    const size = 3.5 + ((i * 7) % 4.5); // 3.5em to 8em particle size
+    const left = (i / 50) * 100; // Spread horizontally across 0% - 100%
+    const delay = ((i * 13) % 10) / 10; // 0s to 1s animation delay
+    const dur = 0.85 + ((i * 17) % 6) / 10; // 0.85s to 1.45s animation duration
+    return { id: i, size, left, delay, dur };
+  });
+
+  return (
+    <div className="particle-fire-container">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="particle"
+          style={{
+            left: `${p.left}%`,
+            width: `${p.size}em`,
+            height: `${p.size}em`,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.dur}s`
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
  * LastLetterPage Component (/last)
  * Special emotional ending page:
  * - "Neyse" intro (100% pixel-identical to home page typography).
  * - Drawer hidden below screen until first scroll; slides up from out of sight.
  * - Matchbox (right) and Envelope (left) clearly separated inside drawer.
  * - Matchbox click slides open matchbox tray and unfolds Handwritten Letter.
- * - Striker strip at TOP of letter paper labeled prominently.
- * - "Mektubu yak.." -> Modal -> Drag matchstick across striker.
- * - User CSS Glitter Fire Blend animation creeping inward from 4 edges of drawer.
- * - Drawer and Handwritten Letter fade out smoothly into fire.
- * - Farewell Message Screen framed with 4-edge Glitter Fire border animation.
+ * - "Mektubu yak.." -> Clicking reveals Kibrit Zımparası (Match Striker) on top of letter paper.
+ * - User SCSS Particle Fire Engine along bottom of screen (never cut during transition).
  * - 10-Minute Farewell Screen Timer -> Full Pitch Black Silent Darkness.
  * - "Bir notla birlikte kilitle" -> Live keylogged note form + DateTimePicker -> SHA-256 seal.
  * - Full BotGhost/Discord webhook tracking for all actions.
@@ -46,6 +82,7 @@ export default function LastLetterPage({ onGoHome }) {
   const [matchboxOpen, setMatchboxOpen] = useState(false);
   const [letterUnfolded, setLetterUnfolded] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
+  const [showStriker, setShowStriker] = useState(false); // Striker appears ONLY when "Mektubu yak.." is clicked
 
   // Burn & Fire Mechanic
   const [matchIgnited, setMatchIgnited] = useState(false);
@@ -199,7 +236,7 @@ export default function LastLetterPage({ onGoHome }) {
     }
   };
 
-  // 3. Burn Flow Modal
+  // 3. Burn Flow Modal (Reveals Striker Strip & Matchstick when chosen)
   const handleOpenBurnModal = () => {
     setBurnModalOpen(true);
     currentStageRef.current = 'Mektubu Yak Onay Modalı';
@@ -214,7 +251,8 @@ export default function LastLetterPage({ onGoHome }) {
     });
 
     if (accepted) {
-      setIsStrikingMatch(true);
+      setShowStriker(true); // Reveal Kibrit Zımparası on top of letter!
+      setIsStrikingMatch(true); // Reveal matchstick to rub across striker!
       currentStageRef.current = 'Kibrit Sürükleme ve Yakma Aşaması';
     }
   };
@@ -361,6 +399,7 @@ export default function LastLetterPage({ onGoHome }) {
     setIsBurned(false);
     setMatchIgnited(false);
     setIsStrikingMatch(false);
+    setShowStriker(false);
     setMatchPos({ x: 0, y: 0 });
     setLockModeActive(false);
     setLockedResult(null);
@@ -436,6 +475,9 @@ export default function LastLetterPage({ onGoHome }) {
       {/* Background Music Loop */}
       <AmbientAudioPlayer />
 
+      {/* User SCSS Particle Fire Engine (Active during burn & stays active on farewell screen without interruption) */}
+      <ParticleFireEngine active={isBurningActive} />
+
       {/* Tester Reset Floating Control (Always Accessible for Tester) */}
       {isTester && (
         <button
@@ -475,9 +517,8 @@ export default function LastLetterPage({ onGoHome }) {
           }}
         />
       ) : isBurned ? (
-        /* Permanent 10-Minute Farewell Message Screen framed with User CSS Glitter Fire Borders */
+        /* Permanent 10-Minute Farewell Message Screen */
         <div
-          className="farewell-fire-border fire"
           style={{
             position: 'fixed',
             inset: 0,
@@ -700,9 +741,6 @@ export default function LastLetterPage({ onGoHome }) {
               overflow: 'hidden'
             }}
           >
-            {/* User CSS 4-Edge Creeping Fire Overlay on Drawer */}
-            {matchIgnited && <div className="creeping-drawer-fire fire" />}
-
             {/* Metallic Wooden Drawer Lid & Handle */}
             <div
               style={{
@@ -867,30 +905,33 @@ export default function LastLetterPage({ onGoHome }) {
                       transition: 'box-shadow 0.5s ease'
                     }}
                   >
-                    {/* Embedded Match Striker Strip (Kibrit Zımparası) ON TOP OF LETTER PAPER */}
-                    <div
-                      ref={strikerRef}
-                      style={{
-                        position: 'relative',
-                        width: '90%',
-                        height: 38,
-                        margin: '14px auto 14px auto',
-                        background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
-                        borderRadius: 6,
-                        border: '2px solid rgba(255, 140, 40, 0.9)',
-                        boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.9), 0 0 16px rgba(255, 100, 20, 0.65)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#ffedd5',
-                        fontSize: '0.8rem',
-                        letterSpacing: '0.12em',
-                        fontStyle: 'italic',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      🔥 KİBRİT ZIMPARASI (Kibriti Buraya Sürtün)
-                    </div>
+                    {/* Embedded Match Striker Strip (Appears ONLY when "Mektubu yak.." is clicked) */}
+                    {showStriker && (
+                      <div
+                        ref={strikerRef}
+                        style={{
+                          position: 'relative',
+                          width: '90%',
+                          height: 38,
+                          margin: '14px auto 14px auto',
+                          background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
+                          borderRadius: 6,
+                          border: '2px solid rgba(255, 140, 40, 0.9)',
+                          boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.9), 0 0 16px rgba(255, 100, 20, 0.65)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffedd5',
+                          fontSize: '0.8rem',
+                          letterSpacing: '0.12em',
+                          fontStyle: 'italic',
+                          fontWeight: 'bold',
+                          animation: 'fadeInSlow 0.4s ease-out'
+                        }}
+                      >
+                        🔥 KİBRİT ZIMPARASI (Kibriti Buraya Sürtün)
+                      </div>
+                    )}
 
                     <img
                       src="/assets/final_letter_paper.jpg"
