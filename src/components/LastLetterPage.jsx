@@ -49,6 +49,7 @@ export default function LastLetterPage({ onGoHome }) {
 
   // Hover states for photos & objects inside drawer
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [isLetterHovered, setIsLetterHovered] = useState(false);
 
   // Burn & Fire Mechanic
   const [matchIgnited, setMatchIgnited] = useState(false);
@@ -810,8 +811,8 @@ export default function LastLetterPage({ onGoHome }) {
                 overflow: 'hidden'
               }}
             >
-              {/* Casual Items inside Drawer (Envelope in Dead Center, Photos Left, Huge IQOS & TEREA Right) */}
-              {!letterUnfolded && !lockModeActive && (
+              {/* Casual Items inside Drawer (Envelope, Photos, IQOS, TEREA & Matchbox) */}
+              {!lockModeActive && (
                 <div
                   style={{
                     position: 'relative',
@@ -819,10 +820,13 @@ export default function LastLetterPage({ onGoHome }) {
                     height: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    filter: letterUnfolded ? 'blur(12px) brightness(0.4)' : 'none',
+                    pointerEvents: letterUnfolded ? 'none' : 'auto',
+                    transition: 'filter 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (Natural Size) */}
+                  {/* Left Photo 1: Baby Photo (Image 2 - Direct Clean Image) */}
                   <img
                     src="/assets/baby_photo.jpg"
                     alt="Nostaljik bebeklik fotoğrafı"
@@ -836,7 +840,8 @@ export default function LastLetterPage({ onGoHome }) {
                       height: 'auto',
                       background: 'transparent',
                       border: 'none',
-                      boxShadow: 'none',
+                      boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
+                      borderRadius: 4,
                       transform: hoveredItem === 'baby'
                         ? 'scale(1.2) rotate(0deg)'
                         : 'rotate(-9deg)',
@@ -846,7 +851,7 @@ export default function LastLetterPage({ onGoHome }) {
                     }}
                   />
 
-                  {/* Left Photo 2: Snow Kiss Photo (Natural Size) */}
+                  {/* Left Photo 2: Snow Kiss Photo (Image 3 - Direct Clean Image) */}
                   <img
                     src="/assets/snow_photo.jpg"
                     alt="Karlar altında katedral önünde fotoğraf"
@@ -860,7 +865,8 @@ export default function LastLetterPage({ onGoHome }) {
                       height: 'auto',
                       background: 'transparent',
                       border: 'none',
-                      boxShadow: 'none',
+                      boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
+                      borderRadius: 4,
                       transform: hoveredItem === 'snow'
                         ? 'scale(1.2) rotate(0deg)'
                         : 'rotate(7deg)',
@@ -901,25 +907,25 @@ export default function LastLetterPage({ onGoHome }) {
                     </section>
                   </div>
 
-                  {/* Right Object 1: IQOS Device (Mint Green - Natural Tall Stick) */}
+                  {/* Right Object 1: IQOS Device (Mint Green - MUCH BIGGER & TALLER) */}
                   <img
                     src="/assets/iqos_device.png"
                     alt="IQOS Iluma Cihazı"
                     style={{
                       position: 'absolute',
-                      right: '18%',
-                      top: '4%',
-                      width: 140,
-                      height: 420,
+                      right: '17%',
+                      top: '2%',
+                      width: 175,
+                      height: 520,
                       objectFit: 'contain',
                       transform: 'rotate(12deg)',
-                      filter: 'drop-shadow(0 14px 30px rgba(0,0,0,0.85))',
+                      filter: 'drop-shadow(0 18px 38px rgba(0,0,0,0.88))',
                       zIndex: 14,
                       pointerEvents: 'none'
                     }}
                   />
 
-                  {/* Right Object 2: TEREA Pack (Natural Pack Size) */}
+                  {/* Right Object 2: TEREA Pack */}
                   <img
                     src="/assets/terea_pack.png"
                     alt="TEREA IQOS Paketi"
@@ -965,39 +971,33 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
               )}
 
-              {/* Unfolded Handwritten Letter (100% Perfectly Fits Screen Height & Fully Readable) */}
+              {/* Unfolded Handwritten Letter Overlay (Floats Over Blurred Drawer Background, Clean Paper & Hover Zoom) */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 40,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 12,
-                    padding: '10px 12px 20px 12px',
+                    gap: 14,
+                    padding: '12px 14px',
                     animation: 'unfoldLetter 0.5s ease-out',
                     overflow: 'hidden'
                   }}
                 >
-                  {/* Handwritten Letter Image Container (Proportionally Scaled to Fit Entire Document) */}
+                  {/* Clean Handwritten Letter Paper Image (Hover Zoom Enabled, NO Dark Container Box) */}
                   <div
+                    onMouseEnter={() => setIsLetterHovered(true)}
+                    onMouseLeave={() => setIsLetterHovered(false)}
                     style={{
                       position: 'relative',
                       width: '100%',
-                      maxWidth: 540,
-                      maxHeight: '64vh',
-                      borderRadius: 10,
-                      overflow: 'hidden',
-                      boxShadow: isBurningActive
-                        ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
-                        : '0 10px 35px rgba(0,0,0,0.85)',
-                      border: isBurningActive
-                        ? '1px solid rgba(255, 120, 30, 0.6)'
-                        : '1px solid rgba(255,255,255,0.12)',
-                      transition: 'box-shadow 0.5s ease',
+                      maxWidth: isLetterHovered ? 620 : 550,
+                      transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                      cursor: 'zoom-in',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center'
@@ -1011,7 +1011,7 @@ export default function LastLetterPage({ onGoHome }) {
                           position: 'relative',
                           width: '90%',
                           height: 36,
-                          margin: '10px auto 10px auto',
+                          margin: '0 auto 10px auto',
                           background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
                           borderRadius: 6,
                           border: '2px solid rgba(255, 140, 40, 0.9)',
@@ -1037,57 +1037,69 @@ export default function LastLetterPage({ onGoHome }) {
                       style={{
                         width: '100%',
                         height: 'auto',
-                        maxHeight: '64vh',
+                        maxHeight: isLetterHovered ? '76vh' : '65vh',
                         objectFit: 'contain',
+                        borderRadius: 8,
+                        boxShadow: isBurningActive
+                          ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
+                          : isLetterHovered
+                            ? '0 24px 60px rgba(0,0,0,0.95), 0 0 35px rgba(255, 200, 150, 0.25)'
+                            : '0 12px 35px rgba(0,0,0,0.85)',
+                        border: isBurningActive
+                          ? '1px solid rgba(255, 120, 30, 0.6)'
+                          : '1px solid rgba(255,255,255,0.15)',
+                        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                         display: 'block'
                       }}
                     />
                   </div>
 
-                  {/* Action Buttons Below Letter */}
-                  <div style={{ display: 'flex', gap: 14, width: '100%', maxWidth: 520, justifyContent: 'center', marginTop: 4 }}>
+                  {/* Compact Smaller Action Buttons Below Letter */}
+                  <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 420, justifyContent: 'center', marginTop: 2 }}>
                     <button
                       onClick={handleOpenBurnModal}
                       style={{
                         flex: 1,
-                        padding: '13px 18px',
+                        padding: '9px 14px',
                         borderRadius: 9999,
                         background: 'rgba(239, 68, 68, 0.18)',
                         border: '1px solid rgba(239, 68, 68, 0.55)',
                         color: '#fca5a5',
-                        fontSize: '0.95rem',
+                        fontSize: '0.84rem',
+                        fontWeight: 500,
                         cursor: 'pointer',
                         backdropFilter: 'blur(8px)',
                         transition: 'all 0.2s ease',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 8
+                        gap: 6
                       }}
                     >
-                      <Flame size={18} /> Mektubu yak..
+                      <Flame size={15} /> Mektubu yak..
                     </button>
 
                     <button
                       onClick={handleOpenLockMode}
                       style={{
                         flex: 1,
-                        padding: '13px 18px',
+                        padding: '9px 14px',
                         borderRadius: 9999,
                         background: 'rgba(52, 211, 153, 0.15)',
                         border: '1px solid rgba(52, 211, 153, 0.45)',
                         color: '#6ee7b7',
-                        fontSize: '0.95rem',
+                        fontSize: '0.84rem',
+                        fontWeight: 500,
                         cursor: 'pointer',
                         backdropFilter: 'blur(8px)',
                         transition: 'all 0.2s ease',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 8
+                        gap: 6
                       }}
                     >
-                      <Lock size={18} /> Bir notla birlikte kilitle
+                      <Lock size={15} /> Bir notla birlikte kilitle
                     </button>
                   </div>
                 </div>
