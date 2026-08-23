@@ -5,53 +5,80 @@ import { Volume2, Volume1, VolumeX } from 'lucide-react';
  * LastLetterAudioPlayer Component
  * Specialized YouTube Audio Engine for /last page:
  * - YouTube Video ID: NBQbekrHnsY
- * - Autoplays on entry at volume 25%.
- * - Phase 1: Starts at 2:05 (125s) with 2.5s fade-in, plays until 2:48 (168s) where it fades out to 0% & pauses.
- * - Phase 2 (When mektup yakma accepted): Starts at 2:49 (169s) with 2s fade-in, plays through until end of song (no repeat/loop).
+ * - Autoplays immediately on page entry at volume 25%.
+ * - Phase 1: Starts at 2:05 (125s) with 2.5s smooth fade-in, plays until 2:48 (168s) where it smooth-fades out to 0% & pauses.
+ * - Triggers onPhase1Complete callback when Phase 1 ends to unlock letter buttons.
+ * - Stops audio when isLocked is true.
+ * - Phase 2 (When mektup yakma accepted): Starts at 2:49 (169s) with 2s smooth fade-in, plays through until end of song (no loop).
  */
-export default function LastLetterAudioPlayer({ isBurningActive }) {
+export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPhase1Complete }) {
   const videoId = 'NBQbekrHnsY';
   const playerRef = useRef(null);
   const fadeIntervalRef = useRef(null);
   const timeCheckIntervalRef = useRef(null);
   const isPhase1EndedRef = useRef(false);
   const isPhase2StartedRef = useRef(false);
+  const hasSeekedInitialRef = useRef(false);
 
   const [volume, setVolume] = useState(25);
   const [isHovered, setIsHovered] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Helper for smooth volume fading
+  // Silky Smooth Exponential Volume Fader (50ms interval)
   const fadeVolume = (targetVol, durationMs, onComplete) => {
     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-    if (!playerRef.current || typeof playerRef.current.getVolume !== 'function') return;
+    if (!playerRef.current || typeof playerRef.current.getVolume !== 'function') {
+      if (onComplete) onComplete();
+      return;
+    }
 
     const startVol = playerRef.current.getVolume();
-    const steps = 20;
-    const stepTime = durationMs / steps;
-    const volChange = (targetVol - startVol) / steps;
-    let currentStep = 0;
+    const steps = Math.max(10, Math.floor(durationMs / 50));
+    let stepCount = 0;
 
     fadeIntervalRef.current = setInterval(() => {
-      currentStep++;
-      const nextVol = Math.max(0, Math.min(100, Math.round(startVol + volChange * currentStep)));
+      stepCount++;
+      const progress = stepCount / steps;
+      // Exponential smooth curve for natural audio perception
+      const easeFactor = targetVol < startVol
+        ? Math.pow(1 - progress, 2)
+        : Math.sin((progress * Math.PI) / 2);
+      
+      const currentVol = targetVol < startVol
+        ? Math.round(startVol * easeFactor)
+        : Math.round(startVol + (targetVol - startVol) * easeFactor);
+
+      const clampedVol = Math.max(0, Math.min(100, currentVol));
+
       try {
         if (playerRef.current && typeof playerRef.current.setVolume === 'function') {
-          playerRef.current.setVolume(nextVol);
-          setVolume(nextVol);
+          playerRef.current.setVolume(clampedVol);
+          setVolume(clampedVol);
         }
       } catch (e) {}
 
-      if (currentStep >= steps) {
+      if (stepCount >= steps) {
         clearInterval(fadeIntervalRef.current);
         if (onComplete) onComplete();
       }
-    }, stepTime);
+    }, 50);
   };
 
-  // Initialize YouTube Player
+  // Initialize YouTube Player Immediately on Entry
   useEffect(() => {
     let isCancelled = false;
+
+    const startAudioEngine = (eventTarget) => {
+      if (hasSeekedInitialRef.current) return;
+      hasSeekedInitialRef.current = true;
+      try {
+        eventTarget.setVolume(0);
+        eventTarget.seekTo(125, true); // 2:05
+        eventTarget.playVideo();
+        fadeVolume(25, 2500);
+        setHasStarted(true);
+      } catch (e) {}
+    };
 
     const onYouTubeIframeAPIReady = () => {
       if (isCancelled || playerRef.current) return;
@@ -73,13 +100,7 @@ export default function LastLetterAudioPlayer({ isBurningActive }) {
         },
         events: {
           onReady: (event) => {
-            try {
-              event.target.setVolume(0);
-              event.target.seekTo(125, true);
-              event.target.playVideo();
-              fadeVolume(25, 2500);
-              setHasStarted(true);
-            } catch (e) {}
+            startAudioEngine(event.target);
           },
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
@@ -100,21 +121,21 @@ export default function LastLetterAudioPlayer({ isBurningActive }) {
       onYouTubeIframeAPIReady();
     }
 
-    // Autoplay unlock for browser policies
+    // Secondary Autoplay Policy Fallback (Unlocks without re-seeking or restarting)
     const unlockAutoplay = () => {
       if (playerRef.current && typeof playerRef.current.playVideo === 'function' && !isPhase1EndedRef.current) {
         try {
-          playerRef.current.seekTo(125, true);
-          playerRef.current.playVideo();
-          fadeVolume(25, 2500);
-          setHasStarted(true);
+          if (!hasStarted) {
+            playerRef.current.playVideo();
+            fadeVolume(25, 1500);
+            setHasStarted(true);
+          }
         } catch (e) {}
       }
     };
 
     window.addEventListener('click', unlockAutoplay, { passive: true, once: true });
     window.addEventListener('touchstart', unlockAutoplay, { passive: true, once: true });
-    window.addEventListener('wheel', unlockAutoplay, { passive: true, once: true });
 
     return () => {
       isCancelled = true;
@@ -122,7 +143,6 @@ export default function LastLetterAudioPlayer({ isBurningActive }) {
       if (timeCheckIntervalRef.current) clearInterval(timeCheckIntervalRef.current);
       window.removeEventListener('click', unlockAutoplay);
       window.removeEventListener('touchstart', unlockAutoplay);
-      window.removeEventListener('wheel', unlockAutoplay);
     };
   }, []);
 
@@ -134,23 +154,34 @@ export default function LastLetterAudioPlayer({ isBurningActive }) {
       try {
         const currTime = playerRef.current.getCurrentTime();
 
-        // Phase 1 Fade-out & Pause at 2:48 (168s)
+        // Phase 1 Smooth Fade-out & Pause at 2:48 (168s)
         if (!isPhase1EndedRef.current && !isPhase2StartedRef.current) {
-          if (currTime >= 165 && currTime < 168) {
-            fadeVolume(0, 3000);
+          if (currTime >= 163 && currTime < 168 && !playerRef.current.isFadingOut) {
+            playerRef.current.isFadingOut = true;
+            fadeVolume(0, 4800, () => {
+              isPhase1EndedRef.current = true;
+              try {
+                playerRef.current.pauseVideo();
+                playerRef.current.setVolume(0);
+              } catch (e) {}
+              if (onPhase1Complete) onPhase1Complete();
+            });
           } else if (currTime >= 168) {
             isPhase1EndedRef.current = true;
-            playerRef.current.pauseVideo();
-            playerRef.current.setVolume(0);
+            try {
+              playerRef.current.pauseVideo();
+              playerRef.current.setVolume(0);
+            } catch (e) {}
+            if (onPhase1Complete) onPhase1Complete();
           }
         }
       } catch (e) {}
-    }, 400);
+    }, 250);
 
     return () => {
       if (timeCheckIntervalRef.current) clearInterval(timeCheckIntervalRef.current);
     };
-  }, []);
+  }, [onPhase1Complete]);
 
   // Handle Phase 2 (When isBurningActive turns true)
   useEffect(() => {
@@ -166,6 +197,19 @@ export default function LastLetterAudioPlayer({ isBurningActive }) {
       }
     }
   }, [isBurningActive]);
+
+  // Handle Note Lock (Stops music when note is locked)
+  useEffect(() => {
+    if (isLocked && playerRef.current && typeof playerRef.current.pauseVideo === 'function') {
+      try {
+        fadeVolume(0, 1200, () => {
+          try {
+            playerRef.current.pauseVideo();
+          } catch (e) {}
+        });
+      } catch (e) {}
+    }
+  }, [isLocked]);
 
   // Volume slider manual change
   const handleVolumeChange = (e) => {
@@ -189,8 +233,7 @@ export default function LastLetterAudioPlayer({ isBurningActive }) {
           width: 1,
           height: 1,
           opacity: 0,
-          pointerEvents: 'none',
-          zIndex: -1
+          pointerEvents: 'none'
         }}
       >
         <div id="youtube-last-letter-frame" />

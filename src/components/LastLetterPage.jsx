@@ -36,6 +36,7 @@ export default function LastLetterPage({ onGoHome }) {
   const [foldProgress, setFoldProgress] = useState(0);
   const [isLetterZoomed, setIsLetterZoomed] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
+  const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(isTester);
 
   // Burn & Fire State
   const [isBurningActive, setIsBurningActive] = useState(false);
@@ -297,7 +298,11 @@ export default function LastLetterPage({ onGoHome }) {
       }}
     >
       {/* Background Audio Engine for /last Page */}
-      <LastLetterAudioPlayer isBurningActive={isBurningActive} />
+      <LastLetterAudioPlayer
+        isBurningActive={isBurningActive}
+        isLocked={lockModeActive || !!lockedResult}
+        onPhase1Complete={() => setIsAudioPhase1Completed(true)}
+      />
 
       {/* Tester Reset Floating Control Bar */}
       {isTester && (
@@ -528,7 +533,7 @@ export default function LastLetterPage({ onGoHome }) {
               zIndex: 20
             }}
           >
-            {/* Left Side Button: "Mektubu Sakla" (Fades in smoothly as paper unfolds) */}
+            {/* Left Side Button: "Mektubu Sakla" (Greyed out until audio Phase 1 ends) */}
             {!lockModeActive && (
               <div
                 style={{
@@ -537,30 +542,30 @@ export default function LastLetterPage({ onGoHome }) {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   zIndex: 50,
-                  opacity: buttonOpacity,
-                  pointerEvents: buttonOpacity > 0.5 ? 'auto' : 'none',
-                  transition: 'opacity 0.4s ease'
+                  opacity: !isAudioPhase1Completed ? 0.35 : buttonOpacity,
+                  pointerEvents: (!isAudioPhase1Completed || buttonOpacity <= 0.5) ? 'none' : 'auto',
+                  transition: 'all 0.4s ease'
                 }}
               >
                 <button
                   onClick={handleOpenLockMode}
-                  disabled={isBurningActive}
+                  disabled={!isAudioPhase1Completed || isBurningActive}
                   style={{
                     padding: '14px 22px',
                     borderRadius: 9999,
-                    background: 'rgba(52, 211, 153, 0.18)',
-                    border: '1px solid rgba(52, 211, 153, 0.55)',
-                    color: '#6ee7b7',
+                    background: !isAudioPhase1Completed ? 'rgba(100, 100, 100, 0.15)' : 'rgba(52, 211, 153, 0.18)',
+                    border: !isAudioPhase1Completed ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(52, 211, 153, 0.55)',
+                    color: !isAudioPhase1Completed ? '#94a3b8' : '#6ee7b7',
                     fontSize: '0.92rem',
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: !isAudioPhase1Completed ? 'not-allowed' : 'pointer',
                     backdropFilter: 'blur(10px)',
                     boxShadow: '0 8px 25px rgba(0,0,0,0.6)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
                     whiteSpace: 'nowrap',
-                    transition: 'transform 0.2s ease'
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <Lock size={17} /> Mektubu Sakla
@@ -613,7 +618,7 @@ export default function LastLetterPage({ onGoHome }) {
               </div>
             )}
 
-            {/* Right Side Button: "Mektubu Yak" (Fades in smoothly as paper unfolds) */}
+            {/* Right Side Button: "Mektubu Yak" (Greyed out until audio Phase 1 ends) */}
             {!lockModeActive && (
               <div
                 style={{
@@ -622,30 +627,30 @@ export default function LastLetterPage({ onGoHome }) {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   zIndex: 50,
-                  opacity: buttonOpacity,
-                  pointerEvents: buttonOpacity > 0.5 ? 'auto' : 'none',
-                  transition: 'opacity 0.4s ease'
+                  opacity: !isAudioPhase1Completed ? 0.35 : buttonOpacity,
+                  pointerEvents: (!isAudioPhase1Completed || buttonOpacity <= 0.5) ? 'none' : 'auto',
+                  transition: 'all 0.4s ease'
                 }}
               >
                 <button
                   onClick={handleOpenBurnModal}
-                  disabled={isBurningActive}
+                  disabled={!isAudioPhase1Completed || isBurningActive}
                   style={{
                     padding: '14px 22px',
                     borderRadius: 9999,
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    border: '1px solid rgba(239, 68, 68, 0.6)',
-                    color: '#fca5a5',
+                    background: !isAudioPhase1Completed ? 'rgba(100, 100, 100, 0.15)' : 'rgba(239, 68, 68, 0.2)',
+                    border: !isAudioPhase1Completed ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(239, 68, 68, 0.6)',
+                    color: !isAudioPhase1Completed ? '#94a3b8' : '#fca5a5',
                     fontSize: '0.92rem',
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: !isAudioPhase1Completed ? 'not-allowed' : 'pointer',
                     backdropFilter: 'blur(10px)',
                     boxShadow: '0 8px 25px rgba(0,0,0,0.6)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
                     whiteSpace: 'nowrap',
-                    transition: 'transform 0.2s ease'
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <Flame size={17} /> Mektubu Yak
