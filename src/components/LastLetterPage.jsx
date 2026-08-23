@@ -811,7 +811,7 @@ export default function LastLetterPage({ onGoHome }) {
                 overflow: 'hidden'
               }}
             >
-              {/* Casual Items inside Drawer (Envelope, Photos, IQOS, TEREA & Matchbox) */}
+              {/* Casual Items inside Drawer (Envelope, IQOS, TEREA & Matchbox) */}
               {!lockModeActive && (
                 <div
                   style={{
@@ -821,59 +821,11 @@ export default function LastLetterPage({ onGoHome }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    pointerEvents: letterUnfolded ? 'none' : 'auto'
+                    filter: letterUnfolded ? 'blur(14px) brightness(0.45)' : 'none',
+                    pointerEvents: letterUnfolded ? 'none' : 'auto',
+                    transition: 'filter 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (Full Original Image, Clean & Unclipped) */}
-                  <img
-                    src="/assets/baby_photo.jpg"
-                    alt="Nostaljik bebeklik fotoğrafı"
-                    onMouseEnter={() => setHoveredItem('baby')}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    style={{
-                      position: 'absolute',
-                      left: '7%',
-                      top: '14%',
-                      width: 240,
-                      height: 'auto',
-                      background: 'none',
-                      border: 'none',
-                      boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
-                      borderRadius: 4,
-                      transform: hoveredItem === 'baby'
-                        ? 'scale(1.2) rotate(0deg)'
-                        : 'rotate(-9deg)',
-                      zIndex: hoveredItem === 'baby' ? 50 : 10,
-                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                      cursor: 'pointer'
-                    }}
-                  />
-
-                  {/* Left Photo 2: Snow Kiss Photo (Full Original Image, Clean & Unclipped) */}
-                  <img
-                    src="/assets/snow_photo.jpg"
-                    alt="Karlar altında katedral önünde fotoğraf"
-                    onMouseEnter={() => setHoveredItem('snow')}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    style={{
-                      position: 'absolute',
-                      left: '20%',
-                      bottom: '10%',
-                      width: 230,
-                      height: 'auto',
-                      background: 'none',
-                      border: 'none',
-                      boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
-                      borderRadius: 4,
-                      transform: hoveredItem === 'snow'
-                        ? 'scale(1.2) rotate(0deg)'
-                        : 'rotate(7deg)',
-                      zIndex: hoveredItem === 'snow' ? 50 : 12,
-                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                      cursor: 'pointer'
-                    }}
-                  />
-
                   {/* Dead Center Focal Item: Romantic 3D CSS Envelope with Heart Button */}
                   <div
                     style={{
@@ -941,35 +893,37 @@ export default function LastLetterPage({ onGoHome }) {
                     }}
                   />
 
-                  {/* Right Object 3: Decorative Matchbox */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      right: '25%',
-                      bottom: '14%',
-                      width: 145,
-                      height: 98,
-                      transform: 'rotate(-10deg)',
-                      filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.75))',
-                      pointerEvents: 'none',
-                      zIndex: 10
-                    }}
-                  >
+                  {/* Right Object 3: Matchbox inside Drawer (Only visible when mektup is closed) */}
+                  {!letterUnfolded && (
                     <div
                       style={{
                         position: 'absolute',
-                        inset: 0,
-                        backgroundImage: `url('/assets/matchbox_cover.png')`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        borderRadius: 6
+                        right: '25%',
+                        bottom: '14%',
+                        width: 145,
+                        height: 98,
+                        transform: 'rotate(-10deg)',
+                        filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.75))',
+                        pointerEvents: 'none',
+                        zIndex: 10
                       }}
-                    />
-                  </div>
+                    >
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          backgroundImage: `url('/assets/matchbox_cover.png')`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          borderRadius: 6
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Unfolded Handwritten Letter Layout with Left & Right Side Buttons */}
+              {/* Unfolded Handwritten Letter Layout with Left & Right Side Controls */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
@@ -979,7 +933,7 @@ export default function LastLetterPage({ onGoHome }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 28,
+                    gap: 32,
                     padding: '16px 24px',
                     animation: 'unfoldLetter 0.5s ease-out'
                   }}
@@ -1050,30 +1004,104 @@ export default function LastLetterPage({ onGoHome }) {
                     />
                   </div>
 
-                  {/* Right Side Button: "Mektubu Yak" (Transforms into Kibrit Zımparası when clicked!) */}
-                  <div style={{ display: 'flex', alignItems: 'center', zIndex: 50 }}>
+                  {/* Right Side Control: "Mektubu Yak" Button or Matchbox + Zımpara Strip */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, zIndex: 50 }}>
                     {showStriker ? (
-                      <div
-                        ref={strikerRef}
-                        style={{
-                          padding: '14px 22px',
-                          borderRadius: 14,
-                          background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
-                          border: '2px solid rgba(255, 140, 40, 0.95)',
-                          boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.9), 0 0 22px rgba(255, 100, 20, 0.75)',
-                          color: '#ffedd5',
-                          fontSize: '0.86rem',
-                          letterSpacing: '0.08em',
-                          fontStyle: 'italic',
-                          fontWeight: 'bold',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          whiteSpace: 'nowrap',
-                          animation: 'fadeInSlow 0.4s ease-out'
-                        }}
-                      >
-                        🔥 KİBRİT ZIMPARASI (Kibriti buraya sürtebilirsin)
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+                        {/* Zımpara Strip */}
+                        <div
+                          ref={strikerRef}
+                          style={{
+                            padding: '14px 22px',
+                            borderRadius: 14,
+                            background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
+                            border: '2px solid rgba(255, 140, 40, 0.95)',
+                            boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.9), 0 0 22px rgba(255, 100, 20, 0.75)',
+                            color: '#ffedd5',
+                            fontSize: '0.86rem',
+                            letterSpacing: '0.08em',
+                            fontStyle: 'italic',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            whiteSpace: 'nowrap',
+                            animation: 'fadeInSlow 0.4s ease-out'
+                          }}
+                        >
+                          🔥 KİBRİT ZIMPARASI (Kibriti buraya sürtebilirsin)
+                        </div>
+
+                        {/* Interactive Single Matchbox on Mektup Layout */}
+                        <div
+                          onClick={() => setMatchboxOpen(prev => !prev)}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 6,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <div style={{ color: '#ffedd5', fontSize: '0.8rem', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            🔥 Kutuyu açmak için tıklayın
+                          </div>
+                          <div
+                            style={{
+                              position: 'relative',
+                              width: 140,
+                              height: 94,
+                              background: '#1a1a1a',
+                              borderRadius: 8,
+                              boxShadow: '0 10px 30px rgba(0,0,0,0.85)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {/* Inner Tray sliding to the LEFT */}
+                            <div
+                              style={{
+                                position: 'absolute',
+                                inset: 4,
+                                background: '#3d2b1f',
+                                borderRadius: 6,
+                                transform: matchboxOpen ? 'translateX(-80px)' : 'translateX(0)',
+                                transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                                boxShadow: matchboxOpen ? '-6px 0 15px rgba(0,0,0,0.7)' : 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                paddingLeft: 8
+                              }}
+                            >
+                              {/* Matchstick Head emerging out of the LEFT side */}
+                              {matchboxOpen && (
+                                <div
+                                  style={{
+                                    width: 14,
+                                    height: 18,
+                                    borderRadius: '50% 50% 30% 30%',
+                                    background: '#b91c1c',
+                                    boxShadow: '0 0 10px rgba(185, 28, 28, 0.8)'
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <div
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                backgroundImage: `url('/assets/matchbox_cover.png')`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                borderRadius: 8,
+                                pointerEvents: 'none'
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <button
@@ -1100,83 +1128,6 @@ export default function LastLetterPage({ onGoHome }) {
                       </button>
                     )}
                   </div>
-
-                  {/* Interactive Matchbox on Right Side (Revealed when showStriker is active, slides open to LEFT) */}
-                  {showStriker && (
-                    <div
-                      onClick={() => setMatchboxOpen(prev => !prev)}
-                      style={{
-                        position: 'absolute',
-                        right: '5%',
-                        top: '15%',
-                        zIndex: 90,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 6
-                      }}
-                    >
-                      <div style={{ color: '#ffedd5', fontSize: '0.8rem', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        🔥 Kutusuna tıklayın
-                      </div>
-                      <div
-                        style={{
-                          position: 'relative',
-                          width: 140,
-                          height: 94,
-                          background: '#1a1a1a',
-                          borderRadius: 8,
-                          boxShadow: '0 10px 30px rgba(0,0,0,0.85)',
-                          border: '1px solid rgba(255,255,255,0.15)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {/* Inner Tray sliding to the LEFT */}
-                        <div
-                          style={{
-                            position: 'absolute',
-                            inset: 4,
-                            background: '#3d2b1f',
-                            borderRadius: 6,
-                            transform: matchboxOpen ? 'translateX(-80px)' : 'translateX(0)',
-                            transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                            boxShadow: matchboxOpen ? '-6px 0 15px rgba(0,0,0,0.7)' : 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-start',
-                            paddingLeft: 8
-                          }}
-                        >
-                          {/* Matchstick Head emerging out of the LEFT side */}
-                          {matchboxOpen && (
-                            <div
-                              style={{
-                                width: 14,
-                                height: 18,
-                                borderRadius: '50% 50% 30% 30%',
-                                background: '#b91c1c',
-                                boxShadow: '0 0 10px rgba(185, 28, 28, 0.8)'
-                              }}
-                            />
-                          )}
-                        </div>
-                        <div
-                          style={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundImage: `url('/assets/matchbox_cover.png')`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            borderRadius: 8,
-                            pointerEvents: 'none'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -1325,31 +1276,32 @@ export default function LastLetterPage({ onGoHome }) {
             </div>
           </div>
 
-          {/* Sleek Custom CSS Draggable Matchstick (Zero White Box Background!) */}
-          {isStrikingMatch && (
+          {/* Sleek Custom CSS Draggable Matchstick (Emerges out of Mektup Matchbox Left Side when Opened) */}
+          {isStrikingMatch && matchboxOpen && (
             <div
               ref={matchstickRef}
               onMouseDown={handleMatchMouseDown}
               onTouchStart={handleMatchMouseDown}
               style={{
                 position: 'fixed',
-                bottom: 100 + matchPos.y * -1,
-                left: `calc(50% + ${matchPos.x}px)`,
+                bottom: 160 + matchPos.y * -1,
+                left: `calc(75% + ${matchPos.x}px)`,
                 transform: 'translateX(-50%)',
-                width: 20,
+                width: 22,
                 height: 180,
                 zIndex: 99999,
                 cursor: 'grab',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center'
+                alignItems: 'center',
+                animation: 'fadeInSlow 0.3s ease-out'
               }}
             >
               {/* Red Phosphorus Match Tip (Ignites with Glowing Flame when struck) */}
               <div
                 style={{
-                  width: 22,
-                  height: 30,
+                  width: 24,
+                  height: 32,
                   borderRadius: '50% 50% 30% 30%',
                   background: matchIgnited
                     ? 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffbb00 35%, #ff4400 100%)'
