@@ -966,37 +966,42 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
               )}
 
-              {/* Unfolded Large Handwritten Letter (Full Size & Width, NO Bottom Narrowing) */}
+              {/* Unfolded Handwritten Letter (Compact Fit, 100% Entire Letter Visible on Screen at Once) */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
                     position: 'relative',
                     width: '100%',
                     height: '100%',
-                    overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 20,
-                    padding: '20px 16px 50px 16px',
-                    animation: 'unfoldLetter 0.6s ease-out'
+                    justifyContent: 'center',
+                    gap: 12,
+                    padding: '8px 12px',
+                    animation: 'unfoldLetter 0.5s ease-out',
+                    overflow: 'hidden'
                   }}
                 >
-                  {/* Handwritten Letter Image Container (Full Unclipped 720px Width View) */}
+                  {/* Handwritten Letter Image Container (Compact 510px Fit) */}
                   <div
                     style={{
                       position: 'relative',
-                      width: '96%',
-                      maxWidth: 720,
-                      borderRadius: 12,
+                      width: '100%',
+                      maxWidth: 510,
+                      maxHeight: '62vh',
+                      borderRadius: 10,
                       overflow: 'hidden',
                       boxShadow: isBurningActive
                         ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
-                        : '0 14px 50px rgba(0,0,0,0.95)',
+                        : '0 10px 35px rgba(0,0,0,0.85)',
                       border: isBurningActive
                         ? '1px solid rgba(255, 120, 30, 0.6)'
                         : '1px solid rgba(255,255,255,0.12)',
-                      transition: 'box-shadow 0.5s ease'
+                      transition: 'box-shadow 0.5s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
                     }}
                   >
                     {/* Embedded Match Striker Strip (Appears ONLY when "Mektubu yak.." is clicked) */}
@@ -1006,8 +1011,8 @@ export default function LastLetterPage({ onGoHome }) {
                         style={{
                           position: 'relative',
                           width: '90%',
-                          height: 38,
-                          margin: '14px auto 14px auto',
+                          height: 36,
+                          margin: '10px auto 10px auto',
                           background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
                           borderRadius: 6,
                           border: '2px solid rgba(255, 140, 40, 0.9)',
@@ -1030,12 +1035,18 @@ export default function LastLetterPage({ onGoHome }) {
                     <img
                       src="/assets/final_letter_paper.jpg"
                       alt="Bir delinin son mesajı: Ayşenur"
-                      style={{ width: '100%', height: 'auto', display: 'block' }}
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        maxHeight: '62vh',
+                        objectFit: 'contain',
+                        display: 'block'
+                      }}
                     />
                   </div>
 
                   {/* Action Buttons Below Letter */}
-                  <div style={{ display: 'flex', gap: 14, width: '100%', maxWidth: 580, justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 480, justifyContent: 'center', marginTop: 4 }}>
                     <button
                       onClick={handleOpenBurnModal}
                       style={{
