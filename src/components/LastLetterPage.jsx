@@ -288,7 +288,8 @@ export default function LastLetterPage({ onGoHome }) {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        backgroundColor: '#0a0a0f',
+        backgroundColor: '#0f1115',
+        backgroundImage: 'radial-gradient(ellipse at center, #15181f 0%, #0a0b0e 100%)',
         color: '#ffffff',
         fontFamily: "'Inter', sans-serif",
         userSelect: 'none',
@@ -610,25 +611,6 @@ export default function LastLetterPage({ onGoHome }) {
                       : `0 ${10 + foldProgress * 20}px ${30 + foldProgress * 30}px rgba(0,0,0,0.85)`
                   }}
                 >
-                  {/* 30-Second Iconic Circular Paper Hole Burn Effect (#0D0E12 Center Hole + 10 Flames + Highlight) */}
-                  {isBurningActive && (
-                    <div className="burn-layer">
-                      <div className="highlight" />
-                      <div className="burn">
-                        <div className="flame" />
-                        <div className="flame" />
-                        <div className="flame" />
-                        <div className="flame" />
-                        <div className="flame" />
-                        <div className="flame" />
-                        <div className="flame" />
-                        <div className="flame" />
-                        <div className="flame" />
-                        <div className="flame" />
-                      </div>
-                    </div>
-                  )}
-
                   {/* Clean Handwritten Letter Paper Image */}
                   <img
                     src="/assets/final_letter_paper.jpg"
@@ -940,6 +922,25 @@ export default function LastLetterPage({ onGoHome }) {
               </div>
             </div>
           )}
+
+          {/* Full-Screen 30-Second Iconic Circular Hole Burn Effect (#0D0E12 Center Hole + 10 Flames + Highlight) */}
+          {isBurningActive && (
+            <div className="burn-layer">
+              <div className="highlight" />
+              <div className="burn">
+                <div className="flame" />
+                <div className="flame" />
+                <div className="flame" />
+                <div className="flame" />
+                <div className="flame" />
+                <div className="flame" />
+                <div className="flame" />
+                <div className="flame" />
+                <div className="flame" />
+                <div className="flame" />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -951,9 +952,11 @@ export default function LastLetterPage({ onGoHome }) {
         }
 
         .burn-layer {
-          position: absolute;
+          position: fixed;
           inset: 0;
-          z-index: 95;
+          width: 100vw;
+          height: 100vh;
+          z-index: 999998;
           pointer-events: none;
           overflow: hidden;
         }
@@ -982,10 +985,10 @@ export default function LastLetterPage({ onGoHome }) {
             box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
           }
           70% {
-            height: 1800px;
-            width: 1800px;
-            top: calc(50% - 900px);
-            right: calc(50% - 900px);
+            height: 2400px;
+            width: 2400px;
+            top: calc(50% - 1200px);
+            right: calc(50% - 1200px);
             border: 3px solid #FFFB5C;
             box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
           }
@@ -996,10 +999,10 @@ export default function LastLetterPage({ onGoHome }) {
           }
           95% {
             opacity: 1;
-            height: 2400px;
-            width: 2400px;
-            top: calc(50% - 1200px);
-            right: calc(50% - 1200px);
+            height: 3500px;
+            width: 3500px;
+            top: calc(50% - 1750px);
+            right: calc(50% - 1750px);
           }
           100% {
             opacity: 0;
@@ -1009,10 +1012,10 @@ export default function LastLetterPage({ onGoHome }) {
         .highlight {
           position: absolute;
           border-radius: 50%;
-          height: 1800px;
-          width: 1800px;
-          top: calc(50% - 900px);
-          right: calc(50% - 900px);
+          height: 3500px;
+          width: 3500px;
+          top: calc(50% - 1750px);
+          right: calc(50% - 1750px);
           box-shadow: 0px 0px 71px 101px transparent;
           animation: 30s grow-highlight linear forwards;
         }
@@ -1029,10 +1032,10 @@ export default function LastLetterPage({ onGoHome }) {
             box-shadow: 0px 0px 71px 101px #dcaa71;
           }
           85% {
-            height: 1800px;
-            width: 1800px;
-            top: calc(50% - 900px);
-            right: calc(50% - 900px);
+            height: 3500px;
+            width: 3500px;
+            top: calc(50% - 1750px);
+            right: calc(50% - 1750px);
             box-shadow: 0px 0px 71px 101px transparent;
           }
           100% {
