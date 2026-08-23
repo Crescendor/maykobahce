@@ -7,12 +7,12 @@ import { postLogToApi } from '../utils/gardenEngine';
  * LastLetterPage Component (/last)
  * Special emotional ending page:
  * - "Neyse" intro (100% pixel-identical to home page typography).
- * - Drawer hidden below screen until first scroll; slides up from out of sight.
- * - Matchbox (right) and Envelope (left) clearly separated inside drawer.
- * - Matchbox click slides open matchbox tray and unfolds Handwritten Letter.
- * - "Mektubu yak.." -> Clicking reveals Kibrit Zımparası (Match Striker) on top of letter paper.
- * - User Exact 10-Flame Paper Hole Burn Animation (expands in 1 direction over 30s without lag).
- * - Automatic transition into Farewell Message Screen (fadeInSlow).
+ * - Wide Drawer (maxWidth: 1080px) sitting flush at the very bottom of the screen.
+ * - Central Realist Glowing Envelope with red wax seal.
+ * - Casual side-by-side items inside drawer (Baby Polaroid, Cologne Kiss Polaroid, IQOS, TEREA pack) with hover magnification.
+ * - Matchbox inside drawer is decorative; clicking envelope unfolds handwritten letter.
+ * - "Mektubu yak.." -> Interactive Matchbox appears on the right side of screen, clicking slides tray open and pops matchstick out.
+ * - 24-Flame Leaf Paper Hole Burn Animation (expands over 18s, GPU accelerated).
  * - 10-Minute Farewell Screen Timer -> Full Pitch Black Silent Darkness.
  * - "Bir notla birlikte kilitle" -> Live keylogged note form + DateTimePicker -> SHA-256 seal.
  * - Full BotGhost/Discord webhook tracking for all actions.
@@ -45,6 +45,9 @@ export default function LastLetterPage({ onGoHome }) {
   const [letterUnfolded, setLetterUnfolded] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
   const [showStriker, setShowStriker] = useState(false); // Striker appears ONLY when "Mektubu yak.." is clicked
+
+  // Hover states for photos & objects inside drawer
+  const [hoveredItem, setHoveredItem] = useState(null);
 
   // Burn & Fire Mechanic
   const [matchIgnited, setMatchIgnited] = useState(false);
@@ -177,24 +180,15 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [handleScrollOrSwipe]);
 
-  // 2. Open Matchbox & Unfold Letter
-  const handleMatchboxClick = () => {
-    if (!matchboxOpen) {
-      setMatchboxOpen(true);
-      if (!hasLoggedMatchboxRef.current) {
-        hasLoggedMatchboxRef.current = true;
-        sendLog('last_matchbox_clicked', { action: 'Kibrit Kutusu Kaydırılarak Açıldı' });
-      }
-    }
+  // 2. Open Envelope & Unfold Letter
+  const handleEnvelopeClick = () => {
     if (!letterUnfolded) {
-      setTimeout(() => {
-        setLetterUnfolded(true);
-        currentStageRef.current = 'Son Mektup Okunuyor';
-        if (!hasLoggedLetterRef.current) {
-          hasLoggedLetterRef.current = true;
-          sendLog('last_letter_opened', { action: 'Zarf Açıldı ve Mektup Okunuyor' });
-        }
-      }, 450);
+      setLetterUnfolded(true);
+      currentStageRef.current = 'Son Mektup Okunuyor';
+      if (!hasLoggedLetterRef.current) {
+        hasLoggedLetterRef.current = true;
+        sendLog('last_letter_opened', { action: 'Zarf Açıldı ve Mektup Okunuyor' });
+      }
     }
   };
 
@@ -214,7 +208,8 @@ export default function LastLetterPage({ onGoHome }) {
 
     if (accepted) {
       setShowStriker(true); // Reveal Kibrit Zımparası on top of letter!
-      setIsStrikingMatch(true); // Reveal matchstick to rub across striker!
+      setIsStrikingMatch(true); // Reveal matchstick & right side matchbox!
+      setMatchboxOpen(false); // Initially closed right-side matchbox
       currentStageRef.current = 'Kibrit Sürükleme ve Yakma Aşaması';
     }
   };
@@ -480,6 +475,75 @@ export default function LastLetterPage({ onGoHome }) {
         </button>
       )}
 
+      {/* Right-Side Interactive Matchbox when "Mektubu yak.." is Chosen */}
+      {isStrikingMatch && !matchIgnited && (
+        <div
+          onClick={() => {
+            if (!matchboxOpen) {
+              setMatchboxOpen(true);
+              sendLog('last_right_matchbox_opened', { action: 'Sağ Kibrit Kutusu Açıldı' });
+            }
+          }}
+          style={{
+            position: 'fixed',
+            right: 36,
+            top: '48%',
+            transform: 'translateY(-50%)',
+            width: 155,
+            height: 105,
+            zIndex: 99998,
+            cursor: 'pointer',
+            filter: 'drop-shadow(0 0 25px rgba(255, 140, 40, 0.75))',
+            animation: 'fadeInSlow 0.5s ease-out'
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: -28,
+              left: -10,
+              right: -10,
+              textAlign: 'center',
+              color: '#ffedd5',
+              fontSize: '0.78rem',
+              fontStyle: 'italic',
+              fontWeight: 'bold',
+              textShadow: '0 2px 8px rgba(0,0,0,0.9)'
+            }}
+          >
+            {!matchboxOpen ? '🔥 Kutusuna tıklayın' : '✨ Kibriti zımparaya sürükleyin'}
+          </div>
+
+          {/* Inner Tray Sliding Out Right */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url('/assets/matchbox_inside.jpg')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              borderRadius: 6,
+              transform: matchboxOpen ? 'translateX(55px)' : 'translateX(0)',
+              transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.7)'
+            }}
+          />
+
+          {/* Exterior Cover */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url('/assets/matchbox_cover.png')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              borderRadius: 6,
+              boxShadow: '0 10px 30px rgba(0,0,0,0.85)'
+            }}
+          />
+        </div>
+      )}
+
       {/* 100% Pitch Black Silent Void (After 10 Minutes pass) */}
       {isDarknessTotal ? (
         <div
@@ -684,20 +748,20 @@ export default function LastLetterPage({ onGoHome }) {
             </div>
           )}
 
-          {/* 3D Dark Wooden Drawer Container (Hidden below screen until scrolled) */}
+          {/* 3D Dark Wooden Drawer Container (Flush at bottom 0px when scrolled) */}
           <div
             onClick={handleScrollOrSwipe}
             style={{
               position: 'absolute',
-              bottom: drawerOpen ? '3%' : '-100%',
+              bottom: drawerOpen ? 0 : '-100%',
               left: '50%',
-              transform: drawerOpen ? 'translateX(-50%) translateY(0) scale(1)' : 'translateX(-50%) translateY(120%) scale(0.9)',
+              transform: drawerOpen ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(120%)',
               opacity: drawerOpen ? 1 : 0,
-              width: '92%',
-              maxWidth: 760,
-              height: '78vh',
+              width: '96%',
+              maxWidth: 1080,
+              height: '84vh',
               background: 'linear-gradient(180deg, #1f1817 0%, #110d0c 100%)',
-              borderRadius: '26px 26px 0 0',
+              borderRadius: '24px 24px 0 0',
               border: '2px solid rgba(130, 85, 65, 0.38)',
               borderBottom: 'none',
               boxShadow: '0 -25px 60px rgba(0, 0, 0, 0.9), inset 0 2px 12px rgba(255, 200, 160, 0.1)',
@@ -705,20 +769,20 @@ export default function LastLetterPage({ onGoHome }) {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              padding: '24px 18px',
+              padding: '20px 22px 0 22px',
               overflow: 'hidden'
             }}
           >
             {/* Metallic Wooden Drawer Lid & Handle */}
             <div
               style={{
-                width: 120,
+                width: 140,
                 height: 14,
                 borderRadius: 7,
                 background: 'linear-gradient(180deg, #4d3a34 0%, #221815 100%)',
                 border: '1px solid rgba(255, 255, 255, 0.14)',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.7)',
-                marginBottom: 22,
+                marginBottom: 16,
                 cursor: 'pointer'
               }}
             />
@@ -730,17 +794,18 @@ export default function LastLetterPage({ onGoHome }) {
                 width: '100%',
                 flex: 1,
                 background: '#0d0b0a',
-                borderRadius: 18,
+                borderRadius: '16px 16px 0 0',
                 border: '1px solid rgba(90, 60, 45, 0.28)',
+                borderBottom: 'none',
                 boxShadow: 'inset 0 12px 35px rgba(0,0,0,0.95)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '20px 24px',
-                overflow: 'visible'
+                overflow: 'hidden'
               }}
             >
-              {/* Distinct Separated Envelope (Left) & Matchbox (Right) Layer */}
+              {/* Casual Items inside Drawer (Envelope in Dead Center, Photos & IQOS/TEREA Side-by-Side) */}
               {!letterUnfolded && !lockModeActive && (
                 <div
                   style={{
@@ -749,71 +814,120 @@ export default function LastLetterPage({ onGoHome }) {
                     height: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 60px 0 30px'
+                    justifyContent: 'center'
                   }}
                 >
-                  {/* Envelope (Left Side) */}
+                  {/* Left Photo 1: Baby Polaroid Photo */}
                   <div
-                    onClick={handleMatchboxClick}
+                    onMouseEnter={() => setHoveredItem('baby')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    style={{
+                      position: 'absolute',
+                      left: '4%',
+                      top: '18%',
+                      width: 185,
+                      padding: '10px 10px 32px 10px',
+                      background: '#faf7f2',
+                      borderRadius: 4,
+                      boxShadow: hoveredItem === 'baby'
+                        ? '0 20px 45px rgba(0,0,0,0.95), 0 0 25px rgba(255, 255, 255, 0.3)'
+                        : '0 10px 30px rgba(0,0,0,0.85)',
+                      transform: hoveredItem === 'baby'
+                        ? 'scale(1.35) rotate(0deg)'
+                        : 'rotate(-12deg)',
+                      zIndex: hoveredItem === 'baby' ? 50 : 10,
+                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <img
+                      src="/assets/baby_photo.jpg"
+                      alt="Nostaljik bebeklik fotoğrafı"
+                      style={{ width: '100%', height: 165, objectFit: 'cover', borderRadius: 2, display: 'block' }}
+                    />
+                  </div>
+
+                  {/* Left Photo 2: Snow Kiss Polaroid Photo */}
+                  <div
+                    onMouseEnter={() => setHoveredItem('snow')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    style={{
+                      position: 'absolute',
+                      left: '19%',
+                      bottom: '12%',
+                      width: 180,
+                      padding: '10px 10px 32px 10px',
+                      background: '#faf7f2',
+                      borderRadius: 4,
+                      boxShadow: hoveredItem === 'snow'
+                        ? '0 20px 45px rgba(0,0,0,0.95), 0 0 25px rgba(255, 255, 255, 0.3)'
+                        : '0 10px 30px rgba(0,0,0,0.85)',
+                      transform: hoveredItem === 'snow'
+                        ? 'scale(1.35) rotate(0deg)'
+                        : 'rotate(8deg)',
+                      zIndex: hoveredItem === 'snow' ? 50 : 12,
+                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <img
+                      src="/assets/snow_photo.jpg"
+                      alt="Karlar altında katedral önünde fotoğraf"
+                      style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 2, display: 'block' }}
+                    />
+                  </div>
+
+                  {/* Dead Center Focal Item: Realist Glowing Handwritten Letter Envelope */}
+                  <div
+                    onClick={handleEnvelopeClick}
                     style={{
                       position: 'relative',
-                      width: 240,
-                      height: 155,
-                      background: 'linear-gradient(135deg, #e4dbc9 0%, #c2b19b 100%)',
-                      borderRadius: 8,
-                      boxShadow: '0 14px 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,0,0,0.08)',
-                      transform: 'rotate(-4deg)',
+                      width: 270,
+                      height: 175,
+                      background: 'linear-gradient(135deg, #eee5d5 0%, #c5aa88 100%)',
+                      borderRadius: 10,
+                      boxShadow: '0 0 40px rgba(255, 225, 160, 0.5), 0 16px 50px rgba(0,0,0,0.95)',
+                      transform: 'rotate(-2deg)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '1px solid rgba(0,0,0,0.18)',
-                      transition: 'transform 0.3s ease'
+                      border: '1.5px solid rgba(255, 255, 255, 0.3)',
+                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                      zIndex: 25
                     }}
                   >
+                    <div style={{ position: 'absolute', top: 12, fontSize: '0.74rem', color: '#785f43', fontStyle: 'italic', letterSpacing: '0.12em' }}>
+                      okumak için tıklayın
+                    </div>
+
                     {/* Pure Red Wax Seal (No text) */}
                     <div
                       style={{
-                        width: 40,
-                        height: 40,
+                        width: 44,
+                        height: 44,
                         borderRadius: '50%',
                         background: 'radial-gradient(circle at 30% 30%, #dc2626 0%, #881337 100%)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3)',
+                        boxShadow: '0 4px 14px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.35)',
                         border: '1px solid rgba(136, 19, 55, 0.6)'
                       }}
                     />
                   </div>
 
-                  {/* Glowing Matchbox (Right Side with Ample Clearance for Slide Animation) */}
+                  {/* Right Object 1: Non-Clickable Decorative Matchbox */}
                   <div
-                    onClick={handleMatchboxClick}
                     style={{
-                      position: 'relative',
-                      width: 165,
-                      height: 110,
-                      transform: matchboxOpen ? 'rotate(4deg) translateX(15px)' : 'rotate(4deg)',
-                      transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
-                      cursor: 'pointer',
-                      filter: 'drop-shadow(0 0 20px rgba(255, 120, 40, 0.55))',
-                      overflow: 'visible'
+                      position: 'absolute',
+                      right: '25%',
+                      top: '16%',
+                      width: 145,
+                      height: 98,
+                      transform: 'rotate(-7deg)',
+                      filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.85))',
+                      pointerEvents: 'none',
+                      zIndex: 10
                     }}
                   >
-                    {/* Inner Match Tray Sliding Out */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        backgroundImage: `url('/assets/matchbox_inside.jpg')`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        borderRadius: 6,
-                        transform: matchboxOpen ? 'translateX(52px)' : 'translateX(0)',
-                        transition: 'transform 0.5s ease-out',
-                        boxShadow: '0 6px 20px rgba(0,0,0,0.7)'
-                      }}
-                    />
-                    {/* Exterior Matchbox Cover */}
                     <div
                       style={{
                         position: 'absolute',
@@ -821,9 +935,60 @@ export default function LastLetterPage({ onGoHome }) {
                         backgroundImage: `url('/assets/matchbox_cover.png')`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        borderRadius: 6,
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.85)'
+                        borderRadius: 6
                       }}
+                    />
+                  </div>
+
+                  {/* Right Object 2: IQOS Device (Mint Green) */}
+                  <div
+                    onMouseEnter={() => setHoveredItem('iqos')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    style={{
+                      position: 'absolute',
+                      right: '13%',
+                      top: '18%',
+                      width: 72,
+                      height: 240,
+                      transform: hoveredItem === 'iqos'
+                        ? 'scale(1.25) rotate(0deg)'
+                        : 'rotate(15deg)',
+                      filter: 'drop-shadow(0 12px 30px rgba(0,0,0,0.85))',
+                      zIndex: hoveredItem === 'iqos' ? 50 : 14,
+                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <img
+                      src="/assets/iqos_device.png"
+                      alt="IQOS Iluma Cihazı"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
+
+                  {/* Right Object 3: TEREA Pack */}
+                  <div
+                    onMouseEnter={() => setHoveredItem('terea')}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    style={{
+                      position: 'absolute',
+                      right: '3%',
+                      bottom: '16%',
+                      width: 140,
+                      height: 100,
+                      transform: hoveredItem === 'terea'
+                        ? 'scale(1.25) rotate(0deg)'
+                        : 'rotate(-9deg)',
+                      filter: 'drop-shadow(0 12px 30px rgba(0,0,0,0.85))',
+                      zIndex: hoveredItem === 'terea' ? 50 : 15,
+                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <img
+                      src="/assets/terea_pack.png"
+                      alt="TEREA IQOS Paketi"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 4 }}
                     />
                   </div>
                 </div>
@@ -886,7 +1051,7 @@ export default function LastLetterPage({ onGoHome }) {
                           animation: 'fadeInSlow 0.4s ease-out'
                         }}
                       >
-                        🔥 KİBRİT ZIMPARASI (Kibriti Buraya Sürtün)
+                        🔥 KİBRİT ZIMPARASI (Sağdaki kibriti buraya sürtün)
                       </div>
                     )}
 
