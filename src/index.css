@@ -488,37 +488,256 @@ body::-webkit-scrollbar,
   }
 }
 
-/* ─── 60fps Iconic Cinematic Ember Dissolve Transition ──────────── */
-.cinematic-burn-dissolve {
-  animation: cinematicPaperBurn 12s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-  will-change: filter, transform, opacity;
+/* ─── User Exact 10-Flame Paper Hole Burn Animation (30s Single Direction) ─── */
+.content {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 99999;
+  overflow: hidden;
 }
 
-@keyframes cinematicPaperBurn {
+.burn {
+  position: absolute;
+  height: 0px;
+  width: 0px;
+  background-color: #050507;
+  border-radius: 50%;
+  top: 50%;
+  right: 50%;
+  animation: 30s burn-grow linear forwards;
+  border: 3px solid rgb(49, 22, 1);
+  box-shadow: inset 0px 0px 6px 2px #fffb5c00, inset 0px 0px 8px 3px rgb(52, 21, 0), 0px 0px 6px 2px #3f1c0100, 0px 0px 15px 10px rgba(105, 46, 0, 0), 0px 0px 17px 18px #401d02eb, inset 0px 0px 29px 22px #c4720f00;
+  will-change: width, height, top, right, opacity;
+  transform: translateZ(0);
+}
+
+@keyframes burn-grow {
   0% {
-    filter: brightness(1) contrast(1) drop-shadow(0 0 0px transparent);
     opacity: 1;
-    transform: scale(1);
+    height: 0px;
+    width: 0px;
+    top: 50%;
+    right: 50%;
+    border: 3px solid #FFFB5C;
+    box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
   }
-  30% {
-    filter: brightness(1.3) contrast(1.2) sepia(0.4) drop-shadow(0 -15px 30px rgba(255, 90, 0, 0.8));
-    opacity: 0.9;
+  85% {
+    opacity: 1;
+    height: 3200px;
+    width: 3200px;
+    top: calc(50% - 1600px);
+    right: calc(50% - 1600px);
+    border: 3px solid #FFFB5C;
+    box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
   }
-  65% {
-    filter: brightness(1.8) contrast(1.6) sepia(0.85) drop-shadow(0 -30px 60px rgba(255, 120, 0, 0.95));
-    opacity: 0.5;
-    transform: scale(0.97) translateY(-10px);
-  }
-  90% {
-    filter: brightness(0.3) contrast(2) grayscale(0.8) drop-shadow(0 0 40px rgba(255, 60, 0, 0.6));
-    opacity: 0.1;
-    transform: scale(0.94) translateY(-20px);
+  95% {
+    opacity: 1;
+    height: 3600px;
+    width: 3600px;
+    top: calc(50% - 1800px);
+    right: calc(50% - 1800px);
+    border: 3px solid rgb(49, 22, 1);
+    box-shadow: inset 0px 0px 6px 2px #fffb5c00, inset 0px 0px 8px 3px rgb(52, 21, 0), 0px 0px 6px 2px #3f1c0100, 0px 0px 15px 10px rgba(105, 46, 0, 0), 0px 0px 17px 18px #401d02eb, inset 0px 0px 29px 22px #c4720f00;
   }
   100% {
-    filter: brightness(0) contrast(3);
-    opacity: 0;
-    transform: scale(0.9) translateY(-30px);
+    opacity: 1;
+    height: 4000px;
+    width: 4000px;
+    top: calc(50% - 2000px);
+    right: calc(50% - 2000px);
   }
+}
+
+.burn .flame {
+  background-color: #fffc98;
+  position: absolute;
+  box-shadow: 0px 0px 0px 0px #FFFB5C;
+  will-change: transform, opacity;
+}
+
+.burn .flame:nth-of-type(1) {
+  border-radius: 50% 0;
+  animation: 30s flame-1 linear forwards;
+  transform-origin: bottom left;
+  opacity: 0;
+}
+
+@keyframes flame-1 {
+  0% {
+    opacity: 1; height: 0px; width: 0px; left: 8%; bottom: 76%;
+    box-shadow: 0px 0px 0px 0px #FFFB5C; background-color: #fffc98;
+  }
+  15% { height: 20px; width: 20px; transform: rotate(-15deg); }
+  46% {
+    height: 40px; width: 40px; left: 5%; bottom: 76%;
+    box-shadow: 0px 0px 5px 4px #FFFB5C; transform: rotate(-40deg); opacity: 1;
+  }
+  75% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(2) {
+  border-radius: 50% 0;
+  animation: 30s flame-2 linear forwards;
+  transform-origin: bottom left;
+  opacity: 0;
+}
+
+@keyframes flame-2 {
+  0% { height: 0px; width: 0px; left: 31%; top: 2%; opacity: 1; }
+  20% { height: 30px; width: 30px; top: -13%; transform: rotate(-2deg); }
+  50% { height: 40px; width: 40px; left: 31%; top: 3%; opacity: 1; }
+  80% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(3) {
+  border-radius: 50% 0;
+  animation: 30s flame-3 linear forwards;
+  transform-origin: bottom left;
+  opacity: 0;
+}
+
+@keyframes flame-3 {
+  0% { height: 0px; width: 0px; left: 40%; top: -6%; opacity: 1; }
+  25% { height: 35px; width: 35px; top: -10%; transform: rotate(15deg); }
+  60% { left: 40%; top: -2%; opacity: 1; }
+  85% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(4) {
+  border-radius: 0 50%;
+  animation: 30s flame-4 linear forwards;
+  transform-origin: bottom right;
+  opacity: 0;
+}
+
+@keyframes flame-4 {
+  0% { height: 0px; width: 0px; right: 20%; top: 5%; opacity: 1; }
+  30% { height: 35px; width: 35px; right: 20%; top: 5%; transform: rotate(20deg); }
+  65% { opacity: 1; }
+  85% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(5) {
+  border-radius: 0 50%;
+  animation: 30s flame-5 linear forwards;
+  transform-origin: bottom right;
+  opacity: 0;
+}
+
+@keyframes flame-5 {
+  0% { height: 0px; width: 0px; left: 98%; top: 38%; opacity: 1; }
+  35% { height: 30px; width: 30px; left: 90%; transform: rotate(15deg); }
+  70% { opacity: 1; }
+  90% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(6) {
+  border-radius: 0 50%;
+  animation: 30s flame-6 linear forwards;
+  transform-origin: bottom right;
+  opacity: 0;
+}
+
+@keyframes flame-6 {
+  0% { height: 0px; width: 0px; left: 96%; top: 35%; opacity: 1; }
+  35% { height: 35px; width: 35px; left: 90%; transform: rotate(45deg); }
+  70% { opacity: 1; }
+  90% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(7) {
+  border-radius: 0 50%;
+  animation: 30s flame-7 linear forwards;
+  transform-origin: bottom right;
+  opacity: 0;
+}
+
+@keyframes flame-7 {
+  0% { height: 0px; width: 0px; left: 63%; top: 91%; opacity: 1; }
+  30% { height: 30px; width: 30px; left: 60%; top: 84%; transform: rotate(70deg); }
+  65% { opacity: 1; }
+  85% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(8) {
+  border-radius: 0 50%;
+  animation: 30s flame-8 linear forwards;
+  transform-origin: bottom right;
+  opacity: 0;
+}
+
+@keyframes flame-8 {
+  0% { height: 0px; width: 0px; left: 69%; top: 80%; opacity: 1; }
+  35% { height: 35px; width: 35px; left: 66%; top: 74%; transform: rotate(80deg); }
+  70% { opacity: 1; }
+  90% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(9) {
+  border-radius: 0 50%;
+  animation: 30s flame-9 linear forwards;
+  transform-origin: bottom right;
+  opacity: 0;
+}
+
+@keyframes flame-9 {
+  0% { height: 0px; width: 0px; left: 23%; top: 85%; opacity: 1; }
+  35% { height: 30px; width: 30px; left: 23%; top: 87%; transform: rotate(65deg); }
+  70% { opacity: 1; }
+  90% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(10) {
+  border-radius: 0 50%;
+  animation: 30s flame-10 linear forwards;
+  transform-origin: bottom right;
+  opacity: 0;
+}
+
+@keyframes flame-10 {
+  0% { height: 0px; width: 0px; top: 57%; left: 0%; opacity: 1; }
+  35% { height: 25px; width: 25px; top: 57%; left: -7%; transform: rotate(10deg); }
+  70% { opacity: 1; }
+  90% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.highlight {
+  position: absolute;
+  border-radius: 50%;
+  height: 500px;
+  width: 500px;
+  top: calc(50% - 250px);
+  right: calc(50% - 250px);
+  box-shadow: 0px 0px 71px 101px transparent;
+  animation: 30s grow-highlight linear forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes grow-highlight {
+  0% {
+    height: 0px; width: 0px; top: 50%; right: 50%;
+    box-shadow: 0px 0px 71px 101px #dcaa71;
+  }
+  60% { box-shadow: 0px 0px 91px 120px #dcaa71; }
+  85% {
+    height: 1200px; width: 1200px; top: calc(50% - 600px); right: calc(50% - 600px);
+    box-shadow: 0px 0px 91px 120px transparent;
+  }
+  100% { opacity: 0; }
 }
 
 /* ─── Melancholy (Hüzün / Siyah Beyaz) Global Mode ──────────────── */
