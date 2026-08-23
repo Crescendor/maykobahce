@@ -748,18 +748,19 @@ export default function LastLetterPage({ onGoHome }) {
             </div>
           )}
 
-          {/* 3D Dark Wooden Drawer Container (Flush at bottom 0px when scrolled, wide 98vw/1440px) */}
+          {/* 3D Dark Wooden Drawer Container (Flush at bottom 0px, 100vw full screen width) */}
           <div
             onClick={handleScrollOrSwipe}
             style={{
               position: 'absolute',
               bottom: drawerOpen ? 0 : '-100%',
-              left: '50%',
-              transform: drawerOpen ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(120%)',
+              left: 0,
+              right: 0,
+              transform: drawerOpen ? 'translateY(0)' : 'translateY(120%)',
               opacity: drawerOpen ? 1 : 0,
-              width: '98vw',
-              maxWidth: 1440,
-              height: '86vh',
+              width: '100vw',
+              maxWidth: '100%',
+              height: '92vh',
               background: 'linear-gradient(180deg, #1f1817 0%, #110d0c 100%)',
               borderRadius: '24px 24px 0 0',
               border: '2px solid rgba(130, 85, 65, 0.38)',
@@ -769,14 +770,14 @@ export default function LastLetterPage({ onGoHome }) {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              padding: '18px 20px 0 20px',
+              padding: '16px 14px 0 14px',
               overflow: 'hidden'
             }}
           >
             {/* Metallic Wooden Drawer Lid & Handle */}
             <div
               style={{
-                width: 160,
+                width: 180,
                 height: 14,
                 borderRadius: 7,
                 background: 'linear-gradient(180deg, #4d3a34 0%, #221815 100%)',
@@ -805,7 +806,7 @@ export default function LastLetterPage({ onGoHome }) {
                 overflow: 'hidden'
               }}
             >
-              {/* Casual Items inside Drawer (Envelope in Dead Center, Photos Left, IQOS & TEREA Right) */}
+              {/* Casual Items inside Drawer (Envelope in Dead Center, Photos Left, Huge IQOS & TEREA Right) */}
               {!letterUnfolded && !lockModeActive && (
                 <div
                   style={{
@@ -817,7 +818,7 @@ export default function LastLetterPage({ onGoHome }) {
                     justifyContent: 'center'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (Original Frame, No Extra Border) */}
+                  {/* Left Photo 1: Baby Photo (Large Polaroid Photo) */}
                   <img
                     src="/assets/baby_photo.jpg"
                     alt="Nostaljik bebeklik fotoğrafı"
@@ -825,16 +826,16 @@ export default function LastLetterPage({ onGoHome }) {
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      left: '3%',
-                      top: '18%',
-                      width: 255,
+                      left: '2%',
+                      top: '12%',
+                      width: 310,
                       height: 'auto',
                       borderRadius: 4,
                       boxShadow: hoveredItem === 'baby'
                         ? '0 25px 50px rgba(0,0,0,0.95), 0 0 30px rgba(255, 255, 255, 0.35)'
                         : '0 12px 35px rgba(0,0,0,0.85)',
                       transform: hoveredItem === 'baby'
-                        ? 'scale(1.3) rotate(0deg)'
+                        ? 'scale(1.25) rotate(0deg)'
                         : 'rotate(-9deg)',
                       zIndex: hoveredItem === 'baby' ? 50 : 10,
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -842,7 +843,7 @@ export default function LastLetterPage({ onGoHome }) {
                     }}
                   />
 
-                  {/* Left Photo 2: Snow Kiss Photo (Original Frame, No Extra Border) */}
+                  {/* Left Photo 2: Snow Kiss Photo (Large Polaroid Photo) */}
                   <img
                     src="/assets/snow_photo.jpg"
                     alt="Karlar altında katedral önünde fotoğraf"
@@ -850,16 +851,16 @@ export default function LastLetterPage({ onGoHome }) {
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      left: '21%',
-                      bottom: '12%',
-                      width: 245,
+                      left: '22%',
+                      bottom: '8%',
+                      width: 300,
                       height: 'auto',
                       borderRadius: 4,
                       boxShadow: hoveredItem === 'snow'
                         ? '0 25px 50px rgba(0,0,0,0.95), 0 0 30px rgba(255, 255, 255, 0.35)'
                         : '0 12px 35px rgba(0,0,0,0.85)',
                       transform: hoveredItem === 'snow'
-                        ? 'scale(1.3) rotate(0deg)'
+                        ? 'scale(1.25) rotate(0deg)'
                         : 'rotate(7deg)',
                       zIndex: hoveredItem === 'snow' ? 50 : 12,
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -872,8 +873,8 @@ export default function LastLetterPage({ onGoHome }) {
                     onClick={handleEnvelopeClick}
                     style={{
                       position: 'relative',
-                      width: 280,
-                      height: 180,
+                      width: 320,
+                      height: 210,
                       background: 'linear-gradient(135deg, #eee5d5 0%, #c5aa88 100%)',
                       borderRadius: 10,
                       boxShadow: '0 0 45px rgba(255, 225, 160, 0.55), 0 18px 55px rgba(0,0,0,0.95)',
@@ -887,15 +888,15 @@ export default function LastLetterPage({ onGoHome }) {
                       zIndex: 25
                     }}
                   >
-                    <div style={{ position: 'absolute', top: 12, fontSize: '0.74rem', color: '#785f43', fontStyle: 'italic', letterSpacing: '0.12em' }}>
+                    <div style={{ position: 'absolute', top: 14, fontSize: '0.78rem', color: '#785f43', fontStyle: 'italic', letterSpacing: '0.12em' }}>
                       okumak için tıklayın
                     </div>
 
                     {/* Pure Red Wax Seal (No text) */}
                     <div
                       style={{
-                        width: 44,
-                        height: 44,
+                        width: 48,
+                        height: 48,
                         borderRadius: '50%',
                         background: 'radial-gradient(circle at 30% 30%, #dc2626 0%, #881337 100%)',
                         boxShadow: '0 4px 14px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.35)',
@@ -908,10 +909,10 @@ export default function LastLetterPage({ onGoHome }) {
                   <div
                     style={{
                       position: 'absolute',
-                      right: '32%',
+                      right: '34%',
                       top: '18%',
-                      width: 145,
-                      height: 98,
+                      width: 155,
+                      height: 105,
                       transform: 'rotate(-9deg)',
                       filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.85))',
                       pointerEvents: 'none',
@@ -930,50 +931,40 @@ export default function LastLetterPage({ onGoHome }) {
                     />
                   </div>
 
-                  {/* Right Object 2: IQOS Device (Mint Green - Proper Large Dimensions) */}
+                  {/* Right Object 2: IQOS Device (Mint Green - HUGE REALISTIC LIFE SIZE, NO MOUSE INTERACTION) */}
                   <img
                     src="/assets/iqos_device.png"
                     alt="IQOS Iluma Cihazı"
-                    onMouseEnter={() => setHoveredItem('iqos')}
-                    onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      right: '17%',
-                      top: '12%',
-                      width: 105,
-                      height: 310,
+                      right: '18%',
+                      top: '8%',
+                      width: 140,
+                      height: 430,
                       objectFit: 'contain',
-                      transform: hoveredItem === 'iqos'
-                        ? 'scale(1.2) rotate(0deg)'
-                        : 'rotate(11deg)',
+                      transform: 'rotate(11deg)',
                       filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.85))',
-                      zIndex: hoveredItem === 'iqos' ? 50 : 14,
-                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                      cursor: 'pointer'
+                      zIndex: 14,
+                      pointerEvents: 'none'
                     }}
                   />
 
-                  {/* Right Object 3: TEREA Pack (Side-by-side right next to IQOS) */}
+                  {/* Right Object 3: TEREA Pack (HUGE REALISTIC LIFE SIZE, NO MOUSE INTERACTION) */}
                   <img
                     src="/assets/terea_pack.png"
                     alt="TEREA IQOS Paketi"
-                    onMouseEnter={() => setHoveredItem('terea')}
-                    onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
-                      right: '3%',
+                      right: '2%',
                       top: '32%',
-                      width: 185,
-                      height: 130,
+                      width: 250,
+                      height: 175,
                       objectFit: 'contain',
                       borderRadius: 4,
-                      transform: hoveredItem === 'terea'
-                        ? 'scale(1.2) rotate(0deg)'
-                        : 'rotate(-6deg)',
+                      transform: 'rotate(-6deg)',
                       filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.85))',
-                      zIndex: hoveredItem === 'terea' ? 50 : 15,
-                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                      cursor: 'pointer'
+                      zIndex: 15,
+                      pointerEvents: 'none'
                     }}
                   />
                 </div>
