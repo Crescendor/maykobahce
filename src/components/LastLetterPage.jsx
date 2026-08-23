@@ -826,7 +826,7 @@ export default function LastLetterPage({ onGoHome }) {
                     transition: 'filter 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (Image 2 - Direct Clean Image) */}
+                  {/* Left Photo 1: Baby Photo (100% Raw Clean Image - ZERO Shadow, ZERO Border) */}
                   <img
                     src="/assets/baby_photo.jpg"
                     alt="Nostaljik bebeklik fotoğrafı"
@@ -838,10 +838,10 @@ export default function LastLetterPage({ onGoHome }) {
                       top: '14%',
                       width: 240,
                       height: 'auto',
-                      background: 'transparent',
+                      background: 'none',
                       border: 'none',
-                      boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
-                      borderRadius: 4,
+                      boxShadow: 'none',
+                      borderRadius: 0,
                       transform: hoveredItem === 'baby'
                         ? 'scale(1.2) rotate(0deg)'
                         : 'rotate(-9deg)',
@@ -851,7 +851,7 @@ export default function LastLetterPage({ onGoHome }) {
                     }}
                   />
 
-                  {/* Left Photo 2: Snow Kiss Photo (Image 3 - Direct Clean Image) */}
+                  {/* Left Photo 2: Snow Kiss Photo (100% Raw Clean Image - ZERO Shadow, ZERO Border) */}
                   <img
                     src="/assets/snow_photo.jpg"
                     alt="Karlar altında katedral önünde fotoğraf"
@@ -863,10 +863,10 @@ export default function LastLetterPage({ onGoHome }) {
                       bottom: '10%',
                       width: 230,
                       height: 'auto',
-                      background: 'transparent',
+                      background: 'none',
                       border: 'none',
-                      boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
-                      borderRadius: 4,
+                      boxShadow: 'none',
+                      borderRadius: 0,
                       transform: hoveredItem === 'snow'
                         ? 'scale(1.2) rotate(0deg)'
                         : 'rotate(7deg)',
@@ -907,19 +907,19 @@ export default function LastLetterPage({ onGoHome }) {
                     </section>
                   </div>
 
-                  {/* Right Object 1: IQOS Device (Mint Green - MUCH BIGGER & TALLER) */}
+                  {/* Right Object 1: IQOS Device (Mint Green - GIGANTIC MASSIVE 10X SIZE) */}
                   <img
                     src="/assets/iqos_device.png"
                     alt="IQOS Iluma Cihazı"
                     style={{
                       position: 'absolute',
-                      right: '17%',
-                      top: '2%',
-                      width: 175,
-                      height: 520,
+                      right: '12%',
+                      top: '0%',
+                      width: 380,
+                      height: 650,
                       objectFit: 'contain',
                       transform: 'rotate(12deg)',
-                      filter: 'drop-shadow(0 18px 38px rgba(0,0,0,0.88))',
+                      filter: 'drop-shadow(0 20px 45px rgba(0,0,0,0.9))',
                       zIndex: 14,
                       pointerEvents: 'none'
                     }}
