@@ -5,9 +5,9 @@ import { Volume2, Volume1, VolumeX } from 'lucide-react';
  * LastLetterAudioPlayer Component
  * Specialized YouTube Audio Engine for /last page:
  * - YouTube Video ID: NBQbekrHnsY
- * - Autoplays immediately on page entry at volume 25%.
- * - Phase 1: Starts at 2:05 (125s) with 2.5s smooth fade-in, plays until 2:48 (168s) where it smooth-fades out to 0% & pauses.
- * - Triggers onPhase1Complete callback when Phase 1 ends to unlock letter buttons.
+ * - Autoplays on entry at volume 25%.
+ * - Phase 1: Starts at 2:05 (125s) with smooth playback until 2:48 (168s) where it smooth-fades out to 0% & pauses.
+ * - Guarantees onPhase1Complete callback triggers at 2:48 (168s) to unlock action buttons.
  * - Stops audio when isLocked is true.
  * - Phase 2 (When mektup yakma accepted): Starts at 2:49 (169s) with 2s smooth fade-in, plays through until end of song (no loop).
  */
@@ -39,7 +39,6 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     fadeIntervalRef.current = setInterval(() => {
       stepCount++;
       const progress = stepCount / steps;
-      // Exponential smooth curve for natural audio perception
       const easeFactor = targetVol < startVol
         ? Math.pow(1 - progress, 2)
         : Math.sin((progress * Math.PI) / 2);
@@ -64,7 +63,19 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     }, 50);
   };
 
-  // Initialize YouTube Player Immediately on Entry (Starts at 2:05 / 125s with 25% Volume)
+  // 1. Guaranteed 43-Second Fallback Safety Timer (125s -> 168s = 43 seconds exact)
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      if (!isPhase1EndedRef.current) {
+        isPhase1EndedRef.current = true;
+        if (onPhase1Complete) onPhase1Complete();
+      }
+    }, 43000); // 43 Seconds exact duration of Phase 1
+
+    return () => clearTimeout(safetyTimer);
+  }, [onPhase1Complete]);
+
+  // 2. Initialize YouTube Player Immediately on Entry
   useEffect(() => {
     let isCancelled = false;
 
@@ -72,10 +83,17 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       if (hasSeekedInitialRef.current) return;
       hasSeekedInitialRef.current = true;
       try {
+        if (typeof eventTarget.unMute === 'function') eventTarget.unMute();
         eventTarget.setVolume(25);
         eventTarget.seekTo(125, true); // 2:05 (125. saniye)
-        eventTarget.playVideo();
-        setHasStarted(true);
+        const promise = eventTarget.playVideo();
+        if (promise !== undefined && typeof promise.then === 'function') {
+          promise.then(() => {
+            setHasStarted(true);
+          }).catch(() => {});
+        } else {
+          setHasStarted(true);
+        }
       } catch (e) {}
     };
 
@@ -120,28 +138,26 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       onYouTubeIframeAPIReady();
     }
 
-    // Secondary Autoplay Policy Fallback (Unlocks without re-seeking or restarting)
+    // Universal Autoplay Policy Unlock (Mouse Move, Pointer, Touch, Scroll, Key)
     const unlockAutoplay = () => {
       if (playerRef.current && typeof playerRef.current.playVideo === 'function' && !isPhase1EndedRef.current) {
         try {
-          if (!hasStarted) {
-            playerRef.current.setVolume(25);
-            playerRef.current.playVideo();
-            setHasStarted(true);
-          }
+          if (typeof playerRef.current.unMute === 'function') playerRef.current.unMute();
+          playerRef.current.setVolume(25);
+          playerRef.current.playVideo();
+          setHasStarted(true);
         } catch (e) {}
       }
     };
 
-    window.addEventListener('click', unlockAutoplay, { passive: true, once: true });
-    window.addEventListener('touchstart', unlockAutoplay, { passive: true, once: true });
+    const events = ['mousemove', 'pointermove', 'touchstart', 'touchend', 'scroll', 'wheel', 'keydown', 'click'];
+    events.forEach(evt => window.addEventListener(evt, unlockAutoplay, { passive: true, once: true }));
 
     return () => {
       isCancelled = true;
       if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
       if (timeCheckIntervalRef.current) clearInterval(timeCheckIntervalRef.current);
-      window.removeEventListener('click', unlockAutoplay);
-      window.removeEventListener('touchstart', unlockAutoplay);
+      events.forEach(evt => window.removeEventListener(evt, unlockAutoplay));
     };
   }, []);
 
@@ -188,6 +204,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       isPhase2StartedRef.current = true;
       if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
         try {
+          if (typeof playerRef.current.unMute === 'function') playerRef.current.unMute();
           playerRef.current.seekTo(169, true); // 2:49 (169. saniye)
           playerRef.current.setVolume(0);
           playerRef.current.playVideo();
