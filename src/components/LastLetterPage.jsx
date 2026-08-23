@@ -36,7 +36,7 @@ export default function LastLetterPage({ onGoHome }) {
   const [foldProgress, setFoldProgress] = useState(0);
   const [isLetterZoomed, setIsLetterZoomed] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
-  const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(isTester);
+  const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(false);
 
   // Burn & Fire State - Clear all previous local storage burn records completely as requested
   useEffect(() => {
