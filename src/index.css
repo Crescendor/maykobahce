@@ -488,100 +488,36 @@ body::-webkit-scrollbar,
   }
 }
 
-/* ─── 30-Second Bottom-Center Growing Particle Fire Ball Engine ─── */
-.fire-center-stage {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 99995;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+/* ─── 60fps Iconic Cinematic Ember Dissolve Transition ──────────── */
+.cinematic-burn-dissolve {
+  animation: cinematicPaperBurn 12s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: filter, transform, opacity;
 }
 
-.fire-ball-container {
-  position: absolute;
-  bottom: -6em;
-  left: 50%;
-  transform: translateX(-50%) scale(1);
-  width: 10em;
-  height: 12em;
-  font-size: 24px;
-  filter: blur(0.02em);
-  -webkit-filter: blur(0.02em);
-  animation: growFireBall30s 30s cubic-bezier(0.1, 0.4, 0.2, 1) forwards;
-  transform-origin: bottom center;
-}
-
-@keyframes growFireBall30s {
+@keyframes cinematicPaperBurn {
   0% {
-    transform: translateX(-50%) scale(1);
-    opacity: 0.85;
-  }
-  85% {
-    transform: translateX(-50%) scale(22);
+    filter: brightness(1) contrast(1) drop-shadow(0 0 0px transparent);
     opacity: 1;
-    filter: brightness(1.3) blur(0.01em);
+    transform: scale(1);
   }
-  95% {
-    transform: translateX(-50%) scale(28);
+  30% {
+    filter: brightness(1.3) contrast(1.2) sepia(0.4) drop-shadow(0 -15px 30px rgba(255, 90, 0, 0.8));
     opacity: 0.9;
   }
-  100% {
-    transform: translateX(-50%) scale(32);
-    opacity: 0;
+  65% {
+    filter: brightness(1.8) contrast(1.6) sepia(0.85) drop-shadow(0 -30px 60px rgba(255, 120, 0, 0.95));
+    opacity: 0.5;
+    transform: scale(0.97) translateY(-10px);
   }
-}
-
-.particle {
-  position: absolute;
-  bottom: 0;
-  width: 5em;
-  height: 5em;
-  border-radius: 50%;
-  background-image: radial-gradient(rgb(255, 80, 0) 20%, rgba(255, 80, 0, 0) 70%);
-  mix-blend-mode: screen;
-  opacity: 0;
-  animation: rise 1s ease-in infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes rise {
-  0% {
-    opacity: 0;
-    transform: translateY(0) scale(1);
-  }
-  25% {
-    opacity: 1;
+  90% {
+    filter: brightness(0.3) contrast(2) grayscale(0.8) drop-shadow(0 0 40px rgba(255, 60, 0, 0.6));
+    opacity: 0.1;
+    transform: scale(0.94) translateY(-20px);
   }
   100% {
-    opacity: 0;
-    transform: translateY(-10em) scale(0);
-  }
-}
-
-/* 30-Second Fade Out transition for Wooden Drawer & Letter */
-.fade-out-drawer-30s {
-  animation: fadeOutDrawer30s 30s cubic-bezier(0.1, 0.4, 0.2, 1) forwards;
-}
-
-@keyframes fadeOutDrawer30s {
-  0% {
-    opacity: 1;
-    filter: brightness(1) contrast(1);
-  }
-  70% {
-    opacity: 0.65;
-    filter: brightness(1.4) contrast(1.3) sepia(0.5);
-  }
-  92% {
-    opacity: 0.15;
-    filter: brightness(2) contrast(1.8) sepia(0.8);
-  }
-  100% {
-    opacity: 0;
     filter: brightness(0) contrast(3);
+    opacity: 0;
+    transform: scale(0.9) translateY(-30px);
   }
 }
 
