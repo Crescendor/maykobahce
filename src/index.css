@@ -637,3 +637,223 @@ body::-webkit-scrollbar,
   transition: filter 1.5s ease-in-out;
   background: radial-gradient(circle at center, #1b2620 0%, #0d1310 50%, #040504 100%) !important;
 }
+
+/* ─── Interactive Romantic 3D CSS Envelope & Letters ─────────────── */
+:root {
+  --envelope-x: 280px;
+  --envelope-y: 180px;
+  --envelope-bg: #e6d3ba;
+  --envelope-shadow: #b38f68;
+  --letter-x: 260px;
+  --letter-y: 170px;
+  --letter-bg: #faf3e0;
+  --letter-shadow: #d1b894;
+  --letter-text: #180d07;
+  --letter-font: "Dancing Script", 'Cardo', Georgia, serif;
+  --letter-button-text: #991b1b;
+  --heart-bg: #991b1b;
+  --heart-text: #ffffff;
+}
+
+@media (min-width: 650px) {
+  :root {
+    --envelope-x: 320px;
+    --envelope-y: 210px;
+    --letter-x: 300px;
+    --letter-y: 200px;
+  }
+}
+
+.cssletter {
+  position: relative;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  margin: 0;
+}
+
+.envelope {
+  position: relative;
+  width: var(--envelope-x);
+  height: var(--envelope-y);
+  background: var(--envelope-bg);
+  box-shadow: inset 0 0 30px -5px var(--envelope-shadow), 0 0 45px 5px rgba(255, 220, 160, 0.45);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.envelope:hover {
+  box-shadow: inset 0 0 30px -5px var(--envelope-shadow), 0 0 55px 10px rgba(255, 220, 160, 0.6);
+  transform: scale(1.03) rotate(-2deg);
+}
+
+.envelope::before {
+  content: "˚ʚ❤︎ɞ˚";
+  font-size: 2.2rem;
+  color: white;
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: soft-light;
+}
+
+.envelope-flap {
+  width: 100%;
+  height: 71%;
+  position: absolute;
+  top: 0;
+  z-index: 3;
+  overflow: hidden;
+  transition: 0.6s linear all;
+  transform-origin: top;
+  pointer-events: all;
+}
+
+.envelope-folds {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 2;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.envelope-flap::before,
+.envelope-left::before,
+.envelope-right::before,
+.envelope-bottom::before {
+  content: "";
+  transform: rotate(45deg);
+  background: var(--envelope-bg);
+  box-shadow: 0 0 30px -5px var(--envelope-shadow);
+  width: 100%;
+  aspect-ratio: 1;
+  display: block;
+  position: absolute;
+  top: 60%;
+}
+
+.envelope-flap::before {
+  border-radius: 3rem;
+  bottom: 30px;
+  top: auto;
+}
+
+@media (min-width: 650px) {
+  .envelope-flap::before {
+    bottom: 50px;
+  }
+}
+
+.envelope-left::before {
+  top: 10%;
+  left: -65%;
+}
+
+.envelope-right::before {
+  top: 10%;
+  right: -65%;
+}
+
+.envelope-bottom::before {
+  top: 60%;
+  border-radius: 3rem;
+}
+
+.heart {
+  z-index: 4;
+  position: relative;
+  box-shadow: none;
+  border: none;
+  width: 54px;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 60% 65%, var(--heart-bg) 64%, #0000 65%) top left/50% 50%,
+    radial-gradient(circle at 40% 65%, var(--heart-bg) 64%, #0000 65%) top right/50% 50%,
+    conic-gradient(from -45deg at 50% 85.5%, var(--heart-bg) 90deg, #0000 0) bottom/100% 50%;
+  background-repeat: no-repeat;
+  left: 50%;
+  top: 68%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 650px) {
+  .heart {
+    width: 78px;
+  }
+}
+
+.heart::before {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 54px;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 60% 65%, #ffffff26 64%, #0000 65%) top left/50% 50%,
+    radial-gradient(circle at 40% 65%, #ffffff26 64%, #0000 65%) top right/50% 50%,
+    conic-gradient(from -45deg at 50% 85.5%, #ffffff26 90deg, #0000 0) bottom/100% 50%;
+  background-repeat: no-repeat;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: 0.3s ease all;
+  z-index: -1;
+}
+
+@media (min-width: 650px) {
+  .heart::before {
+    width: 78px;
+  }
+}
+
+.heart:hover,
+.heart:active,
+.heart:focus {
+  transform: translate(-50%, -50%) scale(1.08);
+  background-color: transparent;
+  color: var(--heart-text);
+}
+
+.heart:hover::before,
+.heart:active::before,
+.heart:focus::before {
+  transform: translate(-50%, -50%) scale(0.85);
+}
+
+.heart-text {
+  transform: translateY(-4px);
+  display: block;
+  color: var(--heart-text);
+  font-size: 0.95rem;
+  font-family: var(--letter-font);
+  font-weight: bold;
+}
+
+.envelope.active * {
+  pointer-events: none;
+}
+
+.envelope.active .envelope-flap {
+  transform: rotateX(-180deg) translateY(0);
+  perspective: 10px;
+}
+
+.envelope.active .envelope-flap::before {
+  box-shadow: inset 0 0 30px -5px var(--envelope-shadow);
+}
+
+.envelope.active .heart {
+  display: none;
+}

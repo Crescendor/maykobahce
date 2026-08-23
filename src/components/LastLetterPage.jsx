@@ -42,6 +42,7 @@ export default function LastLetterPage({ onGoHome }) {
   // Interactive States
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [matchboxOpen, setMatchboxOpen] = useState(false);
+  const [envelopeActive, setEnvelopeActive] = useState(false);
   const [letterUnfolded, setLetterUnfolded] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
   const [showStriker, setShowStriker] = useState(false); // Striker appears ONLY when "Mektubu yak.." is clicked
@@ -182,13 +183,16 @@ export default function LastLetterPage({ onGoHome }) {
 
   // 2. Open Envelope & Unfold Letter
   const handleEnvelopeClick = () => {
-    if (!letterUnfolded) {
-      setLetterUnfolded(true);
-      currentStageRef.current = 'Son Mektup Okunuyor';
-      if (!hasLoggedLetterRef.current) {
-        hasLoggedLetterRef.current = true;
-        sendLog('last_letter_opened', { action: 'Zarf Açıldı ve Mektup Okunuyor' });
-      }
+    if (!envelopeActive) {
+      setEnvelopeActive(true);
+      setTimeout(() => {
+        setLetterUnfolded(true);
+        currentStageRef.current = 'Son Mektup Okunuyor';
+        if (!hasLoggedLetterRef.current) {
+          hasLoggedLetterRef.current = true;
+          sendLog('last_letter_opened', { action: '3D Zarf Açıldı ve Mektup Okunuyor' });
+        }
+      }, 600);
     }
   };
 
@@ -868,41 +872,35 @@ export default function LastLetterPage({ onGoHome }) {
                     }}
                   />
 
-                  {/* Dead Center Focal Item: Realist Glowing Handwritten Letter Envelope */}
+                  {/* Dead Center Focal Item: Romantic 3D CSS Envelope with Heart Button */}
                   <div
-                    onClick={handleEnvelopeClick}
                     style={{
                       position: 'relative',
-                      width: 320,
-                      height: 210,
-                      background: 'linear-gradient(135deg, #eee5d5 0%, #c5aa88 100%)',
-                      borderRadius: 10,
-                      boxShadow: '0 0 45px rgba(255, 225, 160, 0.55), 0 18px 55px rgba(0,0,0,0.95)',
-                      transform: 'rotate(-2deg)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1.5px solid rgba(255, 255, 255, 0.3)',
-                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                      zIndex: 25
+                      zIndex: 25,
+                      transform: 'rotate(-2deg)'
                     }}
                   >
-                    <div style={{ position: 'absolute', top: 14, fontSize: '0.78rem', color: '#785f43', fontStyle: 'italic', letterSpacing: '0.12em' }}>
-                      okumak için tıklayın
-                    </div>
-
-                    {/* Pure Red Wax Seal (No text) */}
-                    <div
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '50%',
-                        background: 'radial-gradient(circle at 30% 30%, #dc2626 0%, #881337 100%)',
-                        boxShadow: '0 4px 14px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.35)',
-                        border: '1px solid rgba(136, 19, 55, 0.6)'
-                      }}
-                    />
+                    <section className="cssletter">
+                      <div className={`envelope ${envelopeActive ? 'active' : ''}`} onClick={handleEnvelopeClick}>
+                        <button
+                          className="heart"
+                          id="openEnvelope"
+                          aria-label="Open Envelope"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEnvelopeClick();
+                          }}
+                        >
+                          <span className="heart-text">Aç</span>
+                        </button>
+                        <div className="envelope-flap" />
+                        <div className="envelope-folds">
+                          <div className="envelope-left" />
+                          <div className="envelope-right" />
+                          <div className="envelope-bottom" />
+                        </div>
+                      </div>
+                    </section>
                   </div>
 
                   {/* Right Object 1: Non-Clickable Decorative Matchbox */}
