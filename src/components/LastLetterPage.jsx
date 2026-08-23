@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sparkles, Flame, Lock, RotateCcw, AlertTriangle, Calendar, CheckCircle2, ChevronDown, Clock } from 'lucide-react';
-import AmbientAudioPlayer from './AmbientAudioPlayer';
+import LastLetterAudioPlayer from './LastLetterAudioPlayer';
 import { postLogToApi } from '../utils/gardenEngine';
 
 /**
@@ -296,8 +296,8 @@ export default function LastLetterPage({ onGoHome }) {
         WebkitUserSelect: 'none'
       }}
     >
-      {/* Background Ambient Music Player */}
-      <AmbientAudioPlayer trackName="Farewell Theme" autoPlay={true} />
+      {/* Background Audio Engine for /last Page */}
+      <LastLetterAudioPlayer isBurningActive={isBurningActive} />
 
       {/* Tester Reset Floating Control Bar */}
       {isTester && (
