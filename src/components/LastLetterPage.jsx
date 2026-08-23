@@ -431,7 +431,7 @@ export default function LastLetterPage({ onGoHome }) {
       {/* Background Music Loop */}
       <AmbientAudioPlayer />
 
-      {/* User Exact 10-Flame Paper Hole Burn Animation (30s Single Direction Expansion) */}
+      {/* 24-Flame Leaf Paper Hole Burn Animation (18s Synced Single Direction) */}
       {matchIgnited && !isBurned && (
         <div className="content">
           <div
@@ -445,16 +445,9 @@ export default function LastLetterPage({ onGoHome }) {
               } catch (e) {}
             }}
           >
-            <div className="flame" />
-            <div className="flame" />
-            <div className="flame" />
-            <div className="flame" />
-            <div className="flame" />
-            <div className="flame" />
-            <div className="flame" />
-            <div className="flame" />
-            <div className="flame" />
-            <div className="flame" />
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div key={i} className="flame" />
+            ))}
           </div>
           <div className="highlight" />
         </div>
@@ -631,10 +624,7 @@ export default function LastLetterPage({ onGoHome }) {
           style={{
             position: 'absolute',
             inset: 0,
-            filter: isBurningActive
-              ? 'drop-shadow(0 0 45px rgba(255, 90, 20, 0.95)) brightness(0.9) contrast(1.15)'
-              : 'none',
-            transition: 'filter 0.5s ease'
+            filter: 'none'
           }}
         >
           {/* Top Intro Section ("Neyse" - 100% Pixel-Identical to Home Page Typography) */}
@@ -708,13 +698,9 @@ export default function LastLetterPage({ onGoHome }) {
               height: '78vh',
               background: 'linear-gradient(180deg, #1f1817 0%, #110d0c 100%)',
               borderRadius: '26px 26px 0 0',
-              border: isBurningActive
-                ? '2px solid rgba(255, 100, 30, 0.8)'
-                : '2px solid rgba(130, 85, 65, 0.38)',
+              border: '2px solid rgba(130, 85, 65, 0.38)',
               borderBottom: 'none',
-              boxShadow: isBurningActive
-                ? '0 -25px 70px rgba(255, 60, 0, 0.7), inset 0 0 30px rgba(255, 100, 20, 0.4)'
-                : '0 -25px 60px rgba(0, 0, 0, 0.9), inset 0 2px 12px rgba(255, 200, 160, 0.1)',
+              boxShadow: '0 -25px 60px rgba(0, 0, 0, 0.9), inset 0 2px 12px rgba(255, 200, 160, 0.1)',
               transition: 'all 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
               display: 'flex',
               flexDirection: 'column',
