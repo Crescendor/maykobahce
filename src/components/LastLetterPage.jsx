@@ -4,40 +4,40 @@ import AmbientAudioPlayer from './AmbientAudioPlayer';
 import { postLogToApi } from '../utils/gardenEngine';
 
 /**
- * SCSS Particle Fire Engine Component (User Animation)
- * Renders 50 varied particle flames along the bottom of the viewport:
+ * 30-Second Bottom-Center Growing Particle Fire Engine Component (User SCSS)
+ * Renders 50 particles inside a single center-bottom container (.fire-ball-container)
+ * that grows over 30 seconds from scale(1) to scale(32), covering 100% of the viewport!
  * background-image: radial-gradient(rgb(255,80,0) 20%, rgba(255,80,0,0) 70%);
- * mix-blend-mode: screen;
- * animation: rise $dur ease-in infinite;
- * Flames never get erased or interrupted during page transitions or on the farewell screen!
+ * mix-blend-mode: screen; animation: rise 1s ease-in infinite;
  */
-function ParticleFireEngine({ active }) {
+function GrowingFireEngine30s({ active, onComplete }) {
   if (!active) return null;
 
-  // Generate 50 particles with varied sizes, positions, delays, and durations
+  // Generate 50 particles spread across the fire container
   const particles = Array.from({ length: 50 }, (_, i) => {
-    const size = 3.5 + ((i * 7) % 4.5); // 3.5em to 8em particle size
-    const left = (i / 50) * 100; // Spread horizontally across 0% - 100%
-    const delay = ((i * 13) % 10) / 10; // 0s to 1s animation delay
-    const dur = 0.85 + ((i * 17) % 6) / 10; // 0.85s to 1.45s animation duration
-    return { id: i, size, left, delay, dur };
+    const p = i + 1;
+    const leftPercent = ((p - 1) / 50) * 100;
+    const delay = (((p * 17) % 10) / 10).toFixed(2);
+    return { id: p, leftPercent, delay };
   });
 
   return (
-    <div className="particle-fire-container">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="particle"
-          style={{
-            left: `${p.left}%`,
-            width: `${p.size}em`,
-            height: `${p.size}em`,
-            animationDelay: `${p.delay}s`,
-            animationDuration: `${p.dur}s`
-          }}
-        />
-      ))}
+    <div className="fire-center-stage">
+      <div
+        className="fire-ball-container"
+        onAnimationEnd={onComplete}
+      >
+        {particles.map((pt) => (
+          <div
+            key={pt.id}
+            className="particle"
+            style={{
+              left: `calc((100% - 5em) * ${pt.leftPercent / 100})`,
+              animationDelay: `${pt.delay}s`
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -50,7 +50,8 @@ function ParticleFireEngine({ active }) {
  * - Matchbox (right) and Envelope (left) clearly separated inside drawer.
  * - Matchbox click slides open matchbox tray and unfolds Handwritten Letter.
  * - "Mektubu yak.." -> Clicking reveals Kibrit Zımparası (Match Striker) on top of letter paper.
- * - User SCSS Particle Fire Engine along bottom of screen (never cut during transition).
+ * - 30-Second Bottom-Center Growing SCSS Particle Fire Ball (scales up to cover whole page).
+ * - Smooth 30s Fade Out transition into Farewell Message Screen.
  * - 10-Minute Farewell Screen Timer -> Full Pitch Black Silent Darkness.
  * - "Bir notla birlikte kilitle" -> Live keylogged note form + DateTimePicker -> SHA-256 seal.
  * - Full BotGhost/Discord webhook tracking for all actions.
@@ -290,12 +291,6 @@ export default function LastLetterPage({ onGoHome }) {
           setMatchIgnited(true);
           currentStageRef.current = 'Kibrit Ateşlendi & Sayfa Yanıyor';
           sendLog('last_letter_burned', { action: 'Kibrit Zımparaya Sürtüldü ve Alev Aldı!' });
-
-          try {
-            const now = Date.now();
-            localStorage.setItem('mayko_last_burned', 'true');
-            localStorage.setItem('mayko_burned_at', String(now));
-          } catch (err) {}
         }
       }
     },
@@ -475,8 +470,18 @@ export default function LastLetterPage({ onGoHome }) {
       {/* Background Music Loop */}
       <AmbientAudioPlayer />
 
-      {/* User SCSS Particle Fire Engine (Active during burn & stays active on farewell screen without interruption) */}
-      <ParticleFireEngine active={isBurningActive} />
+      {/* 30-Second Bottom-Center Growing SCSS Particle Fire Ball Engine */}
+      <GrowingFireEngine30s
+        active={matchIgnited && !isBurned}
+        onComplete={() => {
+          setIsBurned(true);
+          try {
+            const now = Date.now();
+            localStorage.setItem('mayko_last_burned', 'true');
+            localStorage.setItem('mayko_burned_at', String(now));
+          } catch (e) {}
+        }}
+      />
 
       {/* Tester Reset Floating Control (Always Accessible for Tester) */}
       {isTester && (
@@ -755,19 +760,9 @@ export default function LastLetterPage({ onGoHome }) {
               }}
             />
 
-            {/* Inner Wooden Compartment (Fades out when ignited) */}
+            {/* Inner Wooden Compartment (Fades out over 30s when ignited) */}
             <div
-              className={matchIgnited ? 'fade-out-burn' : ''}
-              onAnimationEnd={() => {
-                if (matchIgnited) {
-                  setIsBurned(true);
-                  try {
-                    const now = Date.now();
-                    localStorage.setItem('mayko_last_burned', 'true');
-                    localStorage.setItem('mayko_burned_at', String(now));
-                  } catch (e) {}
-                }
-              }}
+              className={matchIgnited ? 'fade-out-drawer-30s' : ''}
               style={{
                 position: 'relative',
                 width: '100%',

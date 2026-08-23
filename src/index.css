@@ -488,42 +488,57 @@ body::-webkit-scrollbar,
   }
 }
 
-/* Fade out transition for Drawer & Letter when consumed by fire */
-.fade-out-burn {
-  animation: fadeOutBurn 4.5s ease-in-out forwards;
+/* ─── 30-Second Bottom-Center Growing Particle Fire Ball Engine ─── */
+.fire-center-stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99995;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
 }
 
-@keyframes fadeOutBurn {
-  0% {
-    opacity: 1;
-    filter: brightness(1) contrast(1);
-  }
-  50% {
-    opacity: 0.5;
-    filter: brightness(1.5) contrast(1.4) sepia(0.6);
-  }
-  100% {
-    opacity: 0;
-    filter: brightness(0.1) contrast(2.5) sepia(1);
-  }
-}
-/* ─── Particle Fire Engine (User SCSS converted to CSS) ───────── */
-.particle-fire-container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 240px;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 99995;
+.fire-ball-container {
+  position: absolute;
+  bottom: -6em;
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  width: 10em;
+  height: 12em;
+  font-size: 24px;
   filter: blur(0.02em);
   -webkit-filter: blur(0.02em);
+  animation: growFireBall30s 30s cubic-bezier(0.1, 0.4, 0.2, 1) forwards;
+  transform-origin: bottom center;
+}
+
+@keyframes growFireBall30s {
+  0% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.85;
+  }
+  85% {
+    transform: translateX(-50%) scale(22);
+    opacity: 1;
+    filter: brightness(1.3) blur(0.01em);
+  }
+  95% {
+    transform: translateX(-50%) scale(28);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(-50%) scale(32);
+    opacity: 0;
+  }
 }
 
 .particle {
   position: absolute;
-  bottom: -40px;
+  bottom: 0;
+  width: 5em;
+  height: 5em;
   border-radius: 50%;
   background-image: radial-gradient(rgb(255, 80, 0) 20%, rgba(255, 80, 0, 0) 70%);
   mix-blend-mode: screen;
@@ -542,6 +557,37 @@ body::-webkit-scrollbar,
   }
   100% {
     opacity: 0;
-    transform: translateY(-12em) scale(0);
+    transform: translateY(-10em) scale(0);
   }
+}
+
+/* 30-Second Fade Out transition for Wooden Drawer & Letter */
+.fade-out-drawer-30s {
+  animation: fadeOutDrawer30s 30s cubic-bezier(0.1, 0.4, 0.2, 1) forwards;
+}
+
+@keyframes fadeOutDrawer30s {
+  0% {
+    opacity: 1;
+    filter: brightness(1) contrast(1);
+  }
+  70% {
+    opacity: 0.65;
+    filter: brightness(1.4) contrast(1.3) sepia(0.5);
+  }
+  92% {
+    opacity: 0.15;
+    filter: brightness(2) contrast(1.8) sepia(0.8);
+  }
+  100% {
+    opacity: 0;
+    filter: brightness(0) contrast(3);
+  }
+}
+
+/* ─── Melancholy (Hüzün / Siyah Beyaz) Global Mode ──────────────── */
+.melancholy-mode {
+  filter: grayscale(100%) contrast(108%) brightness(92%);
+  transition: filter 1.5s ease-in-out;
+  background: radial-gradient(circle at center, #1b2620 0%, #0d1310 50%, #040504 100%) !important;
 }
