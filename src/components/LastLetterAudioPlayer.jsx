@@ -64,7 +64,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     }, 50);
   };
 
-  // Initialize YouTube Player Immediately on Entry (Starts at 0:00 with 25% Volume)
+  // Initialize YouTube Player Immediately on Entry (Starts at 2:05 / 125s with 25% Volume)
   useEffect(() => {
     let isCancelled = false;
 
@@ -73,7 +73,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       hasSeekedInitialRef.current = true;
       try {
         eventTarget.setVolume(25);
-        eventTarget.seekTo(0, true); // 0:00 (En baştan)
+        eventTarget.seekTo(125, true); // 2:05 (125. saniye)
         eventTarget.playVideo();
         setHasStarted(true);
       } catch (e) {}
@@ -94,7 +94,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
           loop: 0,
           modestbranding: 1,
           playsinline: 1,
-          start: 0, // 0:00
+          start: 125, // 2:05 (125. saniye)
           origin: window.location.origin
         },
         events: {
@@ -145,7 +145,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     };
   }, []);
 
-  // Monitor playback time for 125. saniye (2:05) smooth fade-out pause & button unlock
+  // Monitor playback time for 2:48 (168s) smooth fade-out pause & button unlock
   useEffect(() => {
     timeCheckIntervalRef.current = setInterval(() => {
       if (!playerRef.current || typeof playerRef.current.getCurrentTime !== 'function') return;
@@ -153,9 +153,9 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       try {
         const currTime = playerRef.current.getCurrentTime();
 
-        // Phase 1 Smooth Fade-out & Pause at 125s (2:05)
+        // Phase 1 Smooth Fade-out & Pause at 2:48 (168s)
         if (!isPhase1EndedRef.current && !isPhase2StartedRef.current) {
-          if (currTime >= 120 && currTime < 125 && !playerRef.current.isFadingOut) {
+          if (currTime >= 163 && currTime < 168 && !playerRef.current.isFadingOut) {
             playerRef.current.isFadingOut = true;
             fadeVolume(0, 4800, () => {
               isPhase1EndedRef.current = true;
@@ -165,7 +165,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
               } catch (e) {}
               if (onPhase1Complete) onPhase1Complete();
             });
-          } else if (currTime >= 125) {
+          } else if (currTime >= 168) {
             isPhase1EndedRef.current = true;
             try {
               playerRef.current.pauseVideo();
@@ -182,13 +182,13 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     };
   }, [onPhase1Complete]);
 
-  // Handle Phase 2 (When mektup yakma is accepted -> Start from 126s with 2s fade-in)
+  // Handle Phase 2 (When mektup yakma is accepted -> Start from 2:49 / 169s with 2s fade-in)
   useEffect(() => {
     if (isBurningActive && !isPhase2StartedRef.current) {
       isPhase2StartedRef.current = true;
       if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
         try {
-          playerRef.current.seekTo(126, true); // 2:06
+          playerRef.current.seekTo(169, true); // 2:49 (169. saniye)
           playerRef.current.setVolume(0);
           playerRef.current.playVideo();
           fadeVolume(25, 2000);
