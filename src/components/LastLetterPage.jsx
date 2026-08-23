@@ -190,15 +190,15 @@ export default function LastLetterPage({ onGoHome }) {
       setIsBurningActive(true);
       currentStageRef.current = 'Mektup Alev Aldı & Yanıyor';
 
-      // Record burned state after burn animation completes
+      // Record burned state after 30-second radial paper hole burn animation completes
       setTimeout(() => {
         setIsBurned(true);
         try {
           localStorage.setItem('mayko_last_burned', 'true');
           localStorage.setItem('mayko_burned_at', Date.now().toString());
         } catch (e) {}
-        sendLog('last_letter_burned_completed', { action: 'Mektup Tamamen Yandı ve Kül Oldu' });
-      }, 5500);
+        sendLog('last_letter_burned_completed', { action: 'Mektup 30 Saniyelik Yuvarlak Yanma İle Tamamen Kül Oldu' });
+      }, 30000);
     }
   };
 
@@ -274,9 +274,9 @@ export default function LastLetterPage({ onGoHome }) {
 
   const isDarknessTotal = remainingMs <= 0;
 
-  // Calculate 3D Folding Rotations based on foldProgress
-  const topFoldRotateX = (1 - foldProgress) * -110; // Rotates from -110deg to 0deg
-  const bottomFoldRotateX = (1 - foldProgress) * 110; // Rotates from 110deg to 0deg
+  // Calculate Center-Fold Rotation (Opens along horizontal center crease from 75deg to 0deg, zero tumbling)
+  const centerFoldRotateX = (1 - foldProgress) * 75;
+  const paperOpacity = Math.min(1, foldProgress * 1.6);
   const buttonOpacity = foldProgress > 0.6 ? (foldProgress - 0.6) / 0.4 : 0;
 
   return (
@@ -579,7 +579,7 @@ export default function LastLetterPage({ onGoHome }) {
               </div>
             )}
 
-            {/* Center 3D Folding Handwritten Letter Paper */}
+            {/* Center Smooth Fade-in & Center-Fold Handwritten Letter Paper */}
             {!lockModeActive && (
               <div
                 onMouseEnter={() => setIsLetterHovered(true)}
@@ -590,16 +590,16 @@ export default function LastLetterPage({ onGoHome }) {
                   width: '90%',
                   maxHeight: '75vh',
                   transformStyle: 'preserve-3d',
-                  opacity: foldProgress > 0.05 ? 1 : foldProgress * 10,
-                  transform: `scale(${0.7 + foldProgress * 0.3}) ${isLetterHovered && foldProgress >= 0.9 ? 'scale(1.08)' : ''}`,
-                  transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
+                  opacity: paperOpacity,
+                  transform: `scale(${0.82 + foldProgress * 0.18}) ${isLetterHovered && foldProgress >= 0.9 ? 'scale(1.08)' : ''}`,
+                  transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease',
                   cursor: 'zoom-in',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center'
                 }}
               >
-                {/* 3D Paper Wrapper with Tri-Fold Simulation */}
+                {/* Center-Fold Paper Wrapper (Opens along horizontal center crease, ZERO Tumbling) */}
                 <div
                   style={{
                     position: 'relative',
@@ -609,27 +609,27 @@ export default function LastLetterPage({ onGoHome }) {
                     boxShadow: isBurningActive
                       ? '0 0 60px rgba(255, 100, 20, 0.95)'
                       : `0 ${10 + foldProgress * 20}px ${30 + foldProgress * 30}px rgba(0,0,0,0.85)`,
-                    transform: `rotateX(${topFoldRotateX}deg)`,
-                    transformOrigin: 'top center',
-                    transition: 'transform 0.1s linear'
+                    transform: `rotateX(${centerFoldRotateX}deg)`,
+                    transformOrigin: 'center center',
+                    transition: 'transform 0.15s ease-out'
                   }}
                 >
-                  {/* Burning Flame Particle Overlay (Triggers on Burn Acceptance) */}
+                  {/* 30-Second Iconic Circular Paper Hole Burn Overlay (Triggers on Burn Acceptance) */}
                   {isBurningActive && (
                     <div
                       style={{
                         position: 'absolute',
                         inset: 0,
                         zIndex: 90,
-                        background: 'radial-gradient(circle at 50% 100%, rgba(255, 140, 20, 0.95) 0%, rgba(239, 68, 68, 0.8) 40%, rgba(0,0,0,0.95) 90%)',
+                        background: 'radial-gradient(circle at 50% 50%, rgba(255, 230, 150, 0.95) 0%, rgba(255, 120, 20, 0.95) 18%, rgba(220, 38, 38, 0.85) 35%, rgba(10, 10, 10, 0.98) 60%)',
                         mixBlendMode: 'screen',
-                        animation: 'firePaperBurn 5.5s forwards ease-in-out',
+                        animation: 'radialFireGlow30s 30s forwards linear',
                         pointerEvents: 'none'
                       }}
                     />
                   )}
 
-                  {/* Clean Handwritten Letter Paper Image */}
+                  {/* Clean Handwritten Letter Paper Image (With 30-Second Radial Circular Hole Burn) */}
                   <img
                     src="/assets/final_letter_paper.jpg"
                     alt="Bir delinin son mesajı: Ayşenur"
@@ -639,7 +639,7 @@ export default function LastLetterPage({ onGoHome }) {
                       maxHeight: '74vh',
                       objectFit: 'contain',
                       display: 'block',
-                      filter: isBurningActive ? 'brightness(1.2) contrast(1.3)' : 'none'
+                      animation: isBurningActive ? 'radialHoleBurn30s 30s forwards cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
                     }}
                   />
                 </div>
@@ -944,17 +944,45 @@ export default function LastLetterPage({ onGoHome }) {
         </div>
       )}
 
-      {/* Embedded Keyframe Animations */}
+      {/* Embedded Keyframe Animations for 30-Second Radial Circular Paper Hole Burn */}
       <style>{`
         @keyframes fadeInSlow {
           0% { opacity: 0; }
           100% { opacity: 1; }
         }
-        @keyframes firePaperBurn {
-          0% { opacity: 0; transform: scale(1); }
-          20% { opacity: 0.85; transform: scale(1.02); }
-          60% { opacity: 1; transform: scale(1.05); filter: contrast(1.5); }
-          100% { opacity: 0; transform: scale(0.9); }
+        @keyframes radialHoleBurn30s {
+          0% {
+            clip-path: circle(0% at 50% 50%);
+            filter: brightness(1);
+            opacity: 1;
+          }
+          8% {
+            clip-path: circle(8% at 50% 50%);
+            filter: brightness(1.2) contrast(1.2);
+            opacity: 1;
+          }
+          40% {
+            clip-path: circle(38% at 50% 50%);
+            filter: brightness(1.35) contrast(1.4);
+            opacity: 0.95;
+          }
+          75% {
+            clip-path: circle(75% at 50% 50%);
+            filter: brightness(1.45) contrast(1.5);
+            opacity: 0.5;
+          }
+          100% {
+            clip-path: circle(130% at 50% 50%);
+            filter: brightness(1.6) contrast(1.6);
+            opacity: 0;
+          }
+        }
+        @keyframes radialFireGlow30s {
+          0% { opacity: 0; transform: scale(0.1); }
+          5% { opacity: 0.95; transform: scale(0.3); }
+          50% { opacity: 1; transform: scale(1.1); }
+          85% { opacity: 0.85; transform: scale(1.8); }
+          100% { opacity: 0; transform: scale(2.4); }
         }
       `}</style>
     </div>
