@@ -533,7 +533,7 @@ export default function LastLetterPage({ onGoHome }) {
               zIndex: 20
             }}
           >
-            {/* Left Side Button: "Mektubu Sakla" (Greyed out until audio Phase 1 ends) */}
+            {/* Left Side Button: "Mektubu Sakla" (Invisible on Neyse intro screen, greyed out on paper until audio Phase 1 ends) */}
             {!lockModeActive && (
               <div
                 style={{
@@ -542,8 +542,8 @@ export default function LastLetterPage({ onGoHome }) {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   zIndex: 50,
-                  opacity: !isAudioPhase1Completed ? 0.35 : buttonOpacity,
-                  pointerEvents: (!isAudioPhase1Completed || buttonOpacity <= 0.5) ? 'none' : 'auto',
+                  opacity: buttonOpacity * (!isAudioPhase1Completed ? 0.35 : 1),
+                  pointerEvents: (buttonOpacity > 0.5 && isAudioPhase1Completed) ? 'auto' : 'none',
                   transition: 'all 0.4s ease'
                 }}
               >
@@ -618,7 +618,7 @@ export default function LastLetterPage({ onGoHome }) {
               </div>
             )}
 
-            {/* Right Side Button: "Mektubu Yak" (Greyed out until audio Phase 1 ends) */}
+            {/* Right Side Button: "Mektubu Yak" (Invisible on Neyse intro screen, greyed out on paper until audio Phase 1 ends) */}
             {!lockModeActive && (
               <div
                 style={{
@@ -627,8 +627,8 @@ export default function LastLetterPage({ onGoHome }) {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   zIndex: 50,
-                  opacity: !isAudioPhase1Completed ? 0.35 : buttonOpacity,
-                  pointerEvents: (!isAudioPhase1Completed || buttonOpacity <= 0.5) ? 'none' : 'auto',
+                  opacity: buttonOpacity * (!isAudioPhase1Completed ? 0.35 : 1),
+                  pointerEvents: (buttonOpacity > 0.5 && isAudioPhase1Completed) ? 'auto' : 'none',
                   transition: 'all 0.4s ease'
                 }}
               >

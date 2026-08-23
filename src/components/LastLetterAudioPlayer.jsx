@@ -142,8 +142,20 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     const events = ['mousemove', 'pointermove', 'touchstart', 'touchend', 'scroll', 'wheel', 'keydown', 'click'];
     events.forEach(evt => window.addEventListener(evt, unlockAutoplay, { passive: true, once: true }));
 
+    // Immediate Autoplay Retry Loop (Triggers every 250ms on entry until playback succeeds)
+    const retryInterval = setInterval(() => {
+      if (playerRef.current && typeof playerRef.current.playVideo === 'function' && !isPhase1EndedRef.current) {
+        try {
+          if (typeof playerRef.current.unMute === 'function') playerRef.current.unMute();
+          playerRef.current.setVolume(25);
+          playerRef.current.playVideo();
+        } catch (e) {}
+      }
+    }, 250);
+
     return () => {
       isCancelled = true;
+      clearInterval(retryInterval);
       if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
       if (timeCheckIntervalRef.current) clearInterval(timeCheckIntervalRef.current);
       events.forEach(evt => window.removeEventListener(evt, unlockAutoplay));
