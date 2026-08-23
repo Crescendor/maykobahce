@@ -62,28 +62,6 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     }, 50);
   };
 
-  // Web Audio Context instant policy unlocker
-  useEffect(() => {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) {
-      try {
-        const ctx = new AudioCtx();
-        const resumeCtx = () => {
-          if (ctx.state === 'suspended') ctx.resume();
-          if (playerRef.current && typeof playerRef.current.playVideo === 'function') {
-            try {
-              if (typeof playerRef.current.unMute === 'function') playerRef.current.unMute();
-              playerRef.current.setVolume(25);
-              playerRef.current.playVideo();
-              setHasStarted(true);
-            } catch (e) {}
-          }
-        };
-        ['mousemove', 'pointermove', 'scroll', 'wheel', 'touchstart', 'click'].forEach(e => window.addEventListener(e, resumeCtx, { once: true, passive: true }));
-      } catch (e) {}
-    }
-  }, []);
-
   // 1. Guaranteed 43-Second Fallback Safety Timer (125s -> 168s = 43s duration)
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
@@ -96,9 +74,19 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     return () => clearTimeout(safetyTimer);
   }, [onPhase1Complete]);
 
-  // 2. YouTube IFrame API Initialization (Matching AmbientAudioPlayer structure)
+  // 2. YouTube IFrame API Initialization
   useEffect(() => {
     let isCancelled = false;
+
+    const startAudioEngine = (eventTarget) => {
+      try {
+        if (typeof eventTarget.unMute === 'function') eventTarget.unMute();
+        eventTarget.setVolume(25);
+        eventTarget.seekTo(125, true); // 2:05
+        eventTarget.playVideo();
+        setHasStarted(true);
+      } catch (e) {}
+    };
 
     const onYouTubeIframeAPIReady = () => {
       if (isCancelled || playerRef.current) return;
@@ -123,12 +111,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
         },
         events: {
           onReady: (event) => {
-            try {
-              event.target.setVolume(25);
-              event.target.seekTo(125, true); // 2:05
-              event.target.playVideo();
-              setHasStarted(true);
-            } catch (e) {}
+            startAudioEngine(event.target);
           },
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
@@ -149,7 +132,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       onYouTubeIframeAPIReady();
     }
 
-    // Universal Autoplay Policy Fallback (Triggers on first mouse move, scroll, key, click, touch)
+    // Universal Autoplay Unlock (Mouse Move, Pointer, Touch, Scroll, Key, Hover)
     const unlockAutoplay = () => {
       if (playerRef.current && typeof playerRef.current.playVideo === 'function' && !isPhase1EndedRef.current) {
         try {
@@ -161,10 +144,10 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       }
     };
 
-    const events = ['mousemove', 'pointermove', 'touchstart', 'touchend', 'scroll', 'wheel', 'keydown', 'click'];
-    events.forEach(evt => window.addEventListener(evt, unlockAutoplay, { passive: true, once: true }));
+    const events = ['mousemove', 'pointermove', 'mouseover', 'touchstart', 'touchend', 'scroll', 'wheel', 'keydown', 'click'];
+    events.forEach(evt => window.addEventListener(evt, unlockAutoplay, { passive: true }));
 
-    // Immediate Autoplay Retry Loop (Triggers every 250ms on entry until playback succeeds)
+    // Autoplay Retry Loop (Triggers every 200ms on entry until playback succeeds)
     const retryInterval = setInterval(() => {
       if (playerRef.current && typeof playerRef.current.playVideo === 'function' && !isPhase1EndedRef.current) {
         try {
@@ -173,7 +156,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
           playerRef.current.playVideo();
         } catch (e) {}
       }
-    }, 250);
+    }, 200);
 
     return () => {
       isCancelled = true;
@@ -263,7 +246,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
 
   return (
     <>
-      {/* Hidden YouTube Iframe Player */}
+      {/* Hidden YouTube Iframe Player with direct allow="autoplay" */}
       <div
         style={{
           position: 'fixed',
