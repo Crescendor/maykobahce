@@ -393,49 +393,202 @@ body::-webkit-scrollbar,
   }
 }
 
-/* ─── Realistic Radial Hole Burn Animation ─────────────────────── */
-.realistic-hole-burn {
-  position: fixed;
-  height: 0;
-  width: 0;
-  background-color: #050507;
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 99999;
-  border: 3px solid #fffb5c;
-  animation: burnGrowHole 4.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-  box-shadow:
-    inset 0 0 10px 4px #fffb5c,
-    inset 0 0 16px 8px rgba(243, 108, 0, 0.8),
-    0 0 20px 8px #fffb5c,
-    0 0 45px 25px rgba(241, 124, 4, 0.75),
-    0 0 30px 30px #1c0901eb,
-    inset 0 0 40px 30px #c4720f80;
+/* ─── Paper Hole Burn Animation & Flame FX (User CSS) ───────────── */
+.content {
+  position: relative;
+  height: 500px;
+  width: 500px;
+  margin: auto;
+  animation: content-shift 15s infinite;
 }
 
-@keyframes burnGrowHole {
+@keyframes content-shift {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  80% { opacity: 0; }
+  90% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+.burn {
+  position: absolute;
+  height: 0px;
+  width: 0px;
+  background-color: rgb(30,30,30);
+  border-radius: 50%;
+  top: 50%;
+  right: 50%;
+  animation: 7s burn-grow linear forwards;
+  border: 3px solid rgb(49, 22, 1);
+  box-shadow: inset 0px 0px 6px 2px #fffb5c00, inset 0px 0px 8px 3px rgb(52, 21, 0), 0px 0px 6px 2px #3f1c0100, 0px 0px 15px 10px rgba(105, 46, 0, 0), 0px 0px 17px 18px #401d02eb, inset 0px 0px 29px 22px #c4720f00;
+}
+
+@keyframes burn-grow {
   0% {
-    width: 0px;
+    opacity: 1;
     height: 0px;
-    opacity: 1;
-    border-color: #fffb5c;
+    width: 0px;
+    top: 50%;
+    right: 50%;
+    border: 3px solid #FFFB5C;
+    box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
   }
-  85% {
-    width: 260vmax;
-    height: 260vmax;
-    opacity: 1;
-    border-color: #ff9900;
+  60% {
+    height: 1800px;
+    width: 1800px;
+    top: calc(50% - 900px);
+    right: calc(50% - 900px);
+    border: 3px solid #FFFB5C;
+    box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
   }
-  100% {
-    width: 280vmax;
-    height: 280vmax;
+  66% {
     opacity: 1;
-    border-color: #000000;
-    box-shadow: none;
+    border: 3px solid rgb(49, 22, 1);
+    box-shadow: inset 0px 0px 6px 2px #fffb5c00, inset 0px 0px 8px 3px rgb(52, 21, 0), 0px 0px 6px 2px #3f1c0100, 0px 0px 15px 10px rgba(105, 46, 0, 0), 0px 0px 17px 18px #401d02eb, inset 0px 0px 29px 22px #c4720f00;
   }
+  80% { opacity: 0.9; }
+  100% { opacity: 1; }
+}
+
+.burn .flame {
+  background-color: #fffc98;
+  position: absolute;
+  box-shadow: 0px 0px 0px 0px #FFFB5C;
+}
+
+.burn .flame:nth-of-type(1) {
+  border-radius: 50% 0;
+  animation: 7s flame-1 linear forwards;
+  transform-origin: bottom left;
+  opacity: 0;
+}
+
+@keyframes flame-1 {
+  0% {
+    opacity: 1; height: 0px; width: 0px; left: 8%; bottom: 76%;
+    box-shadow: 0px 0px 0px 0px #FFFB5C; background-color: #fffc98;
+  }
+  15% { height: 20px; width: 20px; transform: rotate(-15deg); }
+  46% {
+    height: 40px; width: 40px; left: 5%; bottom: 76%;
+    box-shadow: 0px 0px 15px 10px #FFFB5C; transform: rotate(-40deg); opacity: 1;
+  }
+  70% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(2) {
+  border-radius: 50% 0; animation: 7s flame-2 linear forwards; transform-origin: bottom left; opacity: 0;
+}
+@keyframes flame-2 {
+  0% { height: 0px; width: 0px; left: 31%; top: 2%; opacity: 1; }
+  25% { height: 30px; width: 30px; top: -13%; transform: rotate(-2deg); }
+  60% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(3) {
+  border-radius: 50% 0; animation: 7s flame-3 linear forwards; transform-origin: bottom left; opacity: 0;
+}
+@keyframes flame-3 {
+  0% { height: 0px; width: 0px; left: 40%; top: -6%; opacity: 1; }
+  30% { height: 35px; width: 35px; top: -10%; transform: rotate(15deg); }
+  65% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(4) {
+  border-radius: 0 50%; animation: 7s flame-4 linear forwards; transform-origin: bottom right; opacity: 0;
+}
+@keyframes flame-4 {
+  0% { height: 0px; width: 0px; right: 20%; top: 5%; opacity: 1; }
+  35% { height: 30px; width: 30px; right: 20%; top: 5%; transform: rotate(20deg); }
+  70% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(5) {
+  border-radius: 0 50%; animation: 7s flame-5 linear forwards; transform-origin: bottom right; opacity: 0;
+}
+@keyframes flame-5 {
+  0% { height: 0px; width: 0px; left: 98%; top: 38%; opacity: 1; }
+  40% { height: 30px; width: 30px; left: 90%; transform: rotate(15deg); }
+  70% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(6) {
+  border-radius: 0 50%; animation: 7s flame-6 linear forwards; transform-origin: bottom right; opacity: 0;
+}
+@keyframes flame-6 {
+  0% { height: 0px; width: 0px; left: 96%; top: 35%; opacity: 1; }
+  35% { height: 35px; width: 35px; left: 90%; transform: rotate(45deg); }
+  70% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(7) {
+  border-radius: 0 50%; animation: 7s flame-7 linear forwards; transform-origin: bottom right; opacity: 0;
+}
+@keyframes flame-7 {
+  0% { height: 0px; width: 0px; left: 63%; top: 91%; opacity: 1; }
+  30% { height: 30px; width: 30px; left: 60%; top: 84%; transform: rotate(70deg); }
+  65% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(8) {
+  border-radius: 0 50%; animation: 7s flame-8 linear forwards; transform-origin: bottom right; opacity: 0;
+}
+@keyframes flame-8 {
+  0% { height: 0px; width: 0px; left: 69%; top: 80%; opacity: 1; }
+  35% { height: 35px; width: 35px; left: 66%; top: 74%; transform: rotate(80deg); }
+  70% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(9) {
+  border-radius: 0 50%; animation: 7s flame-9 linear forwards; transform-origin: bottom right; opacity: 0;
+}
+@keyframes flame-9 {
+  0% { height: 0px; width: 0px; left: 23%; top: 85%; opacity: 1; }
+  35% { height: 30px; width: 30px; left: 23%; top: 87%; transform: rotate(65deg); }
+  70% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.burn .flame:nth-of-type(10) {
+  border-radius: 0 50%; animation: 7s flame-10 linear forwards; transform-origin: bottom right; opacity: 0;
+}
+@keyframes flame-10 {
+  0% { height: 0px; width: 0px; top: 57%; left: 0%; opacity: 1; }
+  35% { height: 25px; width: 25px; top: 57%; left: -7%; transform: rotate(10deg); }
+  70% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.highlight {
+  position: absolute;
+  border-radius: 50%;
+  height: 350px;
+  width: 350px;
+  top: calc(50% - 175px);
+  right: calc(50% - 175px);
+  box-shadow: 0px 0px 71px 101px transparent;
+  animation: 7s grow-highlight linear forwards;
+}
+
+@keyframes grow-highlight {
+  0% {
+    height: 0px; width: 0px; top: 50%; right: 50%;
+    box-shadow: 0px 0px 71px 101px #dcaa71;
+  }
+  53% { box-shadow: 0px 0px 71px 101px #dcaa71; }
+  66% {
+    height: 350px; width: 350px; top: calc(50% - 175px); right: calc(50% - 175px);
+    box-shadow: 0px 0px 71px 101px transparent;
+  }
+  100% { opacity: 0; }
 }
 
 /* ─── Melancholy (Hüzün / Siyah Beyaz) Global Mode ──────────────── */
