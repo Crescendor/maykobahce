@@ -606,9 +606,7 @@ export default function LastLetterPage({ onGoHome }) {
                     width: '100%',
                     borderRadius: 8,
                     overflow: 'hidden',
-                    boxShadow: isBurningActive
-                      ? '0 0 60px rgba(255, 100, 20, 0.95)'
-                      : `0 ${10 + foldProgress * 20}px ${30 + foldProgress * 30}px rgba(0,0,0,0.85)`
+                    boxShadow: `0 ${10 + foldProgress * 20}px ${30 + foldProgress * 30}px rgba(0,0,0,0.85)`
                   }}
                 >
                   {/* Clean Handwritten Letter Paper Image */}
@@ -970,8 +968,8 @@ export default function LastLetterPage({ onGoHome }) {
           top: 50%;
           right: 50%;
           animation: 30s burn-grow linear forwards;
-          border: 3px solid rgb(49, 22, 1);
-          box-shadow: inset 0px 0px 6px 2px #fffb5c00, inset 0px 0px 8px 3px rgb(52, 21, 0), 0px 0px 6px 2px #3f1c0100, 0px 0px 15px 10px rgba(105, 46, 0, 0), 0px 0px 17px 18px #401d02eb, inset 0px 0px 29px 22px #c4720f00;
+          border: 20px solid #ffaa00;
+          box-shadow: inset 0 0 25px 8px #ffeb3b, inset 0 0 45px 15px #ff3d00, 0 0 35px 12px #ff9800, 0 0 75px 30px rgba(255, 61, 0, 0.85), 0 0 130px 50px rgba(255, 30, 0, 0.6);
         }
 
         @keyframes burn-grow {
@@ -981,21 +979,21 @@ export default function LastLetterPage({ onGoHome }) {
             width: 0px;
             top: 50%;
             right: 50%;
-            border: 3px solid #FFFB5C;
-            box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
+            border: 20px solid #ffeb3b;
+            box-shadow: inset 0 0 25px 8px #ffeb3b, inset 0 0 45px 15px #ff3d00, 0 0 35px 12px #ff9800, 0 0 75px 30px rgba(255, 61, 0, 0.85), 0 0 130px 50px rgba(255, 30, 0, 0.6);
           }
           70% {
             height: 2400px;
             width: 2400px;
             top: calc(50% - 1200px);
             right: calc(50% - 1200px);
-            border: 3px solid #FFFB5C;
-            box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
+            border: 22px solid #ff9800;
+            box-shadow: inset 0 0 30px 10px #ffeb3b, inset 0 0 50px 18px #ff3d00, 0 0 45px 15px #ff9800, 0 0 90px 35px rgba(255, 61, 0, 0.9), 0 0 150px 60px rgba(255, 30, 0, 0.75);
           }
           85% {
             opacity: 1;
-            border: 3px solid rgb(49, 22, 1);
-            box-shadow: inset 0px 0px 6px 2px #fffb5c00, inset 0px 0px 8px 3px rgb(52, 21, 0), 0px 0px 6px 2px #3f1c0100, 0px 0px 15px 10px rgba(105, 46, 0, 0), 0px 0px 17px 18px #401d02eb, inset 0px 0px 29px 22px #c4720f00;
+            border: 24px solid #e65100;
+            box-shadow: inset 0 0 20px 6px #ff9800, inset 0 0 35px 10px #bf360c, 0 0 30px 10px #e65100, 0 0 60px 20px rgba(191, 54, 12, 0.8);
           }
           95% {
             opacity: 1;
@@ -1016,7 +1014,7 @@ export default function LastLetterPage({ onGoHome }) {
           width: 3500px;
           top: calc(50% - 1750px);
           right: calc(50% - 1750px);
-          box-shadow: 0px 0px 71px 101px transparent;
+          box-shadow: 0px 0px 100px 80px rgba(255, 120, 20, 0.4);
           animation: 30s grow-highlight linear forwards;
         }
 
@@ -1026,17 +1024,17 @@ export default function LastLetterPage({ onGoHome }) {
             width: 0px;
             top: 50%;
             right: 50%;
-            box-shadow: 0px 0px 71px 101px #dcaa71;
+            box-shadow: 0px 0px 80px 60px rgba(255, 140, 20, 0.5);
           }
           60% {
-            box-shadow: 0px 0px 71px 101px #dcaa71;
+            box-shadow: 0px 0px 120px 90px rgba(255, 120, 20, 0.45);
           }
           85% {
             height: 3500px;
             width: 3500px;
             top: calc(50% - 1750px);
             right: calc(50% - 1750px);
-            box-shadow: 0px 0px 71px 101px transparent;
+            box-shadow: 0px 0px 150px 100px transparent;
           }
           100% {
             opacity: 0;
