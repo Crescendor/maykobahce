@@ -1054,20 +1054,27 @@ export default function LastLetterPage({ onGoHome }) {
                     />
                   </div>
 
-                  {/* Compact Smaller Action Buttons Below Letter */}
+                  {/* Compact Smaller Action Buttons Below Letter (Disabled when burn is active) */}
                   <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 420, justifyContent: 'center', marginTop: 2 }}>
                     <button
                       onClick={handleOpenBurnModal}
+                      disabled={showStriker || matchIgnited || isBurningActive}
                       style={{
                         flex: 1,
                         padding: '9px 14px',
                         borderRadius: 9999,
-                        background: 'rgba(239, 68, 68, 0.18)',
-                        border: '1px solid rgba(239, 68, 68, 0.55)',
-                        color: '#fca5a5',
+                        background: (showStriker || matchIgnited || isBurningActive)
+                          ? 'rgba(100, 100, 100, 0.15)'
+                          : 'rgba(239, 68, 68, 0.18)',
+                        border: (showStriker || matchIgnited || isBurningActive)
+                          ? '1px solid rgba(255, 255, 255, 0.15)'
+                          : '1px solid rgba(239, 68, 68, 0.55)',
+                        color: (showStriker || matchIgnited || isBurningActive) ? '#94a3b8' : '#fca5a5',
                         fontSize: '0.84rem',
                         fontWeight: 500,
-                        cursor: 'pointer',
+                        cursor: (showStriker || matchIgnited || isBurningActive) ? 'not-allowed' : 'pointer',
+                        opacity: (showStriker || matchIgnited || isBurningActive) ? 0.35 : 1,
+                        pointerEvents: (showStriker || matchIgnited || isBurningActive) ? 'none' : 'auto',
                         backdropFilter: 'blur(8px)',
                         transition: 'all 0.2s ease',
                         display: 'flex',
@@ -1081,16 +1088,23 @@ export default function LastLetterPage({ onGoHome }) {
 
                     <button
                       onClick={handleOpenLockMode}
+                      disabled={showStriker || matchIgnited || isBurningActive}
                       style={{
                         flex: 1,
                         padding: '9px 14px',
                         borderRadius: 9999,
-                        background: 'rgba(52, 211, 153, 0.15)',
-                        border: '1px solid rgba(52, 211, 153, 0.45)',
-                        color: '#6ee7b7',
+                        background: (showStriker || matchIgnited || isBurningActive)
+                          ? 'rgba(100, 100, 100, 0.15)'
+                          : 'rgba(52, 211, 153, 0.15)',
+                        border: (showStriker || matchIgnited || isBurningActive)
+                          ? '1px solid rgba(255, 255, 255, 0.15)'
+                          : '1px solid rgba(52, 211, 153, 0.45)',
+                        color: (showStriker || matchIgnited || isBurningActive) ? '#94a3b8' : '#6ee7b7',
                         fontSize: '0.84rem',
                         fontWeight: 500,
-                        cursor: 'pointer',
+                        cursor: (showStriker || matchIgnited || isBurningActive) ? 'not-allowed' : 'pointer',
+                        opacity: (showStriker || matchIgnited || isBurningActive) ? 0.35 : 1,
+                        pointerEvents: (showStriker || matchIgnited || isBurningActive) ? 'none' : 'auto',
                         backdropFilter: 'blur(8px)',
                         transition: 'all 0.2s ease',
                         display: 'flex',
@@ -1250,7 +1264,7 @@ export default function LastLetterPage({ onGoHome }) {
             </div>
           </div>
 
-          {/* Draggable Matchstick & Ignited Flame */}
+          {/* Real Draggable Matchstick & Ignited Flame on Match Head */}
           {isStrikingMatch && (
             <div
               ref={matchstickRef}
@@ -1258,11 +1272,11 @@ export default function LastLetterPage({ onGoHome }) {
               onTouchStart={handleMatchMouseDown}
               style={{
                 position: 'fixed',
-                bottom: 40 + matchPos.y * -1,
+                bottom: 80 + matchPos.y * -1,
                 left: `calc(50% + ${matchPos.x}px)`,
                 transform: 'translateX(-50%)',
-                width: 14,
-                height: 125,
+                width: 32,
+                height: 170,
                 zIndex: 99999,
                 cursor: 'grab',
                 display: 'flex',
@@ -1270,31 +1284,37 @@ export default function LastLetterPage({ onGoHome }) {
                 alignItems: 'center'
               }}
             >
-              {/* Red Match Tip / Burning Flame */}
-              <div
-                style={{
-                  width: 18,
-                  height: 24,
-                  borderRadius: '50% 50% 30% 30%',
-                  background: matchIgnited
-                    ? 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffbb00 40%, #ff4400 100%)'
-                    : '#b91c1c',
-                  boxShadow: matchIgnited
-                    ? '0 0 35px #ffbb00, 0 0 60px #ff4400, 0 -10px 25px #ffffff'
-                    : 'none',
-                  position: 'relative',
-                  transition: 'background 0.2s ease, box-shadow 0.2s ease'
-                }}
-              />
+              {/* Glowing Ignited Flame attached to match head when struck against zımpara */}
+              {matchIgnited && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -26,
+                    width: 34,
+                    height: 48,
+                    borderRadius: '50% 50% 35% 35%',
+                    background: 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffcc00 35%, #ff4400 75%, rgba(255, 68, 0, 0) 100%)',
+                    boxShadow: '0 0 35px #ffcc00, 0 0 65px #ff4400, 0 -10px 25px #ffffff',
+                    animation: 'matchFlameGlow 0.2s ease-in-out infinite alternate',
+                    zIndex: 2,
+                    pointerEvents: 'none'
+                  }}
+                />
+              )}
 
-              {/* Wooden Stick */}
-              <div
+              {/* Real Matchstick Image (Red tip at top) */}
+              <img
+                src="/assets/matchstick.png"
+                alt="Kibrit Çöpü"
                 style={{
-                  flex: 1,
-                  width: 8,
-                  background: '#d97706',
-                  borderRadius: '0 0 4px 4px',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
+                  width: 28,
+                  height: 170,
+                  objectFit: 'contain',
+                  display: 'block',
+                  filter: matchIgnited
+                    ? 'drop-shadow(0 0 15px rgba(255, 120, 20, 0.9))'
+                    : 'drop-shadow(0 4px 10px rgba(0,0,0,0.7))',
+                  pointerEvents: 'none'
                 }}
               />
             </div>
@@ -1400,6 +1420,10 @@ export default function LastLetterPage({ onGoHome }) {
         @keyframes fadeInSlow {
           0% { opacity: 0; }
           100% { opacity: 1; }
+        }
+        @keyframes matchFlameGlow {
+          0% { transform: scale(1) rotate(-3deg); filter: brightness(1); }
+          100% { transform: scale(1.18) rotate(3deg); filter: brightness(1.3); }
         }
       `}</style>
     </div>
