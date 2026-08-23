@@ -548,8 +548,6 @@ export default function LastLetterPage({ onGoHome }) {
               pageBurnProgress > 0
                 ? `brightness(${Math.max(0, 1 - pageBurnProgress / 100)}) contrast(${1 + pageBurnProgress / 50}) sepia(${pageBurnProgress / 100})`
                 : 'none',
-            opacity: Math.max(0, 1 - pageBurnProgress / 100),
-            transform: `scale(${1 - pageBurnProgress * 0.002})`,
             transition: 'filter 0.1s linear, opacity 0.1s linear'
           }}
         >
@@ -557,12 +555,14 @@ export default function LastLetterPage({ onGoHome }) {
           <div
             style={{
               position: 'absolute',
-              top: '12%',
+              top: '50%',
               left: 0,
               right: 0,
+              transform: 'translateY(-50%)',
               textAlign: 'center',
-              opacity: drawerOpen ? 0.25 : 0.95,
-              transition: 'opacity 0.6s ease'
+              opacity: drawerOpen ? 0.15 : 0.95,
+              transition: 'opacity 0.6s ease',
+              pointerEvents: 'none'
             }}
           >
             <h1
@@ -584,35 +584,42 @@ export default function LastLetterPage({ onGoHome }) {
             >
               Neyse
             </h1>
-            {!drawerOpen && (
-              <p
-                style={{
-                  fontFamily: "'Cardo', Georgia, serif",
-                  color: 'rgba(228, 231, 236, 0.42)',
-                  fontSize: '0.82rem',
-                  letterSpacing: '0.14em',
-                  fontStyle: 'italic',
-                  marginTop: 16,
-                  textTransform: 'lowercase'
-                }}
-              >
-                çekmeceyi açmak için kaydırın
-              </p>
-            )}
           </div>
+
+          {/* Standard Homepage Scroll Hint (at bottom center) */}
+          {!drawerOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 28,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 4,
+                color: 'rgba(228, 231, 236, 0.42)',
+                transition: 'opacity 0.3s ease',
+                pointerEvents: 'none'
+              }}
+            >
+              <span style={{ fontFamily: "'Cardo', Georgia, serif", fontSize: '0.78rem', letterSpacing: '0.14em', fontStyle: 'italic' }}>kaydırın</span>
+              <ChevronDown size={15} style={{ animation: 'bounceSubtle 2s infinite' }} />
+            </div>
+          )}
 
           {/* 3D Dark Wooden Drawer Container (Hidden below screen until scrolled) */}
           <div
             onClick={handleScrollOrSwipe}
             style={{
               position: 'absolute',
-              bottom: drawerOpen ? '4%' : '-100%',
+              bottom: drawerOpen ? '3%' : '-100%',
               left: '50%',
               transform: drawerOpen ? 'translateX(-50%) translateY(0) scale(1)' : 'translateX(-50%) translateY(120%) scale(0.9)',
               opacity: drawerOpen ? 1 : 0,
               width: '92%',
-              maxWidth: 740,
-              height: '76vh',
+              maxWidth: 760,
+              height: '78vh',
               background: 'linear-gradient(180deg, #1f1817 0%, #110d0c 100%)',
               borderRadius: '26px 26px 0 0',
               border: '2px solid rgba(130, 85, 65, 0.38)',
@@ -653,7 +660,8 @@ export default function LastLetterPage({ onGoHome }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 20
+                padding: '20px 24px',
+                overflow: 'visible'
               }}
             >
               {/* Distinct Separated Envelope (Left) & Matchbox (Right) Layer */}
@@ -666,7 +674,7 @@ export default function LastLetterPage({ onGoHome }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '0 40px'
+                    padding: '0 60px 0 30px'
                   }}
                 >
                   {/* Envelope (Left Side) */}
@@ -674,8 +682,8 @@ export default function LastLetterPage({ onGoHome }) {
                     onClick={handleMatchboxClick}
                     style={{
                       position: 'relative',
-                      width: 250,
-                      height: 165,
+                      width: 240,
+                      height: 155,
                       background: 'linear-gradient(135deg, #e4dbc9 0%, #c2b19b 100%)',
                       borderRadius: 8,
                       boxShadow: '0 14px 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,0,0,0.08)',
@@ -688,40 +696,34 @@ export default function LastLetterPage({ onGoHome }) {
                       transition: 'transform 0.3s ease'
                     }}
                   >
+                    {/* Pure Red Wax Seal (No text) */}
                     <div
                       style={{
-                        width: 44,
-                        height: 44,
+                        width: 40,
+                        height: 40,
                         borderRadius: '50%',
-                        background: '#991b1b',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#fee2e2',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.05em'
+                        background: 'radial-gradient(circle at 30% 30%, #dc2626 0%, #881337 100%)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3)',
+                        border: '1px solid rgba(136, 19, 55, 0.6)'
                       }}
-                    >
-                      SEAL
-                    </div>
+                    />
                   </div>
 
-                  {/* Glowing Matchbox (Right Side - Cover & Inner Tray) */}
+                  {/* Glowing Matchbox (Right Side with Ample Clearance for Slide Animation) */}
                   <div
                     onClick={handleMatchboxClick}
                     style={{
                       position: 'relative',
-                      width: 175,
-                      height: 115,
-                      transform: matchboxOpen ? 'rotate(5deg) translateX(25px)' : 'rotate(5deg)',
+                      width: 165,
+                      height: 110,
+                      transform: matchboxOpen ? 'rotate(4deg) translateX(15px)' : 'rotate(4deg)',
                       transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
                       cursor: 'pointer',
-                      filter: 'drop-shadow(0 0 20px rgba(255, 120, 40, 0.55))'
+                      filter: 'drop-shadow(0 0 20px rgba(255, 120, 40, 0.55))',
+                      overflow: 'visible'
                     }}
                   >
-                    {/* Inner Match Tray Sliding Out */}
+                    {/* Inner Match Tray Sliding Out (Clips nicely within container) */}
                     <div
                       style={{
                         position: 'absolute',
@@ -730,7 +732,7 @@ export default function LastLetterPage({ onGoHome }) {
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         borderRadius: 6,
-                        transform: matchboxOpen ? 'translateX(70px)' : 'translateX(0)',
+                        transform: matchboxOpen ? 'translateX(52px)' : 'translateX(0)',
                         transition: 'transform 0.5s ease-out',
                         boxShadow: '0 6px 20px rgba(0,0,0,0.7)'
                       }}
@@ -751,7 +753,7 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
               )}
 
-              {/* Unfolded Large Handwritten Letter with Mouse Hover Zoom */}
+              {/* Unfolded Large Handwritten Letter (No hover zoom) */}
               {letterUnfolded && !lockModeActive && (
                 <div
                   style={{
@@ -767,10 +769,8 @@ export default function LastLetterPage({ onGoHome }) {
                     animation: 'unfoldLetter 0.6s ease-out'
                   }}
                 >
-                  {/* Larger Handwritten Letter Image Container */}
+                  {/* Stable Handwritten Letter Image Container */}
                   <div
-                    onMouseEnter={() => setIsLetterHovered(true)}
-                    onMouseLeave={() => setIsLetterHovered(false)}
                     style={{
                       position: 'relative',
                       width: '100%',
@@ -778,11 +778,7 @@ export default function LastLetterPage({ onGoHome }) {
                       borderRadius: 10,
                       overflow: 'hidden',
                       boxShadow: '0 14px 50px rgba(0,0,0,0.95)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      transform: isLetterHovered ? 'scale(1.22)' : 'scale(1)',
-                      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                      cursor: isLetterHovered ? 'zoom-out' : 'zoom-in',
-                      zIndex: isLetterHovered ? 10 : 1
+                      border: '1px solid rgba(255,255,255,0.12)'
                     }}
                   >
                     <img
