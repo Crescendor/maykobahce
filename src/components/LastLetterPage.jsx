@@ -34,7 +34,7 @@ export default function LastLetterPage({ onGoHome }) {
 
   // Interactive 3D Scroll Folding Progress (0 = Fully Folded, 1 = Fully Unfolded)
   const [foldProgress, setFoldProgress] = useState(0);
-  const [isLetterHovered, setIsLetterHovered] = useState(false);
+  const [isLetterZoomed, setIsLetterZoomed] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
 
   // Burn & Fire State
@@ -579,27 +579,26 @@ export default function LastLetterPage({ onGoHome }) {
               </div>
             )}
 
-            {/* Center Smooth Fade-in & Center-Fold Handwritten Letter Paper */}
+            {/* Center Smooth Fade-in Handwritten Letter Paper (Click to Zoom) */}
             {!lockModeActive && (
               <div
-                onMouseEnter={() => setIsLetterHovered(true)}
-                onMouseLeave={() => setIsLetterHovered(false)}
+                onClick={() => setIsLetterZoomed(prev => !prev)}
                 style={{
                   position: 'relative',
-                  maxWidth: isLetterHovered ? 620 : 540,
+                  maxWidth: isLetterZoomed ? 660 : 540,
                   width: '90%',
-                  maxHeight: '75vh',
-                  transformStyle: 'preserve-3d',
+                  maxHeight: '78vh',
                   opacity: paperOpacity,
-                  transform: `scale(${0.82 + foldProgress * 0.18}) ${isLetterHovered && foldProgress >= 0.9 ? 'scale(1.08)' : ''}`,
+                  transform: `scale(${0.85 + foldProgress * 0.15}) ${isLetterZoomed ? 'scale(1.22)' : ''}`,
                   transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease',
-                  cursor: 'zoom-in',
+                  cursor: isLetterZoomed ? 'zoom-out' : 'zoom-in',
                   display: 'flex',
                   justifyContent: 'center',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  zIndex: 30
                 }}
               >
-                {/* Center-Fold Paper Wrapper (Opens along horizontal center crease, ZERO Tumbling) */}
+                {/* Clean Paper Wrapper */}
                 <div
                   style={{
                     position: 'relative',
@@ -608,38 +607,38 @@ export default function LastLetterPage({ onGoHome }) {
                     overflow: 'hidden',
                     boxShadow: isBurningActive
                       ? '0 0 60px rgba(255, 100, 20, 0.95)'
-                      : `0 ${10 + foldProgress * 20}px ${30 + foldProgress * 30}px rgba(0,0,0,0.85)`,
-                    transform: `rotateX(${centerFoldRotateX}deg)`,
-                    transformOrigin: 'center center',
-                    transition: 'transform 0.15s ease-out'
+                      : `0 ${10 + foldProgress * 20}px ${30 + foldProgress * 30}px rgba(0,0,0,0.85)`
                   }}
                 >
-                  {/* 30-Second Iconic Circular Paper Hole Burn Overlay (Triggers on Burn Acceptance) */}
+                  {/* 30-Second Iconic Circular Paper Hole Burn Effect (#0D0E12 Center Hole + 10 Flames + Highlight) */}
                   {isBurningActive && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        zIndex: 90,
-                        background: 'radial-gradient(circle at 50% 50%, rgba(255, 230, 150, 0.95) 0%, rgba(255, 120, 20, 0.95) 18%, rgba(220, 38, 38, 0.85) 35%, rgba(10, 10, 10, 0.98) 60%)',
-                        mixBlendMode: 'screen',
-                        animation: 'radialFireGlow30s 30s forwards linear',
-                        pointerEvents: 'none'
-                      }}
-                    />
+                    <div className="burn-layer">
+                      <div className="highlight" />
+                      <div className="burn">
+                        <div className="flame" />
+                        <div className="flame" />
+                        <div className="flame" />
+                        <div className="flame" />
+                        <div className="flame" />
+                        <div className="flame" />
+                        <div className="flame" />
+                        <div className="flame" />
+                        <div className="flame" />
+                        <div className="flame" />
+                      </div>
+                    </div>
                   )}
 
-                  {/* Clean Handwritten Letter Paper Image (With 30-Second Radial Circular Hole Burn) */}
+                  {/* Clean Handwritten Letter Paper Image */}
                   <img
                     src="/assets/final_letter_paper.jpg"
                     alt="Bir delinin son mesajı: Ayşenur"
                     style={{
                       width: '100%',
                       height: 'auto',
-                      maxHeight: '74vh',
+                      maxHeight: '76vh',
                       objectFit: 'contain',
-                      display: 'block',
-                      animation: isBurningActive ? 'radialHoleBurn30s 30s forwards cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+                      display: 'block'
                     }}
                   />
                 </div>
@@ -944,45 +943,237 @@ export default function LastLetterPage({ onGoHome }) {
         </div>
       )}
 
-      {/* Embedded Keyframe Animations for 30-Second Radial Circular Paper Hole Burn */}
+      {/* Embedded Keyframe Animations for 30-Second Iconic #0D0E12 Paper Hole Burn */}
       <style>{`
         @keyframes fadeInSlow {
           0% { opacity: 0; }
           100% { opacity: 1; }
         }
-        @keyframes radialHoleBurn30s {
+
+        .burn-layer {
+          position: absolute;
+          inset: 0;
+          z-index: 95;
+          pointer-events: none;
+          overflow: hidden;
+        }
+
+        .burn {
+          position: absolute;
+          height: 0px;
+          width: 0px;
+          background-color: #0D0E12;
+          border-radius: 50%;
+          top: 50%;
+          right: 50%;
+          animation: 30s burn-grow linear forwards;
+          border: 3px solid rgb(49, 22, 1);
+          box-shadow: inset 0px 0px 6px 2px #fffb5c00, inset 0px 0px 8px 3px rgb(52, 21, 0), 0px 0px 6px 2px #3f1c0100, 0px 0px 15px 10px rgba(105, 46, 0, 0), 0px 0px 17px 18px #401d02eb, inset 0px 0px 29px 22px #c4720f00;
+        }
+
+        @keyframes burn-grow {
           0% {
-            clip-path: circle(0% at 50% 50%);
-            filter: brightness(1);
             opacity: 1;
+            height: 0px;
+            width: 0px;
+            top: 50%;
+            right: 50%;
+            border: 3px solid #FFFB5C;
+            box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
           }
-          8% {
-            clip-path: circle(8% at 50% 50%);
-            filter: brightness(1.2) contrast(1.2);
+          70% {
+            height: 1800px;
+            width: 1800px;
+            top: calc(50% - 900px);
+            right: calc(50% - 900px);
+            border: 3px solid #FFFB5C;
+            box-shadow: inset 0px 0px 6px 2px #FFFB5C, inset 0px 0px 5px 6px rgba(243, 108, 0,0.5), 0px 0px 6px 2px #FFFB5C, 0px 0px 15px 10px rgba(241, 124, 4, 0.6), 0px 0px 8px 11px #1c0901eb, inset 0px 0px 29px 22px #c4720f42;
+          }
+          85% {
             opacity: 1;
+            border: 3px solid rgb(49, 22, 1);
+            box-shadow: inset 0px 0px 6px 2px #fffb5c00, inset 0px 0px 8px 3px rgb(52, 21, 0), 0px 0px 6px 2px #3f1c0100, 0px 0px 15px 10px rgba(105, 46, 0, 0), 0px 0px 17px 18px #401d02eb, inset 0px 0px 29px 22px #c4720f00;
           }
-          40% {
-            clip-path: circle(38% at 50% 50%);
-            filter: brightness(1.35) contrast(1.4);
-            opacity: 0.95;
-          }
-          75% {
-            clip-path: circle(75% at 50% 50%);
-            filter: brightness(1.45) contrast(1.5);
-            opacity: 0.5;
+          95% {
+            opacity: 1;
+            height: 2400px;
+            width: 2400px;
+            top: calc(50% - 1200px);
+            right: calc(50% - 1200px);
           }
           100% {
-            clip-path: circle(130% at 50% 50%);
-            filter: brightness(1.6) contrast(1.6);
             opacity: 0;
           }
         }
-        @keyframes radialFireGlow30s {
-          0% { opacity: 0; transform: scale(0.1); }
-          5% { opacity: 0.95; transform: scale(0.3); }
-          50% { opacity: 1; transform: scale(1.1); }
-          85% { opacity: 0.85; transform: scale(1.8); }
-          100% { opacity: 0; transform: scale(2.4); }
+
+        .highlight {
+          position: absolute;
+          border-radius: 50%;
+          height: 1800px;
+          width: 1800px;
+          top: calc(50% - 900px);
+          right: calc(50% - 900px);
+          box-shadow: 0px 0px 71px 101px transparent;
+          animation: 30s grow-highlight linear forwards;
+        }
+
+        @keyframes grow-highlight {
+          0% {
+            height: 0px;
+            width: 0px;
+            top: 50%;
+            right: 50%;
+            box-shadow: 0px 0px 71px 101px #dcaa71;
+          }
+          60% {
+            box-shadow: 0px 0px 71px 101px #dcaa71;
+          }
+          85% {
+            height: 1800px;
+            width: 1800px;
+            top: calc(50% - 900px);
+            right: calc(50% - 900px);
+            box-shadow: 0px 0px 71px 101px transparent;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+
+        .burn .flame {
+          background-color: #fffc98;
+          position: absolute;
+          box-shadow: 0px 0px 0px 0px #FFFB5C;
+        }
+
+        .burn .flame:nth-of-type(1) {
+          border-radius: 50% 0;
+          animation: 30s flame-1 linear forwards;
+          transform-origin: bottom left;
+          opacity: 0;
+        }
+        @keyframes flame-1 {
+          0% { opacity: 1; height: 0px; width: 0px; left: 8%; bottom: 76%; background-color: #fffc98; }
+          15% { height: 20px; width: 20px; transform: rotate(-15deg); }
+          30% { transform: rotate(-45deg); }
+          46% { height: 20px; width: 20px; left: 5%; bottom: 76%; box-shadow: 0px 0px 5px 4px #FFFB5C; transform: rotate(-40deg); opacity: 1; }
+          75% { transform: rotate(-27deg); opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(2) {
+          border-radius: 50% 0;
+          animation: 30s flame-2 linear forwards;
+          transform-origin: bottom left;
+          opacity: 0;
+        }
+        @keyframes flame-2 {
+          0% { height: 0px; width: 0px; left: 31%; transform: rotate(-17deg); top: 2%; opacity: 1; }
+          25% { height: 20px; width: 20px; top: -13%; transform: rotate(-2deg); }
+          46% { height: 10px; width: 10px; left: 31%; top: 3%; box-shadow: 0px 0px 5px 4px #FFFB5C; opacity: 1; }
+          75% { opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(3) {
+          border-radius: 50% 0;
+          animation: 30s flame-3 linear forwards;
+          transform-origin: bottom left;
+          opacity: 0;
+        }
+        @keyframes flame-3 {
+          0% { height: 0px; width: 0px; left: 40%; transform: rotate(-15deg); top: -6%; opacity: 1; }
+          30% { height: 20px; width: 20px; top: -10%; transform: rotate(15deg); }
+          50% { left: 40%; top: -2%; box-shadow: 0px 0px 5px 4px #FFFB5C; opacity: 1; }
+          75% { opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(4) {
+          border-radius: 0 50%;
+          animation: 30s flame-4 linear forwards;
+          transform-origin: bottom right;
+          opacity: 0;
+        }
+        @keyframes flame-4 {
+          0% { height: 0px; width: 0px; right: 20%; transform: rotate(0deg); top: 5%; opacity: 1; }
+          30% { height: 20px; width: 20px; right: 20%; top: 5%; box-shadow: 0px 0px 5px 4px #FFFB5C; opacity: 1; }
+          75% { opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(5) {
+          border-radius: 0 50%;
+          animation: 30s flame-5 linear forwards;
+          transform-origin: bottom right;
+          opacity: 0;
+        }
+        @keyframes flame-5 {
+          0% { height: 0px; width: 0px; left: 98%; transform: rotate(15deg); top: 38%; opacity: 1; }
+          35% { height: 20px; width: 20px; left: 90%; transform: rotate(15deg); }
+          50% { opacity: 1; box-shadow: 0px 0px 5px 4px #FFFB5C; }
+          75% { opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(6) {
+          border-radius: 0 50%;
+          animation: 30s flame-6 linear forwards;
+          transform-origin: bottom right;
+          opacity: 0;
+        }
+        @keyframes flame-6 {
+          0% { height: 0px; width: 0px; left: 96%; transform: rotate(45deg); top: 35%; opacity: 1; }
+          35% { height: 20px; width: 20px; left: 90%; transform: rotate(45deg); }
+          50% { opacity: 1; box-shadow: 0px 0px 5px 4px #FFFB5C; }
+          75% { opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(7) {
+          border-radius: 0 50%;
+          animation: 30s flame-7 linear forwards;
+          transform-origin: bottom right;
+          opacity: 0;
+        }
+        @keyframes flame-7 {
+          0% { height: 0px; width: 0px; left: 63%; transform: rotate(70deg); top: 91%; opacity: 1; }
+          30% { height: 20px; width: 20px; left: 60%; top: 84%; }
+          50% { opacity: 1; box-shadow: 0px 0px 5px 4px #FFFB5C; }
+          75% { opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(8) {
+          border-radius: 0 50%;
+          animation: 30s flame-8 linear forwards;
+          transform-origin: bottom right;
+          opacity: 0;
+        }
+        @keyframes flame-8 {
+          0% { height: 0px; width: 0px; left: 69%; transform: rotate(80deg); top: 80%; opacity: 1; }
+          35% { height: 30px; width: 30px; left: 66%; top: 74%; }
+          50% { opacity: 1; box-shadow: 0px 0px 5px 4px #FFFB5C; }
+          75% { opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(9) {
+          border-radius: 0 50%;
+          animation: 30s flame-9 linear forwards;
+          transform-origin: bottom right;
+          opacity: 0;
+        }
+        @keyframes flame-9 {
+          0% { height: 0px; width: 0px; left: 23%; top: 85%; transform: rotate(70deg); opacity: 1; }
+          35% { height: 20px; width: 20px; left: 23%; top: 85%; }
+          50% { opacity: 1; box-shadow: 0px 0px 5px 4px #FFFB5C; }
+          75% { opacity: 0; }
+        }
+
+        .burn .flame:nth-of-type(10) {
+          border-radius: 0 50%;
+          animation: 30s flame-10 linear forwards;
+          transform-origin: bottom right;
+          opacity: 0;
+        }
+        @keyframes flame-10 {
+          0% { height: 0px; width: 0px; top: 57%; left: 0%; transform: rotate(-10deg); opacity: 1; }
+          35% { height: 15px; width: 15px; top: 57%; left: -7%; }
+          50% { opacity: 1; box-shadow: 0px 0px 5px 4px #FFFB5C; }
+          75% { opacity: 0; }
         }
       `}</style>
     </div>
