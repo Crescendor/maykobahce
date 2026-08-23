@@ -573,10 +573,14 @@ export default function LastLetterPage({ onGoHome }) {
               </div>
             )}
 
-            {/* Center Smooth Fade-in Handwritten Letter Paper (Click to Zoom) */}
+            {/* Center Smooth Fade-in Handwritten Letter Paper (Click to Zoom when visible) */}
             {!lockModeActive && (
               <div
-                onClick={() => setIsLetterZoomed(prev => !prev)}
+                onClick={() => {
+                  if (paperOpacity > 0.2) {
+                    setIsLetterZoomed(prev => !prev);
+                  }
+                }}
                 style={{
                   position: 'relative',
                   maxWidth: isLetterZoomed ? 660 : 540,
@@ -585,7 +589,8 @@ export default function LastLetterPage({ onGoHome }) {
                   opacity: paperOpacity,
                   transform: `scale(${0.85 + foldProgress * 0.15}) ${isLetterZoomed ? 'scale(1.22)' : ''}`,
                   transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease',
-                  cursor: isLetterZoomed ? 'zoom-out' : 'zoom-in',
+                  cursor: paperOpacity > 0.2 ? (isLetterZoomed ? 'zoom-out' : 'zoom-in') : 'default',
+                  pointerEvents: paperOpacity > 0.2 ? 'auto' : 'none',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
