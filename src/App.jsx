@@ -1235,7 +1235,7 @@ export default function App() {
       )}
 
       {/* Persistent Background Ambient Audio Player (YouTube Loop: 6fBXmhBpFGE, disabled on /last page) */}
-      {currentRoute !== 'last' && <AmbientAudioPlayer />}
+      {currentPath !== '/last' && <AmbientAudioPlayer />}
     </div>
   );
 }
