@@ -5,18 +5,14 @@ import { postLogToApi } from '../utils/gardenEngine';
 
 /**
  * LastLetterPage Component (/last)
- * Special emotional ending page:
- * - "Neyse" intro (100% pixel-identical to home page typography).
- * - Wide Drawer (maxWidth: 1080px) sitting flush at the very bottom of the screen.
- * - Central Realist Glowing Envelope with red wax seal.
- * - Casual side-by-side items inside drawer (Baby Polaroid, Cologne Kiss Polaroid, IQOS, TEREA pack) with hover magnification.
- * - Matchbox inside drawer is decorative; clicking envelope unfolds handwritten letter.
- * - "Mektubu yak.." -> Interactive Matchbox appears on the right side of screen, clicking slides tray open and pops matchstick out.
- * - 24-Flame Leaf Paper Hole Burn Animation (expands over 18s, GPU accelerated).
- * - 10-Minute Farewell Screen Timer -> Full Pitch Black Silent Darkness.
- * - "Bir notla birlikte kilitle" -> Live keylogged note form + DateTimePicker -> SHA-256 seal.
- * - Full BotGhost/Discord webhook tracking for all actions.
- * - Tester privileges for device dev_m2troqnl9_mswunr9c (Reset/Extinguish button + unlimited retries).
+ * Pure 3D Paper Scroll Folding & Unfolding Experience:
+ * - "Neyse" intro screen (100% pixel-identical typography).
+ * - Mouse wheel / scroll smoothly folds and unfolds the handwritten letter paper in real 3D perspective!
+ * - Zero drawers, zero matchboxes, zero matchsticks!
+ * - Action buttons ("Mektubu Sakla" left, "Mektubu Yak" right) fade in smoothly as the paper unfolds.
+ * - "Mektubu Yak" -> Warning modal -> "Kabul Et" -> Realistic paper burn animation & system deletion flow.
+ * - "Mektubu Sakla" -> Lock note form with DateTimePicker & SHA-256 seal.
+ * - Webhook logging for all interactions.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -32,30 +28,17 @@ export default function LastLetterPage({ onGoHome }) {
 
   // Analytics & Timing
   const sessionStartTimeRef = useRef(Date.now());
-  const hasLoggedFirstScrollRef = useRef(false);
-  const hasLoggedDrawerRef = useRef(false);
-  const hasLoggedMatchboxRef = useRef(false);
-  const hasLoggedLetterRef = useRef(false);
-  const hasSentExitRef = useRef(false);
+  const hasLoggedScrollRef = useRef(false);
+  const hasLoggedLetterOpenRef = useRef(false);
   const currentStageRef = useRef('Giriş / Neyse Ekranı');
 
-  // Interactive States
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [matchboxOpen, setMatchboxOpen] = useState(false);
-  const [envelopeActive, setEnvelopeActive] = useState(false);
-  const [letterUnfolded, setLetterUnfolded] = useState(false);
-  const [burnModalOpen, setBurnModalOpen] = useState(false);
-  const [showStriker, setShowStriker] = useState(false); // Striker appears ONLY when "Mektubu yak.." is clicked
-
-  // Hover states for photos & objects inside drawer
-  const [hoveredItem, setHoveredItem] = useState(null);
+  // Interactive 3D Scroll Folding Progress (0 = Fully Folded, 1 = Fully Unfolded)
+  const [foldProgress, setFoldProgress] = useState(0);
   const [isLetterHovered, setIsLetterHovered] = useState(false);
+  const [burnModalOpen, setBurnModalOpen] = useState(false);
 
-  // Burn & Fire Mechanic
-  const [matchIgnited, setMatchIgnited] = useState(false);
-  const [isStrikingMatch, setIsStrikingMatch] = useState(false);
-  const [matchPos, setMatchPos] = useState({ x: 0, y: 0 });
-  const [isDraggingMatch, setIsDraggingMatch] = useState(false);
+  // Burn & Fire State
+  const [isBurningActive, setIsBurningActive] = useState(false);
   const [isBurned, setIsBurned] = useState(() => {
     if (isTester) return false;
     try {
@@ -123,11 +106,6 @@ export default function LastLetterPage({ onGoHome }) {
   const prevNoteTextRef = useRef('');
   const draftTimerRef = useRef(null);
 
-  // Striker area ref for collision detection
-  const strikerRef = useRef(null);
-  const matchstickRef = useRef(null);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-
   // Detect Client Device
   const detectDevice = () => {
     if (typeof window === 'undefined') return 'Bilinmiyor';
@@ -148,144 +126,89 @@ export default function LastLetterPage({ onGoHome }) {
     });
   }, []);
 
-  // 1. Initial Scroll Listener -> Open Drawer smoothly from out of sight
-  const handleScrollOrSwipe = useCallback(() => {
-    if (!hasLoggedFirstScrollRef.current) {
-      hasLoggedFirstScrollRef.current = true;
-      currentStageRef.current = 'Siyah Çekmece Açıldı';
-      sendLog('last_first_scroll', { action: '/last Sayfasında Kaydırma Yapıldı' });
-    }
-    if (!drawerOpen) {
-      setDrawerOpen(true);
-      if (!hasLoggedDrawerRef.current) {
-        hasLoggedDrawerRef.current = true;
-        sendLog('last_drawer_opened', { action: 'Siyah Ahşap Çekmece Açıldı' });
+  // 1. Mouse Wheel & Touch Scroll Handler -> Smooth 3D Folding Control
+  const handleScrollWheel = useCallback((e) => {
+    const delta = e.deltaY || e.detail || 0;
+    setFoldProgress((prev) => {
+      const step = delta > 0 ? 0.08 : -0.08;
+      const next = Math.max(0, Math.min(1, prev + step));
+
+      if (next > 0.1 && !hasLoggedScrollRef.current) {
+        hasLoggedScrollRef.current = true;
+        currentStageRef.current = '3D Mektup Katlaması Açılıyor';
+        sendLog('last_scroll_started', { action: 'Sayfa Kaydırılarak 3D Mektup Açılmaya Başlandı' });
       }
-    }
-  }, [drawerOpen, sendLog]);
+
+      if (next >= 0.85 && !hasLoggedLetterOpenRef.current) {
+        hasLoggedLetterOpenRef.current = true;
+        currentStageRef.current = 'Mektup Tam Açıldı';
+        sendLog('last_letter_fully_unfolded', { action: '3D Mektup Tamamen Katından Çıkarıldı ve Okunuyor' });
+      }
+
+      return next;
+    });
+  }, [sendLog]);
+
+  // Touch Swipe Handler for Mobile
+  const touchStartRef = useRef(0);
+  const handleTouchStart = (e) => {
+    touchStartRef.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = useCallback((e) => {
+    const currentY = e.touches[0].clientY;
+    const diff = touchStartRef.current - currentY;
+    touchStartRef.current = currentY;
+
+    setFoldProgress((prev) => {
+      const step = diff > 0 ? 0.05 : -0.05;
+      const next = Math.max(0, Math.min(1, prev + step));
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
-    const onWheel = (e) => {
-      if (e.deltaY > 5 || e.deltaY < -5) {
-        handleScrollOrSwipe();
-      }
-    };
-    const onTouchMove = () => {
-      handleScrollOrSwipe();
-    };
-
+    const onWheel = (e) => handleScrollWheel(e);
     window.addEventListener('wheel', onWheel, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    return () => {
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchmove', onTouchMove);
-    };
-  }, [handleScrollOrSwipe]);
+    return () => window.removeEventListener('wheel', onWheel);
+  }, [handleScrollWheel]);
 
-  // 2. Open Envelope & Unfold Letter
-  const handleEnvelopeClick = () => {
-    if (!envelopeActive) {
-      setEnvelopeActive(true);
-      setTimeout(() => {
-        setLetterUnfolded(true);
-        currentStageRef.current = 'Son Mektup Okunuyor';
-        if (!hasLoggedLetterRef.current) {
-          hasLoggedLetterRef.current = true;
-          sendLog('last_letter_opened', { action: '3D Zarf Açıldı ve Mektup Okunuyor' });
-        }
-      }, 600);
-    }
-  };
-
-  // 3. Burn Flow Modal (Reveals Striker Strip & Matchstick when chosen)
+  // 2. Burn Choice Handler
   const handleOpenBurnModal = () => {
     setBurnModalOpen(true);
     currentStageRef.current = 'Mektubu Yak Onay Modalı';
-    sendLog('last_burn_modal_opened', { action: '"Mektubu yak.." Butonuna Basıldı' });
+    sendLog('last_burn_modal_opened', { action: '"Mektubu Yak" Butonuna Basıldı' });
   };
 
   const handleBurnChoice = (accepted) => {
     setBurnModalOpen(false);
     sendLog('last_burn_modal_choice', {
       accepted,
-      choice: accepted ? 'Kabul Et (Yakılacak)' : 'Vazgeç (İptal)'
+      choice: accepted ? 'Kabul Et (Mektup Yanıyor)' : 'Vazgeç (İptal)'
     });
 
     if (accepted) {
-      setShowStriker(true); // Reveal Kibrit Zımparası on top of letter!
-      setIsStrikingMatch(true); // Reveal matchstick & right side matchbox!
-      setMatchboxOpen(false); // Initially closed right-side matchbox
-      currentStageRef.current = 'Kibrit Sürükleme ve Yakma Aşaması';
+      setIsBurningActive(true);
+      currentStageRef.current = 'Mektup Alev Aldı & Yanıyor';
+
+      // Record burned state after burn animation completes
+      setTimeout(() => {
+        setIsBurned(true);
+        try {
+          localStorage.setItem('mayko_last_burned', 'true');
+          localStorage.setItem('mayko_burned_at', Date.now().toString());
+        } catch (e) {}
+        sendLog('last_letter_burned_completed', { action: 'Mektup Tamamen Yandı ve Kül Oldu' });
+      }, 5500);
     }
   };
 
-  // Drag Matchstick & Check Collision with Striker Strip
-  const handleMatchMouseDown = (e) => {
-    setIsDraggingMatch(true);
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
-    dragStartRef.current = { x: clientX - matchPos.x, y: clientY - matchPos.y };
-  };
-
-  const handleMatchMouseMove = useCallback(
-    (e) => {
-      if (!isDraggingMatch) return;
-      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
-      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
-
-      const newX = clientX - dragStartRef.current.x;
-      const newY = clientY - dragStartRef.current.y;
-      setMatchPos({ x: newX, y: newY });
-
-      // Collision Detection with Striker Strip
-      if (strikerRef.current && matchstickRef.current && !matchIgnited) {
-        const strikerRect = strikerRef.current.getBoundingClientRect();
-        const matchRect = matchstickRef.current.getBoundingClientRect();
-
-        const isColliding =
-          matchRect.left < strikerRect.right &&
-          matchRect.right > strikerRect.left &&
-          matchRect.top < strikerRect.bottom &&
-          matchRect.bottom > strikerRect.top;
-
-        if (isColliding) {
-          setMatchIgnited(true);
-          currentStageRef.current = 'Kibrit Ateşlendi & Sayfa Yanıyor';
-          sendLog('last_letter_burned', { action: 'Kibrit Zımparaya Sürtüldü ve Alev Aldı!' });
-        }
-      }
-    },
-    [isDraggingMatch, matchIgnited, sendLog]
-  );
-
-  const handleMatchMouseUp = useCallback(() => {
-    setIsDraggingMatch(false);
-  }, []);
-
-  useEffect(() => {
-    if (isDraggingMatch) {
-      window.addEventListener('mousemove', handleMatchMouseMove);
-      window.addEventListener('mouseup', handleMatchMouseUp);
-      window.addEventListener('touchmove', handleMatchMouseMove);
-      window.addEventListener('touchend', handleMatchMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMatchMouseMove);
-      window.removeEventListener('mouseup', handleMatchMouseUp);
-      window.removeEventListener('touchmove', handleMatchMouseMove);
-      window.removeEventListener('touchend', handleMatchMouseUp);
-    };
-  }, [isDraggingMatch, handleMatchMouseMove, handleMatchMouseUp]);
-
-  // 4. Lock Note Flow
+  // 3. Lock Note Handler
   const handleOpenLockMode = () => {
     setLockModeActive(true);
-    setLetterUnfolded(false);
     currentStageRef.current = 'Kilitli Not Yazma Alanı';
-    sendLog('last_lock_clicked', { action: '"Bir notla birlikte kilitle" Butonuna Basıldı' });
+    sendLog('last_lock_clicked', { action: '"Mektubu Sakla" Butonuna Basıldı' });
   };
 
-  // Live Note Harf Harf Keylog Engine
   const handleNoteTextChange = (e) => {
     const val = e.target.value;
     const prev = prevNoteTextRef.current;
@@ -312,7 +235,6 @@ export default function LastLetterPage({ onGoHome }) {
     }, 1800);
   };
 
-  // Generate 32-char SHA-256 simulation hash
   const generateSha256Hash = () => {
     const chars = '0123456789abcdef';
     let result = '';
@@ -350,190 +272,125 @@ export default function LastLetterPage({ onGoHome }) {
     } catch (e) {}
   };
 
-  // 5. Reset / Extinguish for Tester (dev_m2troqnl9_mswunr9c)
-  const handleResetTester = () => {
-    setIsBurned(false);
-    setMatchIgnited(false);
-    setIsStrikingMatch(false);
-    setShowStriker(false);
-    setMatchPos({ x: 0, y: 0 });
-    setLockModeActive(false);
-    setLockedResult(null);
-    setDrawerOpen(false);
-    setMatchboxOpen(false);
-    setLetterUnfolded(false);
-    setNoteText('');
-    allTypedRef.current = '';
-    deletedSegmentsRef.current = [];
-    try {
-      localStorage.removeItem('mayko_last_burned');
-      localStorage.removeItem('mayko_burned_at');
-      localStorage.removeItem('mayko_last_locked_data');
-    } catch (e) {}
-    currentStageRef.current = 'Sayfa Sıfırlandı (Test Cihazı)';
-    sendLog('last_reset_clicked', { action: 'Test Cihazı Söndür/Sıfırla Butonuna Bastı' });
-  };
+  const isDarknessTotal = remainingMs <= 0;
 
-  // 6. Universal Exit Logging on /last
-  useEffect(() => {
-    const handleExit = () => {
-      if (hasLoggedFirstScrollRef.current && !hasSentExitRef.current) {
-        hasSentExitRef.current = true;
-        const durationMs = Date.now() - sessionStartTimeRef.current;
-        const totalSec = Math.round(durationMs / 1000);
-        const mins = Math.floor(totalSec / 60);
-        const secs = totalSec % 60;
-        const durationStr = mins > 0 ? `${mins} dakika ${secs} saniye` : `${secs} saniye`;
-
-        sendLog('last_page_abandoned', {
-          action: '/last Sayfasından Ayrıldı',
-          duration: durationStr,
-          stage: currentStageRef.current,
-          noteText: noteText || '-',
-          allTypedHistory: allTypedRef.current || noteText || '-',
-          deletedText: deletedSegmentsRef.current.join(' | ') || '-'
-        });
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') handleExit();
-    };
-
-    window.addEventListener('beforeunload', handleExit);
-    window.addEventListener('pagehide', handleExit);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleExit);
-      window.removeEventListener('pagehide', handleExit);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [noteText, sendLog]);
-
-  const isBurningActive = matchIgnited || isBurned;
-  const isDarknessTotal = isBurned && remainingMs <= 0 && !isTester;
+  // Calculate 3D Folding Rotations based on foldProgress
+  const topFoldRotateX = (1 - foldProgress) * -110; // Rotates from -110deg to 0deg
+  const bottomFoldRotateX = (1 - foldProgress) * 110; // Rotates from 110deg to 0deg
+  const buttonOpacity = foldProgress > 0.6 ? (foldProgress - 0.6) / 0.4 : 0;
 
   return (
     <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: '#0a0b0e',
-        backgroundImage: 'radial-gradient(ellipse at center, #15181f 0%, #0a0b0e 100%)',
-        color: '#e4e7ec',
-        fontFamily: "'Cardo', Georgia, serif",
+        position: 'relative',
+        width: '100vw',
+        height: '100vh',
         overflow: 'hidden',
+        backgroundColor: '#0a0a0f',
+        color: '#ffffff',
+        fontFamily: "'Inter', sans-serif",
         userSelect: 'none',
-        zIndex: 900
+        WebkitUserSelect: 'none'
       }}
     >
-      {/* Background Music Loop */}
-      <AmbientAudioPlayer />
+      {/* Background Ambient Music Player */}
+      <AmbientAudioPlayer trackName="Farewell Theme" autoPlay={true} />
 
-      {/* 24-Flame Leaf Paper Hole Burn Animation (18s Synced Single Direction) */}
-      {matchIgnited && !isBurned && (
-        <div className="content">
-          <div
-            className="burn"
-            onAnimationEnd={() => {
-              setIsBurned(true);
-              try {
-                const now = Date.now();
-                localStorage.setItem('mayko_last_burned', 'true');
-                localStorage.setItem('mayko_burned_at', String(now));
-              } catch (e) {}
-            }}
-          >
-            {Array.from({ length: 24 }).map((_, i) => (
-              <div key={i} className="flame" />
-            ))}
-          </div>
-          <div className="highlight" />
-        </div>
-      )}
-
-      {/* Tester Reset Floating Control (Always Accessible for Tester) */}
+      {/* Tester Reset Floating Control Bar */}
       {isTester && (
-        <button
-          onClick={handleResetTester}
+        <div
           style={{
             position: 'fixed',
-            top: 20,
-            left: 20,
-            zIndex: 200000,
+            top: 14,
+            right: 14,
+            zIndex: 120000,
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
+            gap: 10,
             padding: '8px 14px',
             borderRadius: 9999,
             background: 'rgba(239, 68, 68, 0.25)',
             border: '1px solid rgba(239, 68, 68, 0.6)',
+            backdropFilter: 'blur(12px)',
+            fontSize: '0.78rem',
             color: '#fca5a5',
-            fontSize: '0.82rem',
-            cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+            boxShadow: '0 4px 20px rgba(0,0,0,0.8)'
           }}
         >
-          <RotateCcw size={14} /> Söndür / Sıfırla (Test Cihazı)
-        </button>
+          <span>🛠️ Test Modu (Geliştirici)</span>
+          <button
+            onClick={() => {
+              try {
+                localStorage.removeItem('mayko_last_burned');
+                localStorage.removeItem('mayko_burned_at');
+                localStorage.removeItem('mayko_last_locked_data');
+              } catch (e) {}
+              setIsBurned(false);
+              setIsBurningActive(false);
+              setLockedResult(null);
+              setLockModeActive(false);
+              setFoldProgress(0);
+              setRemainingMs(600000);
+            }}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 9999,
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            <RotateCcw size={12} /> Sıfırla
+          </button>
+        </div>
       )}
 
-      {/* 100% Pitch Black Silent Void (After 10 Minutes pass) */}
-      {isDarknessTotal ? (
+      {/* Burned Farewell / Countdown Screen */}
+      {isBurned ? (
         <div
           style={{
-            position: 'fixed',
+            position: 'absolute',
             inset: 0,
-            backgroundColor: '#000000',
-            zIndex: 150000,
-            cursor: 'default'
-          }}
-        />
-      ) : isBurned ? (
-        /* Permanent 10-Minute Farewell Message Screen (Fade In) */
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: '#050507',
-            backgroundImage: 'radial-gradient(circle at center, #0f0b0c 0%, #030304 100%)',
+            zIndex: 100000,
+            background: 'linear-gradient(180deg, #09090b 0%, #000000 100%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '40px 24px',
-            textAlign: 'center',
-            zIndex: 100000,
-            overflowY: 'auto',
-            animation: 'fadeInSlow 2s ease-out forwards'
+            padding: 24,
+            textAlign: 'center'
           }}
         >
-          {/* 10-Minute Countdown Indicator */}
+          {/* Countdown Clock Header */}
           <div
             style={{
               position: 'absolute',
               top: 24,
-              right: 24,
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              padding: '6px 14px',
+              padding: '10px 20px',
               borderRadius: 9999,
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#94a3b8',
-              fontSize: '0.8rem',
-              fontFamily: 'monospace',
-              zIndex: 100001
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              fontSize: '0.88rem',
+              color: '#f8fafc',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)'
             }}
           >
-            <Clock size={14} style={{ color: '#ef4444' }} />
+            <Clock size={15} style={{ color: '#ef4444' }} />
             <span>Karanlığa Gömülmeye: <strong style={{ color: '#fca5a5' }}>{formatCountdown(remainingMs)}</strong></span>
           </div>
 
-          {/* Main Emotional Farewell Lines */}
+          {/* Farewell Lines */}
           <div style={{ maxWidth: 680, width: '100%', marginBottom: 36, marginTop: 40, zIndex: 100001 }}>
             <h2
               style={{
@@ -579,7 +436,7 @@ export default function LastLetterPage({ onGoHome }) {
             </h3>
           </div>
 
-          {/* System Deletion Console Summary Lines */}
+          {/* System Deletion Summary Lines */}
           <div
             style={{
               maxWidth: 620,
@@ -619,15 +476,10 @@ export default function LastLetterPage({ onGoHome }) {
           </div>
         </div>
       ) : (
-        /* Main Page Content */
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            filter: 'none'
-          }}
-        >
-          {/* Top Intro Section ("Neyse" - 100% Pixel-Identical to Home Page Typography) */}
+        /* Main Interactive Screen */
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          
+          {/* Top Intro Typography ("Neyse" - Fades Out smoothly as user scrolls) */}
           <div
             style={{
               position: 'absolute',
@@ -636,9 +488,10 @@ export default function LastLetterPage({ onGoHome }) {
               right: 0,
               transform: 'translateY(-50%)',
               textAlign: 'center',
-              opacity: drawerOpen ? 0.15 : 0.95,
-              transition: 'opacity 0.6s ease',
-              pointerEvents: 'none'
+              opacity: Math.max(0, 1 - foldProgress * 2.5),
+              transition: 'opacity 0.3s ease',
+              pointerEvents: 'none',
+              zIndex: 10
             }}
           >
             <h1
@@ -646,491 +499,266 @@ export default function LastLetterPage({ onGoHome }) {
                 fontFamily: "'Cardo', Georgia, serif",
                 fontSize: 'clamp(4.2rem, 9.5vw, 7.5rem)',
                 fontWeight: 400,
-                fontStyle: 'normal',
                 color: '#e4e7ec',
                 letterSpacing: '0.04em',
                 lineHeight: 1.1,
-                textAlign: 'center',
-                margin: 0,
-                padding: 0,
-                textRendering: 'optimizeLegibility',
-                WebkitFontSmoothing: 'antialiased',
-                MozOsxFontSmoothing: 'grayscale'
+                margin: 0
               }}
             >
               Neyse
             </h1>
-          </div>
 
-          {/* Standard Homepage Scroll Hint (at bottom center) */}
-          {!drawerOpen && (
+            {/* Scroll Hint */}
             <div
               style={{
-                position: 'absolute',
-                bottom: 28,
-                left: '50%',
-                transform: 'translateX(-50%)',
+                marginTop: 28,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 4,
-                color: 'rgba(228, 231, 236, 0.42)',
-                transition: 'opacity 0.3s ease',
-                pointerEvents: 'none'
+                gap: 6,
+                color: 'rgba(228, 231, 236, 0.45)',
+                fontSize: '0.9rem',
+                fontStyle: 'italic'
               }}
             >
-              <span style={{ fontFamily: "'Cardo', Georgia, serif", fontSize: '0.78rem', letterSpacing: '0.14em', fontStyle: 'italic' }}>kaydırın</span>
-              <ChevronDown size={15} style={{ animation: 'bounceSubtle 2s infinite' }} />
+              <span>Aşağı doğru kaydırın</span>
+              <ChevronDown size={20} className="animate-bounce" />
             </div>
-          )}
+          </div>
 
-          {/* 3D Dark Wooden Drawer Container (Flush at bottom 0px, 100vw full screen width) */}
+          {/* 3D Paper Scroll Folding Container */}
           <div
-            onClick={handleScrollOrSwipe}
             style={{
-              position: 'absolute',
-              bottom: drawerOpen ? 0 : '-100%',
-              left: 0,
-              right: 0,
-              transform: drawerOpen ? 'translateY(0)' : 'translateY(120%)',
-              opacity: drawerOpen ? 1 : 0,
-              width: '100vw',
-              maxWidth: '100%',
-              height: '92vh',
-              background: 'linear-gradient(180deg, #1f1817 0%, #110d0c 100%)',
-              borderRadius: '24px 24px 0 0',
-              border: '2px solid rgba(130, 85, 65, 0.38)',
-              borderBottom: 'none',
-              boxShadow: '0 -25px 60px rgba(0, 0, 0, 0.9), inset 0 2px 12px rgba(255, 200, 160, 0.1)',
-              transition: 'all 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+              position: 'relative',
+              width: '100%',
+              height: '100%',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              padding: '16px 14px 0 14px',
-              overflow: 'hidden'
+              justifyContent: 'center',
+              perspective: 1200,
+              zIndex: 20
             }}
           >
-            {/* Metallic Wooden Drawer Lid & Handle */}
-            <div
-              style={{
-                width: 180,
-                height: 14,
-                borderRadius: 7,
-                background: 'linear-gradient(180deg, #4d3a34 0%, #221815 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.14)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.7)',
-                marginBottom: 14,
-                cursor: 'pointer'
-              }}
-            />
+            {/* Left Side Button: "Mektubu Sakla" (Fades in smoothly as paper unfolds) */}
+            {!lockModeActive && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '6%',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 50,
+                  opacity: buttonOpacity,
+                  pointerEvents: buttonOpacity > 0.5 ? 'auto' : 'none',
+                  transition: 'opacity 0.4s ease'
+                }}
+              >
+                <button
+                  onClick={handleOpenLockMode}
+                  disabled={isBurningActive}
+                  style={{
+                    padding: '14px 22px',
+                    borderRadius: 9999,
+                    background: 'rgba(52, 211, 153, 0.18)',
+                    border: '1px solid rgba(52, 211, 153, 0.55)',
+                    color: '#6ee7b7',
+                    fontSize: '0.92rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 8px 25px rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    whiteSpace: 'nowrap',
+                    transition: 'transform 0.2s ease'
+                  }}
+                >
+                  <Lock size={17} /> Mektubu Sakla
+                </button>
+              </div>
+            )}
 
-            {/* Inner Wooden Compartment */}
-            <div
-              style={{
-                position: 'relative',
-                width: '100%',
-                flex: 1,
-                background: '#0d0b0a',
-                borderRadius: '16px 16px 0 0',
-                border: '1px solid rgba(90, 60, 45, 0.28)',
-                borderBottom: 'none',
-                boxShadow: 'inset 0 12px 35px rgba(0,0,0,0.95)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px 24px',
-                overflow: 'hidden'
-              }}
-            >
-              {/* Casual Items inside Drawer (Envelope, IQOS, TEREA & Matchbox) */}
-              {!lockModeActive && (
+            {/* Center 3D Folding Handwritten Letter Paper */}
+            {!lockModeActive && (
+              <div
+                onMouseEnter={() => setIsLetterHovered(true)}
+                onMouseLeave={() => setIsLetterHovered(false)}
+                style={{
+                  position: 'relative',
+                  maxWidth: isLetterHovered ? 620 : 540,
+                  width: '90%',
+                  maxHeight: '75vh',
+                  transformStyle: 'preserve-3d',
+                  opacity: foldProgress > 0.05 ? 1 : foldProgress * 10,
+                  transform: `scale(${0.7 + foldProgress * 0.3}) ${isLetterHovered && foldProgress >= 0.9 ? 'scale(1.08)' : ''}`,
+                  transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
+                  cursor: 'zoom-in',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
+                {/* 3D Paper Wrapper with Tri-Fold Simulation */}
                 <div
                   style={{
                     position: 'relative',
                     width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    filter: letterUnfolded ? 'blur(14px) brightness(0.45)' : 'none',
-                    pointerEvents: letterUnfolded ? 'none' : 'auto',
-                    transition: 'filter 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    boxShadow: isBurningActive
+                      ? '0 0 60px rgba(255, 100, 20, 0.95)'
+                      : `0 ${10 + foldProgress * 20}px ${30 + foldProgress * 30}px rgba(0,0,0,0.85)`,
+                    transform: `rotateX(${topFoldRotateX}deg)`,
+                    transformOrigin: 'top center',
+                    transition: 'transform 0.1s linear'
                   }}
                 >
-                  {/* Dead Center Focal Item: Romantic 3D CSS Envelope with Heart Button */}
-                  <div
-                    style={{
-                      position: 'relative',
-                      zIndex: 25,
-                      transform: 'rotate(-2deg)'
-                    }}
-                  >
-                    <section className="cssletter">
-                      <div className={`envelope ${envelopeActive ? 'active' : ''}`} onClick={handleEnvelopeClick}>
-                        <button
-                          className="heart"
-                          id="openEnvelope"
-                          aria-label="Open Envelope"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEnvelopeClick();
-                          }}
-                        >
-                          <span className="heart-text">Aç</span>
-                        </button>
-                        <div className="envelope-flap" />
-                        <div className="envelope-folds">
-                          <div className="envelope-left" />
-                          <div className="envelope-right" />
-                          <div className="envelope-bottom" />
-                        </div>
-                      </div>
-                    </section>
-                  </div>
-
-                  {/* Right Object 1: IQOS Device (Mint Green - GIGANTIC MASSIVE 10X SIZE) */}
-                  <img
-                    src="/assets/iqos_device.png"
-                    alt="IQOS Iluma Cihazı"
-                    style={{
-                      position: 'absolute',
-                      right: '12%',
-                      top: '0%',
-                      width: 380,
-                      height: 650,
-                      objectFit: 'contain',
-                      transform: 'rotate(12deg)',
-                      filter: 'drop-shadow(0 20px 45px rgba(0,0,0,0.9))',
-                      zIndex: 14,
-                      pointerEvents: 'none'
-                    }}
-                  />
-
-                  {/* Right Object 2: TEREA Pack */}
-                  <img
-                    src="/assets/terea_pack.png"
-                    alt="TEREA IQOS Paketi"
-                    style={{
-                      position: 'absolute',
-                      right: '4%',
-                      top: '26%',
-                      width: 230,
-                      height: 'auto',
-                      borderRadius: 4,
-                      transform: 'rotate(-7deg)',
-                      filter: 'drop-shadow(0 14px 30px rgba(0,0,0,0.85))',
-                      zIndex: 15,
-                      pointerEvents: 'none'
-                    }}
-                  />
-
-                  {/* Right Object 3: Matchbox inside Drawer (Only visible when mektup is closed) */}
-                  {!letterUnfolded && (
+                  {/* Burning Flame Particle Overlay (Triggers on Burn Acceptance) */}
+                  {isBurningActive && (
                     <div
                       style={{
                         position: 'absolute',
-                        right: '25%',
-                        bottom: '14%',
-                        width: 145,
-                        height: 98,
-                        transform: 'rotate(-10deg)',
-                        filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.75))',
-                        pointerEvents: 'none',
-                        zIndex: 10
-                      }}
-                    >
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          backgroundImage: `url('/assets/matchbox_cover.png')`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          borderRadius: 6
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Unfolded Handwritten Letter Layout with Left & Right Side Controls */}
-              {letterUnfolded && !lockModeActive && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 40,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 32,
-                    padding: '16px 24px',
-                    animation: 'unfoldLetter 0.5s ease-out'
-                  }}
-                >
-                  {/* Left Side Button: "Mektubu Sakla" */}
-                  <div style={{ display: 'flex', alignItems: 'center', zIndex: 50 }}>
-                    <button
-                      onClick={handleOpenLockMode}
-                      disabled={showStriker || matchIgnited || isBurningActive}
-                      style={{
-                        padding: '13px 20px',
-                        borderRadius: 9999,
-                        background: (showStriker || matchIgnited || isBurningActive)
-                          ? 'rgba(100, 100, 100, 0.15)'
-                          : 'rgba(52, 211, 153, 0.18)',
-                        border: (showStriker || matchIgnited || isBurningActive)
-                          ? '1px solid rgba(255, 255, 255, 0.15)'
-                          : '1px solid rgba(52, 211, 153, 0.55)',
-                        color: (showStriker || matchIgnited || isBurningActive) ? '#94a3b8' : '#6ee7b7',
-                        fontSize: '0.9rem',
-                        fontWeight: 600,
-                        cursor: (showStriker || matchIgnited || isBurningActive) ? 'not-allowed' : 'pointer',
-                        opacity: (showStriker || matchIgnited || isBurningActive) ? 0.35 : 1,
-                        pointerEvents: (showStriker || matchIgnited || isBurningActive) ? 'none' : 'auto',
-                        backdropFilter: 'blur(8px)',
-                        transition: 'all 0.25s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      <Lock size={16} /> Mektubu Sakla
-                    </button>
-                  </div>
-
-                  {/* Center Item: Clean Handwritten Letter Paper */}
-                  <div
-                    onMouseEnter={() => setIsLetterHovered(true)}
-                    onMouseLeave={() => setIsLetterHovered(false)}
-                    style={{
-                      position: 'relative',
-                      maxWidth: isLetterHovered ? 640 : 550,
-                      width: '100%',
-                      transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                      cursor: 'zoom-in',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <img
-                      src="/assets/final_letter_paper.jpg"
-                      alt="Bir delinin son mesajı: Ayşenur"
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        maxHeight: isLetterHovered ? '78vh' : '66vh',
-                        objectFit: 'contain',
-                        borderRadius: 6,
-                        boxShadow: isBurningActive
-                          ? '0 0 50px rgba(255, 100, 20, 0.95)'
-                          : isLetterHovered
-                            ? '0 20px 50px rgba(0,0,0,0.9)'
-                            : '0 10px 30px rgba(0,0,0,0.8)',
-                        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                        display: 'block'
+                        inset: 0,
+                        zIndex: 90,
+                        background: 'radial-gradient(circle at 50% 100%, rgba(255, 140, 20, 0.95) 0%, rgba(239, 68, 68, 0.8) 40%, rgba(0,0,0,0.95) 90%)',
+                        mixBlendMode: 'screen',
+                        animation: 'firePaperBurn 5.5s forwards ease-in-out',
+                        pointerEvents: 'none'
                       }}
                     />
-                  </div>
+                  )}
 
-                  {/* Right Side Control: "Mektubu Yak" Button or Matchbox + Zımpara Strip */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, zIndex: 50 }}>
-                    {showStriker ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
-                        {/* Zımpara Strip */}
-                        <div
-                          ref={strikerRef}
-                          style={{
-                            padding: '14px 22px',
-                            borderRadius: 14,
-                            background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
-                            border: '2px solid rgba(255, 140, 40, 0.95)',
-                            boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.9), 0 0 22px rgba(255, 100, 20, 0.75)',
-                            color: '#ffedd5',
-                            fontSize: '0.86rem',
-                            letterSpacing: '0.08em',
-                            fontStyle: 'italic',
-                            fontWeight: 'bold',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            whiteSpace: 'nowrap',
-                            animation: 'fadeInSlow 0.4s ease-out'
-                          }}
-                        >
-                          🔥 KİBRİT ZIMPARASI (Kibriti buraya sürtebilirsin)
-                        </div>
-
-                        {/* Interactive Single Matchbox on Mektup Layout */}
-                        <div
-                          onClick={() => setMatchboxOpen(prev => !prev)}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: 6,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <div style={{ color: '#ffedd5', fontSize: '0.8rem', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
-                            🔥 Kutuyu açmak için tıklayın
-                          </div>
-                          <div
-                            style={{
-                              position: 'relative',
-                              width: 140,
-                              height: 94,
-                              background: '#1a1a1a',
-                              borderRadius: 8,
-                              boxShadow: '0 10px 30px rgba(0,0,0,0.85)',
-                              border: '1px solid rgba(255,255,255,0.15)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            {/* Inner Tray sliding to the LEFT */}
-                            <div
-                              style={{
-                                position: 'absolute',
-                                inset: 4,
-                                background: '#3d2b1f',
-                                borderRadius: 6,
-                                transform: matchboxOpen ? 'translateX(-80px)' : 'translateX(0)',
-                                transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                                boxShadow: matchboxOpen ? '-6px 0 15px rgba(0,0,0,0.7)' : 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'flex-start',
-                                paddingLeft: 8
-                              }}
-                            >
-                              {/* Matchstick Head emerging out of the LEFT side */}
-                              {matchboxOpen && (
-                                <div
-                                  style={{
-                                    width: 14,
-                                    height: 18,
-                                    borderRadius: '50% 50% 30% 30%',
-                                    background: '#b91c1c',
-                                    boxShadow: '0 0 10px rgba(185, 28, 28, 0.8)'
-                                  }}
-                                />
-                              )}
-                            </div>
-                            <div
-                              style={{
-                                position: 'absolute',
-                                inset: 0,
-                                backgroundImage: `url('/assets/matchbox_cover.png')`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                borderRadius: 8,
-                                pointerEvents: 'none'
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleOpenBurnModal}
-                        disabled={matchIgnited || isBurningActive}
-                        style={{
-                          padding: '13px 20px',
-                          borderRadius: 9999,
-                          background: 'rgba(239, 68, 68, 0.18)',
-                          border: '1px solid rgba(239, 68, 68, 0.55)',
-                          color: '#fca5a5',
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          backdropFilter: 'blur(8px)',
-                          transition: 'all 0.25s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        <Flame size={16} /> Mektubu Yak
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Lock Note Form */}
-              {lockModeActive && !lockedResult && (
-                <div
-                  style={{
-                    width: '100%',
-                    maxWidth: 520,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 16,
-                    padding: 22,
-                    background: 'rgba(20, 22, 28, 0.88)',
-                    borderRadius: 16,
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    backdropFilter: 'blur(16px)'
-                  }}
-                >
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#6ee7b7', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Lock size={18} /> Zarfa Ek Not Bırak ve Mühürle
-                  </h3>
-
-                  <textarea
-                    value={noteText}
-                    onChange={handleNoteTextChange}
-                    placeholder="Mektubun içine eklemek istediğin notu buraya fısıldayabilirsin.."
-                    rows={4}
+                  {/* Clean Handwritten Letter Paper Image */}
+                  <img
+                    src="/assets/final_letter_paper.jpg"
+                    alt="Bir delinin son mesajı: Ayşenur"
                     style={{
                       width: '100%',
-                      padding: 14,
-                      borderRadius: 10,
+                      height: 'auto',
+                      maxHeight: '74vh',
+                      objectFit: 'contain',
+                      display: 'block',
+                      filter: isBurningActive ? 'brightness(1.2) contrast(1.3)' : 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Right Side Button: "Mektubu Yak" (Fades in smoothly as paper unfolds) */}
+            {!lockModeActive && (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: '6%',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 50,
+                  opacity: buttonOpacity,
+                  pointerEvents: buttonOpacity > 0.5 ? 'auto' : 'none',
+                  transition: 'opacity 0.4s ease'
+                }}
+              >
+                <button
+                  onClick={handleOpenBurnModal}
+                  disabled={isBurningActive}
+                  style={{
+                    padding: '14px 22px',
+                    borderRadius: 9999,
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.6)',
+                    color: '#fca5a5',
+                    fontSize: '0.92rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 8px 25px rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    whiteSpace: 'nowrap',
+                    transition: 'transform 0.2s ease'
+                  }}
+                >
+                  <Flame size={17} /> Mektubu Yak
+                </button>
+              </div>
+            )}
+
+            {/* Lock Note Form Modal */}
+            {lockModeActive && !lockedResult && (
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: 520,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  padding: 24,
+                  background: 'rgba(18, 20, 26, 0.92)',
+                  borderRadius: 18,
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.9)',
+                  zIndex: 60,
+                  animation: 'fadeInSlow 0.4s ease-out'
+                }}
+              >
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#6ee7b7', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Lock size={18} /> Zarfa Ek Not Bırak ve Mühürle
+                </h3>
+
+                <textarea
+                  value={noteText}
+                  onChange={handleNoteTextChange}
+                  placeholder="Mektubun içine eklemek istediğin notu buraya fısıldayabilirsin.."
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: 14,
+                    borderRadius: 10,
+                    background: 'rgba(10, 11, 14, 0.75)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#f1f5f9',
+                    fontSize: '0.95rem',
+                    outline: 'none',
+                    resize: 'none',
+                    fontFamily: "'Cardo', Georgia, serif"
+                  }}
+                />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Calendar size={14} /> Mektubun Tekrar Açılacağı Tarih & Saat:
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={targetDate}
+                    onChange={(e) => setTargetDate(e.target.value)}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 8,
                       background: 'rgba(10, 11, 14, 0.75)',
                       border: '1px solid rgba(255,255,255,0.15)',
                       color: '#f1f5f9',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                      resize: 'none',
-                      fontFamily: "'Cardo', Georgia, serif"
+                      outline: 'none'
                     }}
                   />
+                </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Calendar size={14} /> Mektubun Tekrar Açılacağı Tarih & Saat:
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={targetDate}
-                      onChange={(e) => setTargetDate(e.target.value)}
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: 8,
-                        background: 'rgba(10, 11, 14, 0.75)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        color: '#f1f5f9',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-
+                <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                   <button
                     onClick={handleConfirmLockNote}
                     style={{
-                      marginTop: 8,
+                      flex: 1,
                       padding: '13px',
                       borderRadius: 9999,
                       background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                       color: '#ffffff',
                       border: 'none',
-                      fontSize: '1rem',
-                      fontWeight: 500,
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
                       cursor: 'pointer',
                       boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
                       display: 'flex',
@@ -1141,143 +769,89 @@ export default function LastLetterPage({ onGoHome }) {
                   >
                     <CheckCircle2 size={18} /> Mühürle ve Kilitle
                   </button>
-                </div>
-              )}
 
-              {/* Locked Success Screen */}
-              {lockedResult && (
-                <div
-                  style={{
-                    width: '100%',
-                    maxWidth: 520,
-                    padding: 26,
-                    background: 'rgba(16, 185, 129, 0.08)',
-                    borderRadius: 16,
-                    border: '1px solid rgba(16, 185, 129, 0.35)',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 14
-                  }}
-                >
-                  <div
+                  <button
+                    onClick={() => setLockModeActive(false)}
                     style={{
-                      width: 54,
-                      height: 54,
-                      borderRadius: '50%',
-                      background: '#059669',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      boxShadow: '0 0 22px rgba(16, 185, 129, 0.5)'
+                      padding: '13px 20px',
+                      borderRadius: 9999,
+                      background: 'rgba(255,255,255,0.08)',
+                      color: '#cbd5e1',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer'
                     }}
                   >
-                    <Lock size={26} />
-                  </div>
-
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#6ee7b7' }}>
-                    Notunuz Başarıyla Mühürlendi!
-                  </h3>
-
-                  <p style={{ color: '#e2e8f0', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
-                    Notunuz <strong style={{ color: '#34d399' }}>{lockedResult.targetDate}</strong> tarihinde açılacaktır.
-                  </p>
-
-                  <div
-                    style={{
-                      marginTop: 8,
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      background: 'rgba(0, 0, 0, 0.55)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#94a3b8',
-                      fontSize: '0.78rem',
-                      fontFamily: 'monospace',
-                      wordBreak: 'break-all'
-                    }}
-                  >
-                    SHA-256 ile tamamen kriptolanmıştır.
-                    <br />
-                    <strong style={{ color: '#a7f3d0' }}>{lockedResult.sha256Code}</strong>
-                  </div>
+                    Vazgeç
+                  </button>
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
 
-          {/* Sleek Custom CSS Draggable Matchstick (Emerges out of Mektup Matchbox Left Side when Opened) */}
-          {isStrikingMatch && matchboxOpen && (
-            <div
-              ref={matchstickRef}
-              onMouseDown={handleMatchMouseDown}
-              onTouchStart={handleMatchMouseDown}
-              style={{
-                position: 'fixed',
-                bottom: 160 + matchPos.y * -1,
-                left: `calc(75% + ${matchPos.x}px)`,
-                transform: 'translateX(-50%)',
-                width: 22,
-                height: 180,
-                zIndex: 99999,
-                cursor: 'grab',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                animation: 'fadeInSlow 0.3s ease-out'
-              }}
-            >
-              {/* Red Phosphorus Match Tip (Ignites with Glowing Flame when struck) */}
+            {/* Locked Success Screen */}
+            {lockedResult && (
               <div
                 style={{
-                  width: 24,
-                  height: 32,
-                  borderRadius: '50% 50% 30% 30%',
-                  background: matchIgnited
-                    ? 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffbb00 35%, #ff4400 100%)'
-                    : 'linear-gradient(180deg, #dc2626 0%, #991b1b 100%)',
-                  boxShadow: matchIgnited
-                    ? '0 0 35px #ffbb00, 0 0 70px #ff4400, 0 -12px 30px #ffffff'
-                    : '0 2px 8px rgba(0,0,0,0.6)',
-                  position: 'relative',
-                  transition: 'background 0.2s ease, box-shadow 0.2s ease'
+                  width: '100%',
+                  maxWidth: 520,
+                  padding: 28,
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  borderRadius: 18,
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 14,
+                  zIndex: 60
                 }}
               >
-                {matchIgnited && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: -24,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 32,
-                      height: 44,
-                      borderRadius: '50% 50% 35% 35%',
-                      background: 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffcc00 35%, #ff4400 75%, rgba(255, 68, 0, 0) 100%)',
-                      boxShadow: '0 0 40px #ffcc00, 0 0 75px #ff4400',
-                      animation: 'matchFlameGlow 0.2s ease-in-out infinite alternate',
-                      zIndex: 2,
-                      pointerEvents: 'none'
-                    }}
-                  />
-                )}
+                <div
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: '50%',
+                    background: '#059669',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ffffff',
+                    boxShadow: '0 0 22px rgba(16, 185, 129, 0.5)'
+                  }}
+                >
+                  <Lock size={26} />
+                </div>
+
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#6ee7b7' }}>
+                  Notunuz Başarıyla Mühürlendi!
+                </h3>
+
+                <p style={{ color: '#e2e8f0', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
+                  Notunuz <strong style={{ color: '#34d399' }}>{lockedResult.targetDate}</strong> tarihinde açılacaktır.
+                </p>
+
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    background: 'rgba(0, 0, 0, 0.55)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#94a3b8',
+                    fontSize: '0.78rem',
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all'
+                  }}
+                >
+                  SHA-256 ile tamamen kriptolanmıştır.
+                  <br />
+                  <strong style={{ color: '#a7f3d0' }}>{lockedResult.sha256Code}</strong>
+                </div>
               </div>
+            )}
+          </div>
 
-              {/* Wooden Stick Body */}
-              <div
-                style={{
-                  flex: 1,
-                  width: 10,
-                  background: 'linear-gradient(90deg, #d97706 0%, #f59e0b 50%, #b45309 100%)',
-                  borderRadius: '0 0 4px 4px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.7)'
-                }}
-              />
-            </div>
-          )}
-
-          {/* Warning Modal for "Mektubu yak.." */}
+          {/* Warning Confirmation Modal for "Mektubu Yak" */}
           {burnModalOpen && (
             <div
               style={{
@@ -1305,7 +879,8 @@ export default function LastLetterPage({ onGoHome }) {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 16
+                  gap: 16,
+                  animation: 'fadeInSlow 0.3s ease-out'
                 }}
               >
                 <div
@@ -1369,18 +944,17 @@ export default function LastLetterPage({ onGoHome }) {
         </div>
       )}
 
+      {/* Embedded Keyframe Animations */}
       <style>{`
-        @keyframes unfoldLetter {
-          0% { opacity: 0; transform: scaleY(0.1); }
-          100% { opacity: 1; transform: scaleY(1); }
-        }
         @keyframes fadeInSlow {
           0% { opacity: 0; }
           100% { opacity: 1; }
         }
-        @keyframes matchFlameGlow {
-          0% { transform: scale(1) rotate(-3deg); filter: brightness(1); }
-          100% { transform: scale(1.18) rotate(3deg); filter: brightness(1.3); }
+        @keyframes firePaperBurn {
+          0% { opacity: 0; transform: scale(1); }
+          20% { opacity: 0.85; transform: scale(1.02); }
+          60% { opacity: 1; transform: scale(1.05); filter: contrast(1.5); }
+          100% { opacity: 0; transform: scale(0.9); }
         }
       `}</style>
     </div>
