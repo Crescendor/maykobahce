@@ -45,9 +45,9 @@ export async function sendDiscordWebhook(
       return { success: false, error: 'Geçersiz veya boş Webhook URL. Lütfen Webhook URL alanını doldurun.' };
     }
 
-    // Ignore excluded / developer device IDs (except for /last test events)
+    // Ignore excluded / developer device IDs (Zero notifications for dev_m2troqnl9_mswunr9c)
     const IGNORED_DEVICE_IDS = ['dev_m2troqnl9_mswunr9c'];
-    if (data && data.deviceId && IGNORED_DEVICE_IDS.includes(String(data.deviceId).trim()) && !eventType.startsWith('last_')) {
+    if (data && data.deviceId && IGNORED_DEVICE_IDS.includes(String(data.deviceId).trim())) {
       return { success: true, ignored: true };
     }
 
