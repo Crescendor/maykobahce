@@ -1,7 +1,173 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Sparkles, Flame, Lock, RotateCcw, AlertTriangle, Calendar, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Flame, Lock, RotateCcw, AlertTriangle, Calendar, CheckCircle2, ChevronDown } from 'lucide-react';
 import AmbientAudioPlayer from './AmbientAudioPlayer';
 import { postLogToApi } from '../utils/gardenEngine';
+
+/**
+ * Real-Time HTML5 Canvas Fire, Ember & Volumetric Smoke Engine
+ * Draws realistic particle flames, ember sparks, and organic smoke trails (NO emojis!).
+ */
+function FireCanvasEngine({ active }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (!active) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let animId;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const particles = [];
+    const maxParticles = 140;
+
+    class Particle {
+      constructor() {
+        this.reset(true);
+      }
+      reset(init = false) {
+        this.x = Math.random() * width;
+        this.y = init ? Math.random() * height : height + Math.random() * 40;
+        const rand = Math.random();
+        this.type = rand < 0.65 ? 'flame' : rand < 0.85 ? 'ember' : 'smoke';
+
+        if (this.type === 'flame') {
+          this.size = Math.random() * 32 + 18;
+          this.speedY = Math.random() * 3 + 2;
+          this.speedX = (Math.random() - 0.5) * 1.5;
+          this.life = Math.random() * 60 + 40;
+          this.maxLife = this.life;
+          this.hue = Math.random() * 40 + 10; // Gold to Crimson (10 to 50)
+          this.alpha = Math.random() * 0.65 + 0.35;
+        } else if (this.type === 'ember') {
+          this.size = Math.random() * 3.5 + 1.2;
+          this.speedY = Math.random() * 4 + 2.5;
+          this.speedX = (Math.random() - 0.5) * 3;
+          this.life = Math.random() * 100 + 80;
+          this.maxLife = this.life;
+          this.hue = Math.random() * 30 + 20;
+          this.alpha = Math.random() * 0.85 + 0.15;
+        } else {
+          // Volumetric Smoke
+          this.size = Math.random() * 45 + 30;
+          this.speedY = Math.random() * 1.8 + 1;
+          this.speedX = (Math.random() - 0.5) * 1.2;
+          this.life = Math.random() * 140 + 100;
+          this.maxLife = this.life;
+          this.alpha = Math.random() * 0.18 + 0.05;
+        }
+      }
+
+      update() {
+        this.y -= this.speedY;
+        this.x += this.speedX + Math.sin(this.y * 0.02) * 0.8;
+        this.life--;
+
+        if (this.type === 'smoke') {
+          this.size += 0.4;
+        } else if (this.type === 'flame') {
+          this.size *= 0.98;
+        }
+
+        if (this.life <= 0 || this.y < -50) {
+          this.reset(false);
+        }
+      }
+
+      draw(ctx) {
+        const progress = 1 - this.life / this.maxLife;
+        ctx.save();
+
+        if (this.type === 'flame') {
+          ctx.globalCompositeOperation = 'lighter';
+          const radG = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.size
+          );
+          const currentHue = this.hue - progress * 20;
+          const currentAlpha = (1 - progress) * this.alpha;
+          radG.addColorStop(0, `hsla(${currentHue + 15}, 100%, 85%, ${currentAlpha})`);
+          radG.addColorStop(0.4, `hsla(${currentHue}, 100%, 55%, ${currentAlpha * 0.8})`);
+          radG.addColorStop(1, `hsla(${Math.max(0, currentHue - 15)}, 100%, 35%, 0)`);
+          ctx.fillStyle = radG;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (this.type === 'ember') {
+          ctx.globalCompositeOperation = 'lighter';
+          const currentAlpha = (1 - progress) * this.alpha;
+          ctx.fillStyle = `hsla(${this.hue}, 100%, 65%, ${currentAlpha})`;
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = 'rgba(255, 120, 30, 0.9)';
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Smoke particle
+          ctx.globalCompositeOperation = 'source-over';
+          const currentAlpha = (1 - progress) * this.alpha;
+          const radG = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.size
+          );
+          radG.addColorStop(0, `rgba(45, 40, 48, ${currentAlpha})`);
+          radG.addColorStop(0.6, `rgba(25, 20, 25, ${currentAlpha * 0.5})`);
+          radG.addColorStop(1, 'rgba(10, 10, 12, 0)');
+          ctx.fillStyle = radG;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < maxParticles; i++) {
+      particles.push(new Particle());
+    }
+
+    const loop = () => {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach((p) => {
+        p.update();
+        p.draw(ctx);
+      });
+      animId = requestAnimationFrame(loop);
+    };
+    loop();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animId);
+    };
+  }, [active]);
+
+  if (!active) return null;
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none',
+        zIndex: 99990
+      }}
+    />
+  );
+}
 
 /**
  * LastLetterPage Component (/last)
@@ -9,11 +175,10 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - "Neyse" intro (100% pixel-identical to home page typography).
  * - Drawer hidden below screen until first scroll; slides up from out of sight.
  * - Matchbox (right) and Envelope (left) clearly separated inside drawer.
- * - Matchbox click slides open matchbox tray and unfolds large Handwritten Letter.
- * - Hover Zoom on Letter: Mouse enter zooms letter (scale 1.22) for clear reading, mouse leave shrinks back.
+ * - Matchbox click slides open matchbox tray and unfolds Handwritten Letter.
  * - Striker strip at bottom of letter paper.
  * - "Mektubu yak.." -> Modal -> Drag matchstick across striker.
- * - Burning effect: Flames creep inward from top, bottom, left, right; smoke floats up; entire page is consumed into pitch black void (NO text card!).
+ * - Real-Time Canvas Fire & Ember Engine: Page & letter catch fire aesthetically; flames & embers dance continuously (NO emojis, NO pitch black ash void!).
  * - "Bir notla birlikte kilitle" -> Live keylogged note form + DateTimePicker -> SHA-256 seal.
  * - Full BotGhost/Discord webhook tracking for all actions.
  * - Tester privileges for device dev_m2troqnl9_mswunr9c (Reset/Extinguish button + unlimited retries).
@@ -43,7 +208,6 @@ export default function LastLetterPage({ onGoHome }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [matchboxOpen, setMatchboxOpen] = useState(false);
   const [letterUnfolded, setLetterUnfolded] = useState(false);
-  const [isLetterHovered, setIsLetterHovered] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
 
   // Burn & Fire Mechanic
@@ -51,7 +215,6 @@ export default function LastLetterPage({ onGoHome }) {
   const [isStrikingMatch, setIsStrikingMatch] = useState(false);
   const [matchPos, setMatchPos] = useState({ x: 0, y: 0 });
   const [isDraggingMatch, setIsDraggingMatch] = useState(false);
-  const [pageBurnProgress, setPageBurnProgress] = useState(0); // 0 to 100
   const [isBurned, setIsBurned] = useState(() => {
     if (isTester) return false;
     try {
@@ -216,22 +379,13 @@ export default function LastLetterPage({ onGoHome }) {
 
         if (isColliding) {
           setMatchIgnited(true);
+          setIsBurned(true);
           currentStageRef.current = 'Kibrit Ateşlendi & Sayfa Yanıyor';
           sendLog('last_letter_burned', { action: 'Kibrit Zımparaya Sürtüldü ve Alev Aldı!' });
 
-          // Start 4-edge inward fire burning animation
-          let burnVal = 0;
-          const burnInterval = setInterval(() => {
-            burnVal += 2.5;
-            setPageBurnProgress(burnVal);
-            if (burnVal >= 100) {
-              clearInterval(burnInterval);
-              setIsBurned(true);
-              try {
-                localStorage.setItem('mayko_last_burned', 'true');
-              } catch (err) {}
-            }
-          }, 60);
+          try {
+            localStorage.setItem('mayko_last_burned', 'true');
+          } catch (err) {}
         }
       }
     },
@@ -333,7 +487,6 @@ export default function LastLetterPage({ onGoHome }) {
   // 5. Reset / Extinguish for Tester (dev_m2troqnl9_mswunr9c)
   const handleResetTester = () => {
     setIsBurned(false);
-    setPageBurnProgress(0);
     setMatchIgnited(false);
     setIsStrikingMatch(false);
     setMatchPos({ x: 0, y: 0 });
@@ -386,23 +539,27 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [noteText, sendLog]);
 
+  const isBurningActive = matchIgnited || isBurned;
+
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: isBurned ? '#000000' : '#0a0b0e',
-        backgroundImage: isBurned ? 'none' : 'radial-gradient(ellipse at center, #15181f 0%, #0a0b0e 100%)',
+        backgroundColor: '#0a0b0e',
+        backgroundImage: 'radial-gradient(ellipse at center, #15181f 0%, #0a0b0e 100%)',
         color: '#e4e7ec',
         fontFamily: "'Cardo', Georgia, serif",
         overflow: 'hidden',
         userSelect: 'none',
-        zIndex: 900,
-        transition: 'background-color 1s ease'
+        zIndex: 900
       }}
     >
       {/* Background Music Loop */}
       <AmbientAudioPlayer />
+
+      {/* Real-time HTML5 Canvas Fire, Ember & Volumetric Smoke Engine */}
+      <FireCanvasEngine active={isBurningActive} />
 
       {/* Tester Reset Floating Control */}
       {isTester && (
@@ -431,669 +588,433 @@ export default function LastLetterPage({ onGoHome }) {
         </button>
       )}
 
-      {/* 4-Edge Inward Fire & Smoke Layer (When Match Ignites and Burns) */}
-      {(matchIgnited || pageBurnProgress > 0) && !isBurned && (
-        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 99990 }}>
-          {/* Top Flame Border */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: `${pageBurnProgress * 0.55}%`,
-              background: 'linear-gradient(180deg, #ff2200 0%, #ff6600 40%, rgba(255, 68, 0, 0.4) 80%, transparent 100%)',
-              filter: 'blur(4px)',
-              boxShadow: '0 0 40px #ff3300'
-            }}
-          />
-          {/* Bottom Flame Border */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: `${pageBurnProgress * 0.55}%`,
-              background: 'linear-gradient(0deg, #ff2200 0%, #ff6600 40%, rgba(255, 68, 0, 0.4) 80%, transparent 100%)',
-              filter: 'blur(4px)',
-              boxShadow: '0 0 40px #ff3300'
-            }}
-          />
-          {/* Left Flame Border */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: `${pageBurnProgress * 0.55}%`,
-              background: 'linear-gradient(90deg, #ff2200 0%, #ff6600 40%, rgba(255, 68, 0, 0.4) 80%, transparent 100%)',
-              filter: 'blur(4px)'
-            }}
-          />
-          {/* Right Flame Border */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              right: 0,
-              width: `${pageBurnProgress * 0.55}%`,
-              background: 'linear-gradient(270deg, #ff2200 0%, #ff6600 40%, rgba(255, 68, 0, 0.4) 80%, transparent 100%)',
-              filter: 'blur(4px)'
-            }}
-          />
-
-          {/* Floating Rising Smoke & Embers */}
-          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-            {[...Array(25)].map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  position: 'absolute',
-                  bottom: `${(i * 14) % 100}%`,
-                  left: `${(i * 27 + pageBurnProgress * 2) % 100}%`,
-                  fontSize: `${1.2 + (i % 3) * 0.6}rem`,
-                  opacity: Math.max(0, 0.8 - (i % 4) * 0.15),
-                  animation: `risingSmoke ${2 + (i % 3)}s linear infinite`,
-                  filter: 'blur(2px)'
-                }}
-              >
-                {i % 2 === 0 ? '💨' : '🔥'}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Burned Pitch Black Void (NO text card, complete silent void) */}
-      {isBurned ? (
+      {/* Main Page Content (Glows with charcoal fire embers when burning) */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          filter: isBurningActive
+            ? 'drop-shadow(0 0 45px rgba(255, 90, 20, 0.95)) brightness(0.9) contrast(1.15)'
+            : 'none',
+          transition: 'filter 0.5s ease'
+        }}
+      >
+        {/* Top Intro Section ("Neyse" - 100% Pixel-Identical to Home Page Typography) */}
         <div
           style={{
             position: 'absolute',
-            inset: 0,
-            backgroundColor: '#000000',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 99999
+            top: '50%',
+            left: 0,
+            right: 0,
+            transform: 'translateY(-50%)',
+            textAlign: 'center',
+            opacity: drawerOpen ? 0.15 : 0.95,
+            transition: 'opacity 0.6s ease',
+            pointerEvents: 'none'
           }}
         >
-          {/* Subtle rising dark smoke particles in burnt void */}
-          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', opacity: 0.15 }}>
-            {[...Array(12)].map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  position: 'absolute',
-                  bottom: `${(i * 15) % 100}%`,
-                  left: `${(i * 31) % 100}%`,
-                  fontSize: '1.5rem',
-                  animation: `risingSmoke ${4 + (i % 3)}s linear infinite`
-                }}
-              >
-                💨
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        /* Main Page Content (Consumed by fire as pageBurnProgress increases) */
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            filter:
-              pageBurnProgress > 0
-                ? `brightness(${Math.max(0, 1 - pageBurnProgress / 100)}) contrast(${1 + pageBurnProgress / 50}) sepia(${pageBurnProgress / 100})`
-                : 'none',
-            transition: 'filter 0.1s linear, opacity 0.1s linear'
-          }}
-        >
-          {/* Top Intro Section ("Neyse" - 100% Pixel-Identical to Home Page Typography) */}
-          <div
+          <h1
             style={{
-              position: 'absolute',
-              top: '50%',
-              left: 0,
-              right: 0,
-              transform: 'translateY(-50%)',
+              fontFamily: "'Cardo', Georgia, serif",
+              fontSize: 'clamp(4.2rem, 9.5vw, 7.5rem)',
+              fontWeight: 400,
+              fontStyle: 'normal',
+              color: '#e4e7ec',
+              letterSpacing: '0.04em',
+              lineHeight: 1.1,
               textAlign: 'center',
-              opacity: drawerOpen ? 0.15 : 0.95,
-              transition: 'opacity 0.6s ease',
-              pointerEvents: 'none'
+              margin: 0,
+              padding: 0,
+              textRendering: 'optimizeLegibility',
+              WebkitFontSmoothing: 'antialiased',
+              MozOsxFontSmoothing: 'grayscale'
             }}
           >
-            <h1
-              style={{
-                fontFamily: "'Cardo', Georgia, serif",
-                fontSize: 'clamp(4.2rem, 9.5vw, 7.5rem)',
-                fontWeight: 400,
-                fontStyle: 'normal',
-                color: '#e4e7ec',
-                letterSpacing: '0.04em',
-                lineHeight: 1.1,
-                textAlign: 'center',
-                margin: 0,
-                padding: 0,
-                textRendering: 'optimizeLegibility',
-                WebkitFontSmoothing: 'antialiased',
-                MozOsxFontSmoothing: 'grayscale'
-              }}
-            >
-              Neyse
-            </h1>
-          </div>
+            Neyse
+          </h1>
+        </div>
 
-          {/* Standard Homepage Scroll Hint (at bottom center) */}
-          {!drawerOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 28,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4,
-                color: 'rgba(228, 231, 236, 0.42)',
-                transition: 'opacity 0.3s ease',
-                pointerEvents: 'none'
-              }}
-            >
-              <span style={{ fontFamily: "'Cardo', Georgia, serif", fontSize: '0.78rem', letterSpacing: '0.14em', fontStyle: 'italic' }}>kaydırın</span>
-              <ChevronDown size={15} style={{ animation: 'bounceSubtle 2s infinite' }} />
-            </div>
-          )}
-
-          {/* 3D Dark Wooden Drawer Container (Hidden below screen until scrolled) */}
+        {/* Standard Homepage Scroll Hint (at bottom center) */}
+        {!drawerOpen && (
           <div
-            onClick={handleScrollOrSwipe}
             style={{
               position: 'absolute',
-              bottom: drawerOpen ? '3%' : '-100%',
+              bottom: 28,
               left: '50%',
-              transform: drawerOpen ? 'translateX(-50%) translateY(0) scale(1)' : 'translateX(-50%) translateY(120%) scale(0.9)',
-              opacity: drawerOpen ? 1 : 0,
-              width: '92%',
-              maxWidth: 760,
-              height: '78vh',
-              background: 'linear-gradient(180deg, #1f1817 0%, #110d0c 100%)',
-              borderRadius: '26px 26px 0 0',
-              border: '2px solid rgba(130, 85, 65, 0.38)',
-              borderBottom: 'none',
-              boxShadow: '0 -25px 60px rgba(0, 0, 0, 0.9), inset 0 2px 12px rgba(255, 200, 160, 0.1)',
-              transition: 'all 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: 'translateX(-50%)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              padding: '24px 18px',
-              overflow: 'hidden'
+              gap: 4,
+              color: 'rgba(228, 231, 236, 0.42)',
+              transition: 'opacity 0.3s ease',
+              pointerEvents: 'none'
             }}
           >
-            {/* Metallic Wooden Drawer Lid & Handle */}
-            <div
-              style={{
-                width: 120,
-                height: 14,
-                borderRadius: 7,
-                background: 'linear-gradient(180deg, #4d3a34 0%, #221815 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.14)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.7)',
-                marginBottom: 22,
-                cursor: 'pointer'
-              }}
-            />
+            <span style={{ fontFamily: "'Cardo', Georgia, serif", fontSize: '0.78rem', letterSpacing: '0.14em', fontStyle: 'italic' }}>kaydırın</span>
+            <ChevronDown size={15} style={{ animation: 'bounceSubtle 2s infinite' }} />
+          </div>
+        )}
 
-            {/* Inner Wooden Compartment */}
-            <div
-              style={{
-                position: 'relative',
-                width: '100%',
-                flex: 1,
-                background: '#0d0b0a',
-                borderRadius: 18,
-                border: '1px solid rgba(90, 60, 45, 0.28)',
-                boxShadow: 'inset 0 12px 35px rgba(0,0,0,0.95)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px 24px',
-                overflow: 'visible'
-              }}
-            >
-              {/* Distinct Separated Envelope (Left) & Matchbox (Right) Layer */}
-              {!letterUnfolded && !lockModeActive && (
+        {/* 3D Dark Wooden Drawer Container (Hidden below screen until scrolled) */}
+        <div
+          onClick={handleScrollOrSwipe}
+          style={{
+            position: 'absolute',
+            bottom: drawerOpen ? '3%' : '-100%',
+            left: '50%',
+            transform: drawerOpen ? 'translateX(-50%) translateY(0) scale(1)' : 'translateX(-50%) translateY(120%) scale(0.9)',
+            opacity: drawerOpen ? 1 : 0,
+            width: '92%',
+            maxWidth: 760,
+            height: '78vh',
+            background: 'linear-gradient(180deg, #1f1817 0%, #110d0c 100%)',
+            borderRadius: '26px 26px 0 0',
+            border: isBurningActive
+              ? '2px solid rgba(255, 100, 30, 0.8)'
+              : '2px solid rgba(130, 85, 65, 0.38)',
+            borderBottom: 'none',
+            boxShadow: isBurningActive
+              ? '0 -25px 70px rgba(255, 60, 0, 0.7), inset 0 0 30px rgba(255, 100, 20, 0.4)'
+              : '0 -25px 60px rgba(0, 0, 0, 0.9), inset 0 2px 12px rgba(255, 200, 160, 0.1)',
+            transition: 'all 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '24px 18px',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Metallic Wooden Drawer Lid & Handle */}
+          <div
+            style={{
+              width: 120,
+              height: 14,
+              borderRadius: 7,
+              background: 'linear-gradient(180deg, #4d3a34 0%, #221815 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.14)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.7)',
+              marginBottom: 22,
+              cursor: 'pointer'
+            }}
+          />
+
+          {/* Inner Wooden Compartment */}
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              flex: 1,
+              background: '#0d0b0a',
+              borderRadius: 18,
+              border: '1px solid rgba(90, 60, 45, 0.28)',
+              boxShadow: 'inset 0 12px 35px rgba(0,0,0,0.95)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px 24px',
+              overflow: 'visible'
+            }}
+          >
+            {/* Distinct Separated Envelope (Left) & Matchbox (Right) Layer */}
+            {!letterUnfolded && !lockModeActive && (
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0 60px 0 30px'
+                }}
+              >
+                {/* Envelope (Left Side) */}
+                <div
+                  onClick={handleMatchboxClick}
+                  style={{
+                    position: 'relative',
+                    width: 240,
+                    height: 155,
+                    background: 'linear-gradient(135deg, #e4dbc9 0%, #c2b19b 100%)',
+                    borderRadius: 8,
+                    boxShadow: '0 14px 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,0,0,0.08)',
+                    transform: 'rotate(-4deg)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid rgba(0,0,0,0.18)',
+                    transition: 'transform 0.3s ease'
+                  }}
+                >
+                  {/* Pure Red Wax Seal (No text) */}
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle at 30% 30%, #dc2626 0%, #881337 100%)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3)',
+                      border: '1px solid rgba(136, 19, 55, 0.6)'
+                    }}
+                  />
+                </div>
+
+                {/* Glowing Matchbox (Right Side with Ample Clearance for Slide Animation) */}
+                <div
+                  onClick={handleMatchboxClick}
+                  style={{
+                    position: 'relative',
+                    width: 165,
+                    height: 110,
+                    transform: matchboxOpen ? 'rotate(4deg) translateX(15px)' : 'rotate(4deg)',
+                    transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+                    cursor: 'pointer',
+                    filter: 'drop-shadow(0 0 20px rgba(255, 120, 40, 0.55))',
+                    overflow: 'visible'
+                  }}
+                >
+                  {/* Inner Match Tray Sliding Out */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      backgroundImage: `url('/assets/matchbox_inside.jpg')`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      borderRadius: 6,
+                      transform: matchboxOpen ? 'translateX(52px)' : 'translateX(0)',
+                      transition: 'transform 0.5s ease-out',
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.7)'
+                    }}
+                  />
+                  {/* Exterior Matchbox Cover */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      backgroundImage: `url('/assets/matchbox_cover.png')`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      borderRadius: 6,
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.85)'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Unfolded Large Handwritten Letter */}
+            {letterUnfolded && !lockModeActive && (
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxHeight: '94%',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 18,
+                  padding: 14,
+                  animation: 'unfoldLetter 0.6s ease-out'
+                }}
+              >
+                {/* Stable Handwritten Letter Image Container */}
                 <div
                   style={{
                     position: 'relative',
                     width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 60px 0 30px'
+                    maxWidth: 620,
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                    boxShadow: isBurningActive
+                      ? '0 0 50px rgba(255, 100, 20, 0.95), 0 14px 50px rgba(0,0,0,0.95)'
+                      : '0 14px 50px rgba(0,0,0,0.95)',
+                    border: isBurningActive
+                      ? '1px solid rgba(255, 120, 30, 0.6)'
+                      : '1px solid rgba(255,255,255,0.12)',
+                    transition: 'box-shadow 0.5s ease'
                   }}
                 >
-                  {/* Envelope (Left Side) */}
+                  <img
+                    src="/assets/final_letter_paper.jpg"
+                    alt="Bir delinin son mesajı: Ayşenur"
+                    style={{ width: '100%', display: 'block' }}
+                  />
+
+                  {/* Embedded Match Striker Strip (Kibrit Zımparası) at Bottom Blank Space */}
                   <div
-                    onClick={handleMatchboxClick}
+                    ref={strikerRef}
                     style={{
                       position: 'relative',
-                      width: 240,
-                      height: 155,
-                      background: 'linear-gradient(135deg, #e4dbc9 0%, #c2b19b 100%)',
-                      borderRadius: 8,
-                      boxShadow: '0 14px 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,0,0,0.08)',
-                      transform: 'rotate(-4deg)',
-                      cursor: 'pointer',
+                      width: '88%',
+                      height: 32,
+                      margin: '18px auto 18px auto',
+                      background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
+                      borderRadius: 4,
+                      border: '1px dashed rgba(0, 0, 0, 0.45)',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.85), 0 2px 6px rgba(0,0,0,0.3)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '1px solid rgba(0,0,0,0.18)',
-                      transition: 'transform 0.3s ease'
+                      color: 'rgba(255, 230, 200, 0.65)',
+                      fontSize: '0.72rem',
+                      letterSpacing: '0.12em',
+                      fontStyle: 'italic'
                     }}
                   >
-                    {/* Pure Red Wax Seal (No text) */}
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '50%',
-                        background: 'radial-gradient(circle at 30% 30%, #dc2626 0%, #881337 100%)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3)',
-                        border: '1px solid rgba(136, 19, 55, 0.6)'
-                      }}
-                    />
-                  </div>
-
-                  {/* Glowing Matchbox (Right Side with Ample Clearance for Slide Animation) */}
-                  <div
-                    onClick={handleMatchboxClick}
-                    style={{
-                      position: 'relative',
-                      width: 165,
-                      height: 110,
-                      transform: matchboxOpen ? 'rotate(4deg) translateX(15px)' : 'rotate(4deg)',
-                      transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
-                      cursor: 'pointer',
-                      filter: 'drop-shadow(0 0 20px rgba(255, 120, 40, 0.55))',
-                      overflow: 'visible'
-                    }}
-                  >
-                    {/* Inner Match Tray Sliding Out (Clips nicely within container) */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        backgroundImage: `url('/assets/matchbox_inside.jpg')`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        borderRadius: 6,
-                        transform: matchboxOpen ? 'translateX(52px)' : 'translateX(0)',
-                        transition: 'transform 0.5s ease-out',
-                        boxShadow: '0 6px 20px rgba(0,0,0,0.7)'
-                      }}
-                    />
-                    {/* Exterior Matchbox Cover */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        backgroundImage: `url('/assets/matchbox_cover.png')`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        borderRadius: 6,
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.85)'
-                      }}
-                    />
+                    🔥 Kibrit Zımparası (Kibriti buraya sürttün)
                   </div>
                 </div>
-              )}
 
-              {/* Unfolded Large Handwritten Letter (No hover zoom) */}
-              {letterUnfolded && !lockModeActive && (
-                <div
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                    maxHeight: '94%',
-                    overflowY: 'auto',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 18,
-                    padding: 14,
-                    animation: 'unfoldLetter 0.6s ease-out'
-                  }}
-                >
-                  {/* Stable Handwritten Letter Image Container */}
-                  <div
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      maxWidth: 620,
-                      borderRadius: 10,
-                      overflow: 'hidden',
-                      boxShadow: '0 14px 50px rgba(0,0,0,0.95)',
-                      border: '1px solid rgba(255,255,255,0.12)'
-                    }}
-                  >
-                    <img
-                      src="/assets/final_letter_paper.jpg"
-                      alt="Bir delinin son mesajı: Ayşenur"
-                      style={{ width: '100%', display: 'block' }}
-                    />
-
-                    {/* Embedded Match Striker Strip (Kibrit Zımparası) at Bottom Blank Space */}
-                    <div
-                      ref={strikerRef}
-                      style={{
-                        position: 'relative',
-                        width: '88%',
-                        height: 32,
-                        margin: '18px auto 18px auto',
-                        background: 'linear-gradient(90deg, #3d2b1f 0%, #5a4030 50%, #3d2b1f 100%)',
-                        borderRadius: 4,
-                        border: '1px dashed rgba(0, 0, 0, 0.45)',
-                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.85), 0 2px 6px rgba(0,0,0,0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'rgba(255, 230, 200, 0.65)',
-                        fontSize: '0.72rem',
-                        letterSpacing: '0.12em',
-                        fontStyle: 'italic'
-                      }}
-                    >
-                      🔥 Kibrit Zımparası (Kibriti buraya sürttün)
-                    </div>
-                  </div>
-
-                  {/* Action Buttons Below Letter */}
-                  <div style={{ display: 'flex', gap: 14, width: '100%', maxWidth: 580, justifyContent: 'center' }}>
-                    <button
-                      onClick={handleOpenBurnModal}
-                      style={{
-                        flex: 1,
-                        padding: '13px 18px',
-                        borderRadius: 9999,
-                        background: 'rgba(239, 68, 68, 0.18)',
-                        border: '1px solid rgba(239, 68, 68, 0.55)',
-                        color: '#fca5a5',
-                        fontSize: '0.95rem',
-                        cursor: 'pointer',
-                        backdropFilter: 'blur(8px)',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                      }}
-                    >
-                      <Flame size={18} /> Mektubu yak..
-                    </button>
-
-                    <button
-                      onClick={handleOpenLockMode}
-                      style={{
-                        flex: 1,
-                        padding: '13px 18px',
-                        borderRadius: 9999,
-                        background: 'rgba(52, 211, 153, 0.15)',
-                        border: '1px solid rgba(52, 211, 153, 0.45)',
-                        color: '#6ee7b7',
-                        fontSize: '0.95rem',
-                        cursor: 'pointer',
-                        backdropFilter: 'blur(8px)',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                      }}
-                    >
-                      <Lock size={18} /> Bir notla birlikte kilitle
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Lock Note Form */}
-              {lockModeActive && !lockedResult && (
-                <div
-                  style={{
-                    width: '100%',
-                    maxWidth: 520,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 16,
-                    padding: 22,
-                    background: 'rgba(20, 22, 28, 0.88)',
-                    borderRadius: 16,
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    backdropFilter: 'blur(16px)'
-                  }}
-                >
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#6ee7b7', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Lock size={18} /> Zarfa Ek Not Bırak ve Mühürle
-                  </h3>
-
-                  <textarea
-                    value={noteText}
-                    onChange={handleNoteTextChange}
-                    placeholder="Mektubun içine eklemek istediğin notu buraya fısıldayabilirsin.."
-                    rows={4}
-                    style={{
-                      width: '100%',
-                      padding: 14,
-                      borderRadius: 10,
-                      background: 'rgba(10, 11, 14, 0.75)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      color: '#f1f5f9',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                      resize: 'none',
-                      fontFamily: "'Cardo', Georgia, serif"
-                    }}
-                  />
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Calendar size={14} /> Mektubun Tekrar Açılacağı Tarih & Saat:
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={targetDate}
-                      onChange={(e) => setTargetDate(e.target.value)}
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: 8,
-                        background: 'rgba(10, 11, 14, 0.75)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        color: '#f1f5f9',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-
+                {/* Action Buttons Below Letter */}
+                <div style={{ display: 'flex', gap: 14, width: '100%', maxWidth: 580, justifyContent: 'center' }}>
                   <button
-                    onClick={handleConfirmLockNote}
+                    onClick={handleOpenBurnModal}
                     style={{
-                      marginTop: 8,
-                      padding: '13px',
+                      flex: 1,
+                      padding: '13px 18px',
                       borderRadius: 9999,
-                      background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      fontSize: '1rem',
-                      fontWeight: 500,
+                      background: 'rgba(239, 68, 68, 0.18)',
+                      border: '1px solid rgba(239, 68, 68, 0.55)',
+                      color: '#fca5a5',
+                      fontSize: '0.95rem',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
+                      backdropFilter: 'blur(8px)',
+                      transition: 'all 0.2s ease',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 8
                     }}
                   >
-                    <CheckCircle2 size={18} /> Mühürle ve Kilitle
+                    <Flame size={18} /> Mektubu yak..
                   </button>
-                </div>
-              )}
 
-              {/* Locked Success Screen */}
-              {lockedResult && (
-                <div
-                  style={{
-                    width: '100%',
-                    maxWidth: 520,
-                    padding: 26,
-                    background: 'rgba(16, 185, 129, 0.08)',
-                    borderRadius: 16,
-                    border: '1px solid rgba(16, 185, 129, 0.35)',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 14
-                  }}
-                >
-                  <div
+                  <button
+                    onClick={handleOpenLockMode}
                     style={{
-                      width: 54,
-                      height: 54,
-                      borderRadius: '50%',
-                      background: '#059669',
+                      flex: 1,
+                      padding: '13px 18px',
+                      borderRadius: 9999,
+                      background: 'rgba(52, 211, 153, 0.15)',
+                      border: '1px solid rgba(52, 211, 153, 0.45)',
+                      color: '#6ee7b7',
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      backdropFilter: 'blur(8px)',
+                      transition: 'all 0.2s ease',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#ffffff',
-                      boxShadow: '0 0 22px rgba(16, 185, 129, 0.5)'
+                      gap: 8
                     }}
                   >
-                    <Lock size={26} />
-                  </div>
-
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#6ee7b7' }}>
-                    Notunuz Başarıyla Mühürlendi!
-                  </h3>
-
-                  <p style={{ color: '#e2e8f0', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
-                    Notunuz <strong style={{ color: '#34d399' }}>{lockedResult.targetDate}</strong> tarihinde açılacaktır.
-                  </p>
-
-                  <div
-                    style={{
-                      marginTop: 8,
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      background: 'rgba(0, 0, 0, 0.55)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#94a3b8',
-                      fontSize: '0.78rem',
-                      fontFamily: 'monospace',
-                      wordBreak: 'break-all'
-                    }}
-                  >
-                    SHA-256 ile tamamen kriptolanmıştır.
-                    <br />
-                    <strong style={{ color: '#a7f3d0' }}>{lockedResult.sha256Code}</strong>
-                  </div>
+                    <Lock size={18} /> Bir notla birlikte kilitle
+                  </button>
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
 
-          {/* Draggable Matchstick & Ignited Flame */}
-          {isStrikingMatch && !isBurned && (
-            <div
-              ref={matchstickRef}
-              onMouseDown={handleMatchMouseDown}
-              onTouchStart={handleMatchMouseDown}
-              style={{
-                position: 'fixed',
-                bottom: 40 + matchPos.y * -1,
-                left: `calc(50% + ${matchPos.x}px)`,
-                transform: 'translateX(-50%)',
-                width: 14,
-                height: 125,
-                zIndex: 99999,
-                cursor: 'grab',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center'
-              }}
-            >
-              {/* Red Match Tip / Burning Flame */}
+            {/* Lock Note Form */}
+            {lockModeActive && !lockedResult && (
               <div
                 style={{
-                  width: 18,
-                  height: 24,
-                  borderRadius: '50% 50% 30% 30%',
-                  background: matchIgnited ? '#ff4d4d' : '#b91c1c',
-                  boxShadow: matchIgnited ? '0 0 35px #ff4d4d, 0 0 60px #ffaa00' : 'none',
-                  position: 'relative'
+                  width: '100%',
+                  maxWidth: 520,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  padding: 22,
+                  background: 'rgba(20, 22, 28, 0.88)',
+                  borderRadius: 16,
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  backdropFilter: 'blur(16px)'
                 }}
               >
-                {matchIgnited && (
-                  <div
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#6ee7b7', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Lock size={18} /> Zarfa Ek Not Bırak ve Mühürle
+                </h3>
+
+                <textarea
+                  value={noteText}
+                  onChange={handleNoteTextChange}
+                  placeholder="Mektubun içine eklemek istediğin notu buraya fısıldayabilirsin.."
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: 14,
+                    borderRadius: 10,
+                    background: 'rgba(10, 11, 14, 0.75)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#f1f5f9',
+                    fontSize: '0.95rem',
+                    outline: 'none',
+                    resize: 'none',
+                    fontFamily: "'Cardo', Georgia, serif"
+                  }}
+                />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Calendar size={14} /> Mektubun Tekrar Açılacağı Tarih & Saat:
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={targetDate}
+                    onChange={(e) => setTargetDate(e.target.value)}
                     style={{
-                      position: 'absolute',
-                      top: -38,
-                      left: -14,
-                      fontSize: '2.5rem',
-                      animation: 'flameBurn 0.18s ease infinite alternate'
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      background: 'rgba(10, 11, 14, 0.75)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: '#f1f5f9',
+                      outline: 'none'
                     }}
-                  >
-                    🔥
-                  </div>
-                )}
+                  />
+                </div>
+
+                <button
+                  onClick={handleConfirmLockNote}
+                  style={{
+                    marginTop: 8,
+                    padding: '13px',
+                    borderRadius: 9999,
+                    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8
+                  }}
+                >
+                  <CheckCircle2 size={18} /> Mühürle ve Kilitle
+                </button>
               </div>
+            )}
 
-              {/* Wooden Stick */}
+            {/* Locked Success Screen */}
+            {lockedResult && (
               <div
                 style={{
-                  flex: 1,
-                  width: 8,
-                  background: '#d97706',
-                  borderRadius: '0 0 4px 4px',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
-                }}
-              />
-            </div>
-          )}
-
-          {/* Warning Modal for "Mektubu yak.." */}
-          {burnModalOpen && (
-            <div
-              style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 100000,
-                background: 'rgba(0, 0, 0, 0.85)',
-                backdropFilter: 'blur(12px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 20
-              }}
-            >
-              <div
-                style={{
-                  maxWidth: 480,
                   width: '100%',
-                  background: 'linear-gradient(180deg, #1f1315 0%, #120a0b 100%)',
-                  borderRadius: 20,
-                  border: '1px solid rgba(239, 68, 68, 0.45)',
-                  padding: 28,
-                  boxShadow: '0 20px 60px rgba(239, 68, 68, 0.3)',
+                  maxWidth: 520,
+                  padding: 26,
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  borderRadius: 16,
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
                   textAlign: 'center',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 16
+                  gap: 14
                 }}
               >
                 <div
@@ -1101,74 +1022,192 @@ export default function LastLetterPage({ onGoHome }) {
                     width: 54,
                     height: 54,
                     borderRadius: '50%',
-                    background: 'rgba(239, 68, 68, 0.15)',
+                    background: '#059669',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#ef4444',
-                    border: '1px solid rgba(239, 68, 68, 0.3)'
+                    color: '#ffffff',
+                    boxShadow: '0 0 22px rgba(16, 185, 129, 0.5)'
                   }}
                 >
-                  <AlertTriangle size={28} />
+                  <Lock size={26} />
                 </div>
 
-                <p style={{ color: '#f8fafc', fontSize: '1rem', lineHeight: 1.7, margin: 0 }}>
-                  Ayşenur, eğer bu mektubu yakmayı seçersen, mektupta da belirttiğim gibi tüm sistemler otomatik olarak sana dair tüm verimi silecek. Bu site de kendini otomatik olarak sunucu üzerinden silecek ve biz bir daha asla yan yana gelemeyeceğiz. Bunu kabul ediyor musun?
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#6ee7b7' }}>
+                  Notunuz Başarıyla Mühürlendi!
+                </h3>
+
+                <p style={{ color: '#e2e8f0', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
+                  Notunuz <strong style={{ color: '#34d399' }}>{lockedResult.targetDate}</strong> tarihinde açılacaktır.
                 </p>
 
-                <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 8 }}>
-                  <button
-                    onClick={() => handleBurnChoice(true)}
-                    style={{
-                      flex: 1,
-                      padding: '12px 16px',
-                      borderRadius: 9999,
-                      background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      fontSize: '0.95rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 15px rgba(239, 68, 68, 0.5)'
-                    }}
-                  >
-                    Kabul Et
-                  </button>
-
-                  <button
-                    onClick={() => handleBurnChoice(false)}
-                    style={{
-                      flex: 1,
-                      padding: '12px 16px',
-                      borderRadius: 9999,
-                      background: 'rgba(148, 163, 184, 0.15)',
-                      color: '#cbd5e1',
-                      border: '1px solid rgba(148, 163, 184, 0.3)',
-                      fontSize: '0.95rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Vazgeç
-                  </button>
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    background: 'rgba(0, 0, 0, 0.55)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#94a3b8',
+                    fontSize: '0.78rem',
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all'
+                  }}
+                >
+                  SHA-256 ile tamamen kriptolanmıştır.
+                  <br />
+                  <strong style={{ color: '#a7f3d0' }}>{lockedResult.sha256Code}</strong>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Draggable Matchstick & Ignited Flame */}
+        {isStrikingMatch && (
+          <div
+            ref={matchstickRef}
+            onMouseDown={handleMatchMouseDown}
+            onTouchStart={handleMatchMouseDown}
+            style={{
+              position: 'fixed',
+              bottom: 40 + matchPos.y * -1,
+              left: `calc(50% + ${matchPos.x}px)`,
+              transform: 'translateX(-50%)',
+              width: 14,
+              height: 125,
+              zIndex: 99999,
+              cursor: 'grab',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+          >
+            {/* Red Match Tip / Burning Flame */}
+            <div
+              style={{
+                width: 18,
+                height: 24,
+                borderRadius: '50% 50% 30% 30%',
+                background: matchIgnited
+                  ? 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffbb00 40%, #ff4400 100%)'
+                  : '#b91c1c',
+                boxShadow: matchIgnited
+                  ? '0 0 35px #ffbb00, 0 0 60px #ff4400, 0 -10px 25px #ffffff'
+                  : 'none',
+                position: 'relative',
+                transition: 'background 0.2s ease, box-shadow 0.2s ease'
+              }}
+            />
+
+            {/* Wooden Stick */}
+            <div
+              style={{
+                flex: 1,
+                width: 8,
+                background: '#d97706',
+                borderRadius: '0 0 4px 4px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Warning Modal for "Mektubu yak.." */}
+        {burnModalOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 100000,
+              background: 'rgba(0, 0, 0, 0.85)',
+              backdropFilter: 'blur(12px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 20
+            }}
+          >
+            <div
+              style={{
+                maxWidth: 480,
+                width: '100%',
+                background: 'linear-gradient(180deg, #1f1315 0%, #120a0b 100%)',
+                borderRadius: 20,
+                border: '1px solid rgba(239, 68, 68, 0.45)',
+                padding: 28,
+                boxShadow: '0 20px 60px rgba(239, 68, 68, 0.3)',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 16
+              }}
+            >
+              <div
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: '50%',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ef4444',
+                  border: '1px solid rgba(239, 68, 68, 0.3)'
+                }}
+              >
+                <AlertTriangle size={28} />
+              </div>
+
+              <p style={{ color: '#f8fafc', fontSize: '1rem', lineHeight: 1.7, margin: 0 }}>
+                Ayşenur, eğer bu mektubu yakmayı seçersen, mektupta da belirttiğim gibi tüm sistemler otomatik olarak sana dair tüm verimi silecek. Bu site de kendini otomatik olarak sunucu üzerinden silecek ve biz bir daha asla yan yana gelemeyeceğiz. Bunu kabul ediyor musun?
+              </p>
+
+              <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 8 }}>
+                <button
+                  onClick={() => handleBurnChoice(true)}
+                  style={{
+                    flex: 1,
+                    padding: '12px 16px',
+                    borderRadius: 9999,
+                    background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.5)'
+                  }}
+                >
+                  Kabul Et
+                </button>
+
+                <button
+                  onClick={() => handleBurnChoice(false)}
+                  style={{
+                    flex: 1,
+                    padding: '12px 16px',
+                    borderRadius: 9999,
+                    background: 'rgba(148, 163, 184, 0.15)',
+                    color: '#cbd5e1',
+                    border: '1px solid rgba(148, 163, 184, 0.3)',
+                    fontSize: '0.95rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Vazgeç
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <style>{`
         @keyframes unfoldLetter {
           0% { opacity: 0; transform: scaleY(0.1); }
           100% { opacity: 1; transform: scaleY(1); }
-        }
-        @keyframes flameBurn {
-          0% { transform: scale(1) rotate(-2deg); }
-          100% { transform: scale(1.25) rotate(4deg); }
-        }
-        @keyframes risingSmoke {
-          0% { transform: translateY(0) scale(0.8); opacity: 0.8; }
-          100% { transform: translateY(-300px) scale(2.2); opacity: 0; }
         }
       `}</style>
     </div>
