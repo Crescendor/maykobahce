@@ -824,17 +824,21 @@ export default function LastLetterPage({ onGoHome }) {
                     pointerEvents: letterUnfolded ? 'none' : 'auto'
                   }}
                 >
-                  {/* Left Photo 1: Baby Photo (Cropped with clipPath to remove embedded white border & black margin) */}
-                  <div
+                  {/* Left Photo 1: Baby Photo (Full Original Image, Clean & Unclipped) */}
+                  <img
+                    src="/assets/baby_photo.jpg"
+                    alt="Nostaljik bebeklik fotoğrafı"
                     onMouseEnter={() => setHoveredItem('baby')}
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
                       left: '7%',
                       top: '14%',
-                      width: 230,
-                      height: 190,
-                      overflow: 'hidden',
+                      width: 240,
+                      height: 'auto',
+                      background: 'none',
+                      border: 'none',
+                      boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
                       borderRadius: 4,
                       transform: hoveredItem === 'baby'
                         ? 'scale(1.2) rotate(0deg)'
@@ -843,31 +847,23 @@ export default function LastLetterPage({ onGoHome }) {
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                       cursor: 'pointer'
                     }}
-                  >
-                    <img
-                      src="/assets/baby_photo.jpg"
-                      alt="Nostaljik bebeklik fotoğrafı"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transform: 'scale(1.24)',
-                        display: 'block'
-                      }}
-                    />
-                  </div>
+                  />
 
-                  {/* Left Photo 2: Snow Kiss Photo (Cropped with clipPath to remove embedded white border & black margin) */}
-                  <div
+                  {/* Left Photo 2: Snow Kiss Photo (Full Original Image, Clean & Unclipped) */}
+                  <img
+                    src="/assets/snow_photo.jpg"
+                    alt="Karlar altında katedral önünde fotoğraf"
                     onMouseEnter={() => setHoveredItem('snow')}
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
                       position: 'absolute',
                       left: '20%',
                       bottom: '10%',
-                      width: 220,
-                      height: 185,
-                      overflow: 'hidden',
+                      width: 230,
+                      height: 'auto',
+                      background: 'none',
+                      border: 'none',
+                      boxShadow: '0 12px 30px rgba(0,0,0,0.7)',
                       borderRadius: 4,
                       transform: hoveredItem === 'snow'
                         ? 'scale(1.2) rotate(0deg)'
@@ -876,19 +872,7 @@ export default function LastLetterPage({ onGoHome }) {
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                       cursor: 'pointer'
                     }}
-                  >
-                    <img
-                      src="/assets/snow_photo.jpg"
-                      alt="Karlar altında katedral önünde fotoğraf"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transform: 'scale(1.24)',
-                        display: 'block'
-                      }}
-                    />
-                  </div>
+                  />
 
                   {/* Dead Center Focal Item: Romantic 3D CSS Envelope with Heart Button */}
                   <div
@@ -957,7 +941,7 @@ export default function LastLetterPage({ onGoHome }) {
                     }}
                   />
 
-                  {/* Right Object 3: Non-Clickable Decorative Matchbox */}
+                  {/* Right Object 3: Decorative Matchbox */}
                   <div
                     style={{
                       position: 'absolute',
@@ -1032,7 +1016,7 @@ export default function LastLetterPage({ onGoHome }) {
                     </button>
                   </div>
 
-                  {/* Center Item: Clean Handwritten Letter Paper (Hover Zoom Enabled, ZERO Dark Container Overlay) */}
+                  {/* Center Item: Clean Handwritten Letter Paper */}
                   <div
                     onMouseEnter={() => setIsLetterHovered(true)}
                     onMouseLeave={() => setIsLetterHovered(false)}
@@ -1116,6 +1100,83 @@ export default function LastLetterPage({ onGoHome }) {
                       </button>
                     )}
                   </div>
+
+                  {/* Interactive Matchbox on Right Side (Revealed when showStriker is active, slides open to LEFT) */}
+                  {showStriker && (
+                    <div
+                      onClick={() => setMatchboxOpen(prev => !prev)}
+                      style={{
+                        position: 'absolute',
+                        right: '5%',
+                        top: '15%',
+                        zIndex: 90,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 6
+                      }}
+                    >
+                      <div style={{ color: '#ffedd5', fontSize: '0.8rem', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        🔥 Kutusuna tıklayın
+                      </div>
+                      <div
+                        style={{
+                          position: 'relative',
+                          width: 140,
+                          height: 94,
+                          background: '#1a1a1a',
+                          borderRadius: 8,
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.85)',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {/* Inner Tray sliding to the LEFT */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 4,
+                            background: '#3d2b1f',
+                            borderRadius: 6,
+                            transform: matchboxOpen ? 'translateX(-80px)' : 'translateX(0)',
+                            transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                            boxShadow: matchboxOpen ? '-6px 0 15px rgba(0,0,0,0.7)' : 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            paddingLeft: 8
+                          }}
+                        >
+                          {/* Matchstick Head emerging out of the LEFT side */}
+                          {matchboxOpen && (
+                            <div
+                              style={{
+                                width: 14,
+                                height: 18,
+                                borderRadius: '50% 50% 30% 30%',
+                                background: '#b91c1c',
+                                boxShadow: '0 0 10px rgba(185, 28, 28, 0.8)'
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            backgroundImage: `url('/assets/matchbox_cover.png')`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            borderRadius: 8,
+                            pointerEvents: 'none'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1264,7 +1325,7 @@ export default function LastLetterPage({ onGoHome }) {
             </div>
           </div>
 
-          {/* Real Large Draggable Matchstick & Ignited Flame on Match Head */}
+          {/* Sleek Custom CSS Draggable Matchstick (Zero White Box Background!) */}
           {isStrikingMatch && (
             <div
               ref={matchstickRef}
@@ -1272,11 +1333,11 @@ export default function LastLetterPage({ onGoHome }) {
               onTouchStart={handleMatchMouseDown}
               style={{
                 position: 'fixed',
-                bottom: 120 + matchPos.y * -1,
+                bottom: 100 + matchPos.y * -1,
                 left: `calc(50% + ${matchPos.x}px)`,
                 transform: 'translateX(-50%)',
-                width: 48,
-                height: 240,
+                width: 20,
+                height: 180,
                 zIndex: 99999,
                 cursor: 'grab',
                 display: 'flex',
@@ -1284,37 +1345,50 @@ export default function LastLetterPage({ onGoHome }) {
                 alignItems: 'center'
               }}
             >
-              {/* Glowing Ignited Flame attached to match head when struck against zımpara */}
-              {matchIgnited && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: -36,
-                    width: 48,
-                    height: 64,
-                    borderRadius: '50% 50% 35% 35%',
-                    background: 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffcc00 35%, #ff4400 75%, rgba(255, 68, 0, 0) 100%)',
-                    boxShadow: '0 0 45px #ffcc00, 0 0 80px #ff4400, 0 -12px 30px #ffffff',
-                    animation: 'matchFlameGlow 0.2s ease-in-out infinite alternate',
-                    zIndex: 2,
-                    pointerEvents: 'none'
-                  }}
-                />
-              )}
-
-              {/* Real Matchstick Image (Large & Thick) */}
-              <img
-                src="/assets/matchstick.png"
-                alt="Kibrit Çöpü"
+              {/* Red Phosphorus Match Tip (Ignites with Glowing Flame when struck) */}
+              <div
                 style={{
-                  width: 44,
-                  height: 240,
-                  objectFit: 'contain',
-                  display: 'block',
-                  filter: matchIgnited
-                    ? 'drop-shadow(0 0 20px rgba(255, 120, 20, 0.95))'
-                    : 'drop-shadow(0 6px 15px rgba(0,0,0,0.8))',
-                  pointerEvents: 'none'
+                  width: 22,
+                  height: 30,
+                  borderRadius: '50% 50% 30% 30%',
+                  background: matchIgnited
+                    ? 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffbb00 35%, #ff4400 100%)'
+                    : 'linear-gradient(180deg, #dc2626 0%, #991b1b 100%)',
+                  boxShadow: matchIgnited
+                    ? '0 0 35px #ffbb00, 0 0 70px #ff4400, 0 -12px 30px #ffffff'
+                    : '0 2px 8px rgba(0,0,0,0.6)',
+                  position: 'relative',
+                  transition: 'background 0.2s ease, box-shadow 0.2s ease'
+                }}
+              >
+                {matchIgnited && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -24,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 32,
+                      height: 44,
+                      borderRadius: '50% 50% 35% 35%',
+                      background: 'radial-gradient(circle at 50% 30%, #ffffff 0%, #ffcc00 35%, #ff4400 75%, rgba(255, 68, 0, 0) 100%)',
+                      boxShadow: '0 0 40px #ffcc00, 0 0 75px #ff4400',
+                      animation: 'matchFlameGlow 0.2s ease-in-out infinite alternate',
+                      zIndex: 2,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Wooden Stick Body */}
+              <div
+                style={{
+                  flex: 1,
+                  width: 10,
+                  background: 'linear-gradient(90deg, #d97706 0%, #f59e0b 50%, #b45309 100%)',
+                  borderRadius: '0 0 4px 4px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.7)'
                 }}
               />
             </div>
