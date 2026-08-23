@@ -480,7 +480,7 @@ export default function LastLetterPage({ onGoHome }) {
         /* Main Interactive Screen */
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           
-          {/* Top Intro Typography ("Neyse" - Fades Out smoothly as user scrolls) */}
+          {/* Top Intro Typography ("Neyse" - 100% Pixel Identical to Homepage) */}
           <div
             style={{
               position: 'absolute',
@@ -503,28 +503,16 @@ export default function LastLetterPage({ onGoHome }) {
                 color: '#e4e7ec',
                 letterSpacing: '0.04em',
                 lineHeight: 1.1,
-                margin: 0
+                margin: 0,
+                padding: 0,
+                opacity: 0.95,
+                textRendering: 'optimizeLegibility',
+                WebkitFontSmoothing: 'antialiased',
+                MozOsxFontSmoothing: 'grayscale'
               }}
             >
               Neyse
             </h1>
-
-            {/* Scroll Hint */}
-            <div
-              style={{
-                marginTop: 28,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-                color: 'rgba(228, 231, 236, 0.45)',
-                fontSize: '0.9rem',
-                fontStyle: 'italic'
-              }}
-            >
-              <span>Aşağı doğru kaydırın</span>
-              <ChevronDown size={20} className="animate-bounce" />
-            </div>
           </div>
 
           {/* 3D Paper Scroll Folding Container */}
