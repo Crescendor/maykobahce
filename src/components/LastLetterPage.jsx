@@ -35,7 +35,31 @@ export default function LastLetterPage({ onGoHome }) {
   const [foldProgress, setFoldProgress] = useState(0);
   const [isLetterZoomed, setIsLetterZoomed] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
-  const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(true);
+  // Live Countdown Timer to 26.08.2026 23:59:59 (Gün:Saat:Dakika:Saniye:Salise)
+  const TARGET_TIMESTAMP = new Date('2026-08-26T23:59:59').getTime();
+  const [countdownStr, setCountdownStr] = useState('00:00:00:00:00');
+
+  useEffect(() => {
+    let animationFrameId;
+    const updateCountdown = () => {
+      const now = Date.now();
+      const diff = Math.max(0, TARGET_TIMESTAMP - now);
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const ms = Math.floor((diff % 1000) / 10);
+
+      const formatted = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(ms).padStart(2, '0')}`;
+      setCountdownStr(formatted);
+
+      animationFrameId = requestAnimationFrame(updateCountdown);
+    };
+
+    updateCountdown();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [TARGET_TIMESTAMP]);
 
   // Burn & Fire State - Clear all previous local storage burn records completely as requested
   useEffect(() => {
@@ -667,7 +691,7 @@ export default function LastLetterPage({ onGoHome }) {
         /* Main Interactive Screen */
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           
-          {/* Top Intro Typography ("Neyse" - 100% Pixel Identical to Homepage) */}
+          {/* Top Intro Typography (Live Countdown Timer x:y:z:a:b in place of Neyse) */}
           <div
             style={{
               position: 'absolute',
@@ -679,13 +703,36 @@ export default function LastLetterPage({ onGoHome }) {
               opacity: Math.max(0, 1 - foldProgress * 2.5),
               transition: 'opacity 0.3s ease',
               pointerEvents: 'none',
-              zIndex: 10
+              zIndex: 10,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
+            {/* Sub-heading Subtitle (Appears right above when scroll starts) */}
+            <div
+              style={{
+                fontFamily: "'Cardo', Georgia, serif",
+                fontSize: 'clamp(0.95rem, 2.2vw, 1.4rem)',
+                fontWeight: 400,
+                fontStyle: 'italic',
+                color: 'rgba(228, 231, 236, 0.85)',
+                letterSpacing: '0.04em',
+                marginBottom: 10,
+                opacity: foldProgress > 0.01 ? 1 : 0,
+                transform: foldProgress > 0.01 ? 'translateY(0)' : 'translateY(-12px)',
+                transition: 'opacity 0.4s ease, transform 0.4s ease'
+              }}
+            >
+              Tüm verilerin otomatik olarak silinmesine..
+            </div>
+
+            {/* Live Countdown Timer (x:y:z:a:b - Gün:Saat:Dakika:Saniye:Salise) */}
             <h1
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
-                fontSize: 'clamp(4.2rem, 9.5vw, 7.5rem)',
+                fontSize: 'clamp(3.5rem, 8.2vw, 6.5rem)',
                 fontWeight: 400,
                 color: '#e4e7ec',
                 letterSpacing: '0.04em',
@@ -695,10 +742,12 @@ export default function LastLetterPage({ onGoHome }) {
                 opacity: 0.95,
                 textRendering: 'optimizeLegibility',
                 WebkitFontSmoothing: 'antialiased',
-                MozOsxFontSmoothing: 'grayscale'
+                MozOsxFontSmoothing: 'grayscale',
+                fontVariantNumeric: 'tabular-nums',
+                fontFeatureSettings: '"tnum"'
               }}
             >
-              Neyse
+              {countdownStr}
             </h1>
           </div>
 
