@@ -95,6 +95,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
         height: '1',
         width: '1',
         videoId: videoId,
+        host: 'https://www.youtube-nocookie.com',
         playerVars: {
           autoplay: 1,
           loop: 0,
@@ -106,8 +107,8 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
           playsinline: 1,
           disablekb: 1,
           fs: 0,
-          start: 125, // 2:05
-          origin: window.location.origin
+          enablejsapi: 1,
+          start: 125 // 2:05
         },
         events: {
           onReady: (event) => {

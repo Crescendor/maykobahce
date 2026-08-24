@@ -37,6 +37,7 @@ export default function AmbientAudioPlayer() {
         height: '1',
         width: '1',
         videoId: videoId,
+        host: 'https://www.youtube-nocookie.com',
         playerVars: {
           autoplay: 1,
           loop: 1,
@@ -48,7 +49,7 @@ export default function AmbientAudioPlayer() {
           playsinline: 1,
           disablekb: 1,
           fs: 0,
-          origin: window.location.origin
+          enablejsapi: 1
         },
         events: {
           onReady: (event) => {
