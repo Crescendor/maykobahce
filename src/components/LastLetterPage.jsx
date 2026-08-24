@@ -115,6 +115,48 @@ export default function LastLetterPage({ onGoHome }) {
     return `${os} ${isMobile ? '(Mobil)' : '(Masaüstü)'}`;
   };
 
+  // Global Page Leave / Tab Exit Sentinel
+  useEffect(() => {
+    const handleLeavePage = () => {
+      const elapsedMs = Date.now() - sessionStartTimeRef.current;
+      const mins = Math.floor(elapsedMs / 60000);
+      const secs = Math.floor((elapsedMs % 60000) / 1000);
+      const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
+
+      const payload = JSON.stringify({
+        eventType: 'last_page_abandoned',
+        data: {
+          action: 'Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
+          duration: durationStr,
+          stage: currentStageRef.current || 'Neyse Ekranı',
+          deviceId: getDeviceId(),
+          device: detectDevice(),
+          is_aysenur: true
+        },
+        timestamp: new Date().toISOString()
+      });
+
+      if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon('/api/flower-logs', blob);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        handleLeavePage();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleLeavePage);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleLeavePage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   // Helper for webhook logging
   const sendLog = useCallback((eventType, extraData = {}) => {
     postLogToApi(eventType, {
