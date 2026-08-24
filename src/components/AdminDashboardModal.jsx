@@ -210,6 +210,9 @@ export default function AdminDashboardModal({
     if (logFilter === 'abandoned') return logItem.eventType === 'draft_abandoned';
     if (logFilter === 'deleted') return logItem.eventType === 'flower_deleted';
     if (logFilter === 'melancholy') return logItem.eventType === 'melancholy_quote_viewed';
+    if (logFilter === 'burn_requests') return logItem.eventType === 'last_burn_modal_opened' || logItem.eventType === 'last_burn_modal_choice' || logItem.eventType === 'last_letter_burned';
+    if (logFilter === 'locked_notes') return logItem.eventType === 'last_note_locked';
+    if (logFilter === 'last_letters') return logItem.eventType && logItem.eventType.startsWith('last_');
     return true;
   });
 
@@ -1059,6 +1062,30 @@ export default function AdminDashboardModal({
 
                     <button
                       type="button"
+                      style={{ ...styles.filterChip, ...(logFilter === 'burn_requests' ? styles.activeFilterChip : {}), background: logFilter === 'burn_requests' ? '#dc2626' : undefined, color: logFilter === 'burn_requests' ? '#fff' : undefined }}
+                      onClick={() => setLogFilter('burn_requests')}
+                    >
+                      🔥 Mektup Yakma Talepleri ({activityLogs.filter((l) => l.eventType === 'last_burn_modal_opened' || l.eventType === 'last_burn_modal_choice' || l.eventType === 'last_letter_burned').length})
+                    </button>
+
+                    <button
+                      type="button"
+                      style={{ ...styles.filterChip, ...(logFilter === 'locked_notes' ? styles.activeFilterChip : {}), background: logFilter === 'locked_notes' ? '#059669' : undefined, color: logFilter === 'locked_notes' ? '#fff' : undefined }}
+                      onClick={() => setLogFilter('locked_notes')}
+                    >
+                      🔒 Mühürlü Notlar & Mektuplar ({activityLogs.filter((l) => l.eventType === 'last_note_locked').length})
+                    </button>
+
+                    <button
+                      type="button"
+                      style={{ ...styles.filterChip, ...(logFilter === 'last_letters' ? styles.activeFilterChip : {}) }}
+                      onClick={() => setLogFilter('last_letters')}
+                    >
+                      📜 Tüm /last Mektup Logları ({activityLogs.filter((l) => l.eventType && l.eventType.startsWith('last_')).length})
+                    </button>
+
+                    <button
+                      type="button"
                       style={{ ...styles.filterChip, ...(logFilter === 'abandoned' ? styles.activeFilterChip : {}) }}
                       onClick={() => setLogFilter('abandoned')}
                     >
@@ -1132,7 +1159,35 @@ export default function AdminDashboardModal({
                       let badgeIcon = 'ℹ️';
                       let titleText = 'Etkinlik Kaydı';
 
-                      if (type === 'trigger_detected') {
+                      if (type === 'last_note_locked') {
+                        badgeColor = '#10b981';
+                        badgeIcon = '🔒';
+                        titleText = '🔒✉️ Mektup Saklandı & SHA-256 ile Mühürlendi';
+                      } else if (type === 'last_burn_modal_opened') {
+                        badgeColor = '#f59e0b';
+                        badgeIcon = '⚠️';
+                        titleText = '⚠️ "Mektubu Yak" Butonuna Basıldı (Onay Ekranı)';
+                      } else if (type === 'last_burn_modal_choice' || type === 'last_letter_burned') {
+                        badgeColor = d.accepted ? '#ef4444' : '#64748b';
+                        badgeIcon = '🔥';
+                        titleText = d.accepted ? '🔥 MEKTUP YAKMA ONAYLANDI (KÜL OLDU)' : '🛡️ Mektubu Yakmaktan Vazgeçildi (İptal)';
+                      } else if (type === 'last_lock_clicked') {
+                        badgeColor = '#34d399';
+                        badgeIcon = '🟢';
+                        titleText = '🟢 "Mektubu Sakla" Formu / Canlı Not Yazıldı';
+                      } else if (type === 'last_page_abandoned') {
+                        badgeColor = '#f43f5e';
+                        badgeIcon = '🚪';
+                        titleText = '🚪 Ziyaretçi Sekmeyi Kapattı / Siteden Ayrıldı';
+                      } else if (type === 'last_letter_zoom_toggled') {
+                        badgeColor = '#38bdf8';
+                        badgeIcon = '🔍';
+                        titleText = d.isZoomed ? '🔍 Mektup Odaklandı (Büyütüldü)' : '🔍 Mektup Küçültüldü';
+                      } else if (type === 'last_scroll_started') {
+                        badgeColor = '#a855f7';
+                        badgeIcon = '📜';
+                        titleText = '📜 Sitede Kaydırma Yapıldı';
+                      } else if (type === 'trigger_detected') {
                         badgeColor = '#f59e0b';
                         badgeIcon = '🌸';
                         titleText = 'Ayşenur Trigger Algılandı (Soru Ekranı Açıldı)';
@@ -1176,6 +1231,34 @@ export default function AdminDashboardModal({
                               </div>
                             )}
 
+                            {d.buttonClickTime && (
+                              <div>
+                                <span style={styles.logLabel}>⏱️ Butona Basılma Zamanı:</span>
+                                <span style={{ ...styles.logVal, color: '#fbbf24', fontWeight: 700 }}>{d.buttonClickTime}</span>
+                              </div>
+                            )}
+
+                            {d.targetDate && (
+                              <div>
+                                <span style={styles.logLabel}>📅 Açılacağı Tarih:</span>
+                                <span style={{ ...styles.logVal, color: '#34d399', fontWeight: 700 }}>{d.targetDate}</span>
+                              </div>
+                            )}
+
+                            {d.sha256Code && (
+                              <div style={{ gridColumn: 'span 2' }}>
+                                <span style={styles.logLabel}>🔑 SHA-256 Kodu:</span>
+                                <code style={{ ...styles.codeTag, background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', wordBreak: 'break-all' }}>{d.sha256Code}</code>
+                              </div>
+                            )}
+
+                            {d.duration && (
+                              <div>
+                                <span style={styles.logLabel}>⏱️ Sitede Kalınan Süre:</span>
+                                <span style={{ ...styles.logVal, color: '#38bdf8' }}>{d.duration}</span>
+                              </div>
+                            )}
+
                             {d.device && (
                               <div style={{ gridColumn: 'span 2' }}>
                                 <span style={styles.logLabel}>📱 Cihaz Modeli & Tarayıcı:</span>
@@ -1197,31 +1280,24 @@ export default function AdminDashboardModal({
                               </div>
                             )}
 
-                            {d.typedName || d.name ? (
-                              <div>
-                                <span style={styles.logLabel}>Girilen İsim:</span>
-                                <span style={styles.logVal}>{d.typedName || d.name}</span>
-                              </div>
-                            ) : null}
-
-                            {d.typedInstagram || d.instagram ? (
-                              <div>
-                                <span style={styles.logLabel}>Instagram:</span>
-                                <span style={styles.logVal}>{d.typedInstagram || d.instagram}</span>
-                              </div>
-                            ) : null}
-
-                            {d.answerInput ? (
-                              <div>
-                                <span style={styles.logLabel}>Girilen Cevap:</span>
-                                <span style={{ ...styles.logVal, color: '#34d399', fontWeight: 700 }}>{d.answerInput}</span>
-                              </div>
-                            ) : null}
-
-                            {d.note ? (
+                            {d.noteText || d.note ? (
                               <div style={{ gridColumn: 'span 2' }}>
-                                <span style={styles.logLabel}>Taslak / Yazılan Not:</span>
-                                <div style={styles.logNoteBox}>"{d.note}"</div>
+                                <span style={styles.logLabel}>📝 Eklenen / Yazılan Not:</span>
+                                <div style={{ ...styles.logNoteBox, borderColor: '#34d399', color: '#f1f5f9' }}>"{d.noteText || d.note}"</div>
+                              </div>
+                            ) : null}
+
+                            {d.allTypedHistory && d.allTypedHistory !== (d.noteText || d.note) ? (
+                              <div style={{ gridColumn: 'span 2' }}>
+                                <span style={styles.logLabel}>⌨️ Tüm Klavye Geçmişi (Yazılanlar):</span>
+                                <div style={{ ...styles.logNoteBox, borderColor: 'rgba(56, 189, 248, 0.4)', color: '#cbd5e1' }}>"{d.allTypedHistory}"</div>
+                              </div>
+                            ) : null}
+
+                            {d.deletedText && d.deletedText !== '-' ? (
+                              <div style={{ gridColumn: 'span 2' }}>
+                                <span style={styles.logLabel}>✂️ Silinen Yazı Parçaları:</span>
+                                <div style={{ ...styles.logNoteBox, borderColor: 'rgba(239, 68, 68, 0.4)', color: '#fca5a5' }}>"{d.deletedText}"</div>
                               </div>
                             ) : null}
 
@@ -1231,7 +1307,6 @@ export default function AdminDashboardModal({
                                 <span style={{ ...styles.logVal, color: '#fbbf24', fontStyle: 'italic' }}>{d.stage}</span>
                               </div>
                             ) : null}
-
                             {d.deletedBy ? (
                               <div>
                                 <span style={styles.logLabel}>Silen Kişi:</span>
