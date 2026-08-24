@@ -699,7 +699,7 @@ export default function LastLetterPage({ onGoHome }) {
           </div>
         </div>
       ) : (() => {
-        // Sequential Cinematic Scroll Phrases
+        // Sequential Subtitle Scroll Phrases (All Pure White Sub-headings)
         const SCROLL_PHRASES = [
           { min: 0.00, max: 0.12, text: "Sen Konuyu biliyorsun" },
           { min: 0.12, max: 0.24, text: "Geldiysen" },
@@ -710,15 +710,21 @@ export default function LastLetterPage({ onGoHome }) {
           { min: 0.72, max: 0.83, text: "Tüm verilerin otomatik olarak silinmesine.." }
         ];
 
-        const getPhraseOpacity = (min, max, p) => {
+        const getPhraseOpacity = (min, max, p, idx) => {
           if (p < min || p >= max) return 0;
-          const rel = (p - min) / (max - min);
+          // First phrase ("Sen Konuyu biliyorsun") is 100% visible immediately on page load (p = 0)
+          if (idx === 0) {
+            if (p <= 0.08) return 1;
+            return Math.max(0, (max - p) / (max - 0.08));
+          }
+          const len = max - min;
+          const rel = (p - min) / len;
           if (rel < 0.25) return rel / 0.25;
           if (rel > 0.75) return (1 - rel) / 0.25;
           return 1;
         };
 
-        // Live Countdown Timer appears at foldProgress >= 0.83!
+        // Live Countdown Timer appears directly in center at foldProgress >= 0.83!
         const timerOpacity = foldProgress < 0.83
           ? 0
           : foldProgress <= 0.91
@@ -733,9 +739,9 @@ export default function LastLetterPage({ onGoHome }) {
         /* Main Interactive Screen */
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           
-          {/* Sequential Cinematic Scroll Sentences */}
+          {/* Sequential Sub-heading Scroll Sentences (100% Pure White, Fade In & Fade Out) */}
           {SCROLL_PHRASES.map((phrase, idx) => {
-            const op = getPhraseOpacity(phrase.min, phrase.max, foldProgress);
+            const op = getPhraseOpacity(phrase.min, phrase.max, foldProgress, idx);
             if (op <= 0) return null;
             return (
               <div
@@ -748,33 +754,33 @@ export default function LastLetterPage({ onGoHome }) {
                   transform: 'translateY(-50%)',
                   textAlign: 'center',
                   opacity: op,
-                  transition: 'opacity 0.2s ease, transform 0.3s ease',
+                  transition: 'opacity 0.25s ease',
                   pointerEvents: 'none',
                   zIndex: 15,
-                  padding: '0 20px'
+                  padding: '0 24px'
                 }}
               >
-                <h1
+                <h2
                   style={{
                     fontFamily: "'Cardo', Georgia, serif",
-                    fontSize: idx === 6 ? 'clamp(1.35rem, 3.2vw, 2.2rem)' : 'clamp(2.2rem, 5.5vw, 4.2rem)',
+                    fontSize: 'clamp(1.45rem, 3.6vw, 2.5rem)',
                     fontWeight: 400,
-                    fontStyle: idx === 6 ? 'italic' : 'normal',
-                    color: idx === 4 ? '#f59e0b' : '#e4e7ec',
+                    fontStyle: 'italic',
+                    color: '#ffffff',
                     letterSpacing: '0.04em',
-                    lineHeight: 1.2,
+                    lineHeight: 1.3,
                     margin: 0,
                     opacity: 0.95,
-                    textShadow: '0 0 30px rgba(0,0,0,0.9)'
+                    textShadow: '0 0 20px rgba(255,255,255,0.25), 0 0 35px rgba(0,0,0,0.95)'
                   }}
                 >
                   {phrase.text}
-                </h1>
+                </h2>
               </div>
             );
           })}
 
-          {/* Live Countdown Timer (Appears at foldProgress >= 0.83 after all phrases) */}
+          {/* Live Countdown Timer (Appears directly in center position at foldProgress >= 0.83, zero position shift) */}
           <div
             style={{
               position: 'absolute',
@@ -793,35 +799,33 @@ export default function LastLetterPage({ onGoHome }) {
               justifyContent: 'center'
             }}
           >
-            {/* Locked / Sealed Status Indicator above Timer */}
-            {lockedResult && (
-              <div
-                style={{
-                  fontFamily: "'Cardo', Georgia, serif",
-                  fontSize: 'clamp(0.95rem, 2.2vw, 1.4rem)',
-                  fontWeight: 400,
-                  fontStyle: 'italic',
-                  color: '#6ee7b7',
-                  letterSpacing: '0.04em',
-                  marginBottom: 10
-                }}
-              >
-                🔒 Mektup mühürlendi — Sayaç duraklatıldı
-              </div>
-            )}
+            {/* Subtitle directly above Countdown Timer */}
+            <div
+              style={{
+                fontFamily: "'Cardo', Georgia, serif",
+                fontSize: 'clamp(1.05rem, 2.4vw, 1.45rem)',
+                fontWeight: 400,
+                fontStyle: 'italic',
+                color: lockedResult ? '#6ee7b7' : '#ffffff',
+                letterSpacing: '0.04em',
+                marginBottom: 12
+              }}
+            >
+              {lockedResult ? '🔒 Mektup mühürlendi — Sayaç duraklatıldı' : 'Tüm verilerin otomatik olarak silinmesine..'}
+            </div>
 
-            {/* Live Countdown Timer (x:y:z:a:b - Gün:Saat:Dakika:Saniye:Salise) */}
+            {/* Live Countdown Timer (x:y:z:a:b - Pure White, Centered) */}
             <h1
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
                 fontSize: 'clamp(3.5rem, 8.2vw, 6.5rem)',
                 fontWeight: 400,
-                color: '#e4e7ec',
+                color: '#ffffff',
                 letterSpacing: '0.04em',
                 lineHeight: 1.1,
                 margin: 0,
                 padding: 0,
-                opacity: 0.95,
+                opacity: 0.98,
                 textRendering: 'optimizeLegibility',
                 WebkitFontSmoothing: 'antialiased',
                 MozOsxFontSmoothing: 'grayscale',
