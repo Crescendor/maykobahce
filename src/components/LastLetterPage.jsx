@@ -307,20 +307,20 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [isKeyDragging, keyStage, handleKeyIn]);
 
-  // 1. Mouse Wheel & Touch Scroll Handler -> Smooth 3D Folding Control
+  // 1. Mouse Wheel & Touch Scroll Handler -> Smooth Cinematic Sentences & 3D Folding Control
   const handleScrollWheel = useCallback((e) => {
     const delta = e.deltaY || e.detail || 0;
     setFoldProgress((prev) => {
-      const step = delta > 0 ? 0.08 : -0.08;
+      const step = delta > 0 ? 0.03 : -0.03;
       const next = Math.max(0, Math.min(1, prev + step));
 
-      if (next > 0.1 && !hasLoggedScrollRef.current) {
+      if (next > 0.05 && !hasLoggedScrollRef.current) {
         hasLoggedScrollRef.current = true;
-        currentStageRef.current = '3D Mektup Katlaması Açılıyor';
-        sendLog('last_scroll_started', { action: 'Sayfa Kaydırılarak 3D Mektup Açılmaya Başlandı' });
+        currentStageRef.current = 'Kaydırmalı Cümleler İlerliyor';
+        sendLog('last_scroll_started', { action: 'Sayfa Kaydırılarak Cümleler Okunmaya Başlandı' });
       }
 
-      if (next >= 0.85 && !hasLoggedLetterOpenRef.current) {
+      if (next >= 0.90 && !hasLoggedLetterOpenRef.current) {
         hasLoggedLetterOpenRef.current = true;
         currentStageRef.current = 'Mektup Tam Açıldı';
         sendLog('last_letter_fully_unfolded', { action: '3D Mektup Tamamen Katından Çıkarıldı ve Okunuyor' });
@@ -341,7 +341,7 @@ export default function LastLetterPage({ onGoHome }) {
     touchStartRef.current = currentY;
 
     setFoldProgress((prev) => {
-      const step = diff > 0 ? 0.05 : -0.05;
+      const step = diff > 0 ? 0.025 : -0.025;
       const next = Math.max(0, Math.min(1, prev + step));
       return next;
     });
@@ -699,14 +699,82 @@ export default function LastLetterPage({ onGoHome }) {
           </div>
         </div>
       ) : (() => {
-        const paperOpacity = foldProgress <= 0.45 ? 0 : Math.min(1, (foldProgress - 0.45) * 2.8);
-        const buttonOpacity = foldProgress <= 0.55 ? 0 : Math.min(1, (foldProgress - 0.55) * 2.8);
+        // Sequential Cinematic Scroll Phrases
+        const SCROLL_PHRASES = [
+          { min: 0.00, max: 0.12, text: "Sen Konuyu biliyorsun" },
+          { min: 0.12, max: 0.24, text: "Geldiysen" },
+          { min: 0.24, max: 0.36, text: "Özlemişsindir" },
+          { min: 0.36, max: 0.48, text: "Özlediysen" },
+          { min: 0.48, max: 0.60, text: "Sayacı durdur." },
+          { min: 0.60, max: 0.72, text: "Öyle ya da böyle." },
+          { min: 0.72, max: 0.83, text: "Tüm verilerin otomatik olarak silinmesine.." }
+        ];
+
+        const getPhraseOpacity = (min, max, p) => {
+          if (p < min || p >= max) return 0;
+          const rel = (p - min) / (max - min);
+          if (rel < 0.25) return rel / 0.25;
+          if (rel > 0.75) return (1 - rel) / 0.25;
+          return 1;
+        };
+
+        // Live Countdown Timer appears at foldProgress >= 0.83!
+        const timerOpacity = foldProgress < 0.83
+          ? 0
+          : foldProgress <= 0.91
+          ? (foldProgress - 0.83) / 0.08
+          : Math.max(0, 1 - (foldProgress - 0.91) * 12);
+
+        // 3D Paper Letter & Buttons unfold at foldProgress >= 0.88
+        const paperOpacity = foldProgress <= 0.88 ? 0 : Math.min(1, (foldProgress - 0.88) * 8.3);
+        const buttonOpacity = foldProgress <= 0.92 ? 0 : Math.min(1, (foldProgress - 0.92) * 12.5);
 
         return (
         /* Main Interactive Screen */
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           
-          {/* Top Intro Typography (Live Countdown Timer x:y:z:a:b in place of Neyse) */}
+          {/* Sequential Cinematic Scroll Sentences */}
+          {SCROLL_PHRASES.map((phrase, idx) => {
+            const op = getPhraseOpacity(phrase.min, phrase.max, foldProgress);
+            if (op <= 0) return null;
+            return (
+              <div
+                key={idx}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: 0,
+                  right: 0,
+                  transform: 'translateY(-50%)',
+                  textAlign: 'center',
+                  opacity: op,
+                  transition: 'opacity 0.2s ease, transform 0.3s ease',
+                  pointerEvents: 'none',
+                  zIndex: 15,
+                  padding: '0 20px'
+                }}
+              >
+                <h1
+                  style={{
+                    fontFamily: "'Cardo', Georgia, serif",
+                    fontSize: idx === 6 ? 'clamp(1.35rem, 3.2vw, 2.2rem)' : 'clamp(2.2rem, 5.5vw, 4.2rem)',
+                    fontWeight: 400,
+                    fontStyle: idx === 6 ? 'italic' : 'normal',
+                    color: idx === 4 ? '#f59e0b' : '#e4e7ec',
+                    letterSpacing: '0.04em',
+                    lineHeight: 1.2,
+                    margin: 0,
+                    opacity: 0.95,
+                    textShadow: '0 0 30px rgba(0,0,0,0.9)'
+                  }}
+                >
+                  {phrase.text}
+                </h1>
+              </div>
+            );
+          })}
+
+          {/* Live Countdown Timer (Appears at foldProgress >= 0.83 after all phrases) */}
           <div
             style={{
               position: 'absolute',
@@ -715,37 +783,32 @@ export default function LastLetterPage({ onGoHome }) {
               right: 0,
               transform: 'translateY(-50%)',
               textAlign: 'center',
-              opacity: foldProgress < 0.45 ? 1 : Math.max(0, 1 - (foldProgress - 0.45) * 3.5),
-              transition: 'opacity 0.2s ease',
+              opacity: timerOpacity,
+              transition: 'opacity 0.3s ease',
               pointerEvents: 'none',
-              zIndex: 10,
+              zIndex: 15,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            {/* Sub-heading Subtitle (Appears as scroll starts, stays visible, shows frozen status if locked) */}
-            <div
-              style={{
-                fontFamily: "'Cardo', Georgia, serif",
-                fontSize: 'clamp(0.95rem, 2.2vw, 1.4rem)',
-                fontWeight: 400,
-                fontStyle: 'italic',
-                color: lockedResult ? '#6ee7b7' : '#e2e8f0',
-                letterSpacing: '0.04em',
-                marginBottom: 10,
-                opacity: foldProgress <= 0.01
-                  ? 0
-                  : foldProgress <= 0.45
-                  ? Math.min(1, foldProgress * 15)
-                  : Math.max(0, 1 - (foldProgress - 0.45) * 3.5),
-                transform: foldProgress > 0.01 ? 'translateY(0)' : 'translateY(-10px)',
-                transition: 'opacity 0.25s ease, transform 0.3s ease'
-              }}
-            >
-              {lockedResult ? '🔒 Mektup mühürlendi — Sayaç duraklatıldı' : 'Tüm verilerin otomatik olarak silinmesine..'}
-            </div>
+            {/* Locked / Sealed Status Indicator above Timer */}
+            {lockedResult && (
+              <div
+                style={{
+                  fontFamily: "'Cardo', Georgia, serif",
+                  fontSize: 'clamp(0.95rem, 2.2vw, 1.4rem)',
+                  fontWeight: 400,
+                  fontStyle: 'italic',
+                  color: '#6ee7b7',
+                  letterSpacing: '0.04em',
+                  marginBottom: 10
+                }}
+              >
+                🔒 Mektup mühürlendi — Sayaç duraklatıldı
+              </div>
+            )}
 
             {/* Live Countdown Timer (x:y:z:a:b - Gün:Saat:Dakika:Saniye:Salise) */}
             <h1
