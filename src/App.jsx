@@ -12,8 +12,6 @@ import ReachingHands from './components/ReachingHands';
 import BurningTreeWithRoots from './components/BurningTreeWithRoots';
 import FountainPenWriter from './components/FountainPenWriter';
 import RosePetals from './components/RosePetals';
-import LetterComposerSection from './components/LetterComposerSection';
-import AmbientAudioPlayer from './components/AmbientAudioPlayer';
 import LastLetterPage from './components/LastLetterPage';
 
 // Lazy load admin components into a separate dynamic chunk (Never loaded by normal visitors!)
@@ -1215,8 +1213,7 @@ export default function App() {
         </button>
       )}
 
-      {/* Persistent Background Ambient Audio Player (YouTube Loop: 6fBXmhBpFGE, disabled on /last page) */}
-      {currentPath !== '/last' && <AmbientAudioPlayer />}
+      {/* Clean UI: Audio engine completely removed as requested */}
     </div>
   );
 }

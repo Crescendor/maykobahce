@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Sparkles, Flame, Lock, RotateCcw, AlertTriangle, Calendar, CheckCircle2, ChevronDown, Clock } from 'lucide-react';
-import LastLetterAudioPlayer from './LastLetterAudioPlayer';
 import { postLogToApi } from '../utils/gardenEngine';
 
 /**
@@ -436,12 +434,6 @@ export default function LastLetterPage({ onGoHome }) {
         WebkitUserSelect: 'none'
       }}
     >
-      {/* Background Audio Engine for /last Page */}
-      <LastLetterAudioPlayer
-        isBurningActive={isBurningActive}
-        isLocked={lockModeActive || !!lockedResult}
-        onPhase1Complete={() => setIsAudioPhase1Completed(true)}
-      />
 
       {/* Tester Reset Floating Control Bar */}
       {isTester && (
@@ -887,7 +879,16 @@ export default function LastLetterPage({ onGoHome }) {
                   </button>
 
                   <button
-                    onClick={() => setLockModeActive(false)}
+                    onClick={() => {
+                      setLockModeActive(false);
+                      sendLog('last_lock_clicked', {
+                        action: 'Mektubu Saklamaktan Vazgeçildi (İptal)',
+                        noteText: prevNoteTextRef.current ? `${prevNoteTextRef.current} (Vazgeçildi)` : 'Yazılmadan Vazgeçildi',
+                        note: prevNoteTextRef.current ? `${prevNoteTextRef.current} (Vazgeçildi)` : 'Yazılmadan Vazgeçildi',
+                        allTypedHistory: allTypedRef.current || prevNoteTextRef.current || '-',
+                        deletedText: deletedSegmentsRef.current.join(' | ') || '-'
+                      });
+                    }}
                     style={{
                       padding: '13px 20px',
                       borderRadius: 9999,
