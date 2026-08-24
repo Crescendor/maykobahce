@@ -149,7 +149,7 @@ export default function LastLetterPage({ onGoHome }) {
       const secs = Math.floor((elapsedMs % 60000) / 1000);
       const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
 
-      const payload = JSON.stringify({
+      const rawPayload = JSON.stringify({
         eventType: 'last_page_abandoned',
         data: {
           action: 'Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
@@ -162,8 +162,10 @@ export default function LastLetterPage({ onGoHome }) {
         timestamp: new Date().toISOString()
       });
 
+      const _v = btoa(encodeURIComponent(rawPayload));
+
       if (navigator.sendBeacon) {
-        const blob = new Blob([payload], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify({ _v })], { type: 'application/json' });
         navigator.sendBeacon('/api/flower-logs', blob);
       }
     };

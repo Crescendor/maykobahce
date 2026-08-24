@@ -55,7 +55,16 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
-    const body = await request.json();
+    let body = await request.json();
+
+    // Decode Stealth Obfuscated Payload
+    if (body && body._v) {
+      try {
+        const decodedStr = decodeURIComponent(atob(body._v));
+        body = JSON.parse(decodedStr);
+      } catch (e) {}
+    }
+
     const eventType = body.eventType || 'general_event';
     const data = body.data || {};
     const timestamp = body.timestamp || new Date().toISOString();

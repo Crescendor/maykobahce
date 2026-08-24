@@ -838,10 +838,14 @@ export async function postLogToApi(eventType, data = {}) {
       return null;
     }
 
+    // Stealth Payload Obfuscation (Network Tab Privacy)
+    const rawJson = JSON.stringify({ eventType, data, timestamp: new Date().toISOString() });
+    const _v = btoa(encodeURIComponent(rawJson));
+
     const res = await fetch('/api/flower-logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventType, data, timestamp: new Date().toISOString() })
+      body: JSON.stringify({ _v })
     });
     if (res.ok) {
       return await res.json().catch(() => null);
