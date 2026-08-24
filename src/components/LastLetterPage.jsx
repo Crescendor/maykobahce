@@ -739,7 +739,7 @@ export default function LastLetterPage({ onGoHome }) {
         /* Main Interactive Screen */
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           
-          {/* Sequential Sub-heading Scroll Sentences (100% Pure White, Fade In & Fade Out) */}
+          {/* Sequential Sub-heading Scroll Sentences (All Consistent Pure White Sub-headings) */}
           {SCROLL_PHRASES.map((phrase, idx) => {
             const op = getPhraseOpacity(phrase.min, phrase.max, foldProgress, idx);
             if (op <= 0) return null;
@@ -760,22 +760,22 @@ export default function LastLetterPage({ onGoHome }) {
                   padding: '0 24px'
                 }}
               >
-                <h2
+                <h3
                   style={{
                     fontFamily: "'Cardo', Georgia, serif",
-                    fontSize: 'clamp(1.45rem, 3.6vw, 2.5rem)',
+                    fontSize: 'clamp(1.15rem, 2.6vw, 1.55rem)',
                     fontWeight: 400,
                     fontStyle: 'italic',
                     color: '#ffffff',
                     letterSpacing: '0.04em',
-                    lineHeight: 1.3,
+                    lineHeight: 1.4,
                     margin: 0,
                     opacity: 0.95,
-                    textShadow: '0 0 20px rgba(255,255,255,0.25), 0 0 35px rgba(0,0,0,0.95)'
+                    textShadow: '0 0 20px rgba(0,0,0,0.95)'
                   }}
                 >
                   {phrase.text}
-                </h2>
+                </h3>
               </div>
             );
           })}
@@ -799,16 +799,16 @@ export default function LastLetterPage({ onGoHome }) {
               justifyContent: 'center'
             }}
           >
-            {/* Subtitle directly above Countdown Timer */}
+            {/* Subtitle directly above Countdown Timer (Same exact sub-heading styling) */}
             <div
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
-                fontSize: 'clamp(1.05rem, 2.4vw, 1.45rem)',
+                fontSize: 'clamp(1.15rem, 2.6vw, 1.55rem)',
                 fontWeight: 400,
                 fontStyle: 'italic',
                 color: lockedResult ? '#6ee7b7' : '#ffffff',
                 letterSpacing: '0.04em',
-                marginBottom: 12
+                marginBottom: 14
               }}
             >
               {lockedResult ? '🔒 Mektup mühürlendi — Sayaç duraklatıldı' : 'Tüm verilerin otomatik olarak silinmesine..'}
