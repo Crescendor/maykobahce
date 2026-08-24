@@ -36,7 +36,7 @@ export default function LastLetterPage({ onGoHome }) {
   const [foldProgress, setFoldProgress] = useState(0);
   const [isLetterZoomed, setIsLetterZoomed] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
-  const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(false);
+  const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(true);
 
   // Burn & Fire State - Clear all previous local storage burn records completely as requested
   useEffect(() => {
@@ -226,7 +226,6 @@ export default function LastLetterPage({ onGoHome }) {
 
   // 1. Mouse Wheel & Touch Scroll Handler -> Smooth 3D Folding Control
   const handleScrollWheel = useCallback((e) => {
-    if (!isScrollUnlocked) return;
     const delta = e.deltaY || e.detail || 0;
     setFoldProgress((prev) => {
       const step = delta > 0 ? 0.08 : -0.08;
@@ -246,7 +245,7 @@ export default function LastLetterPage({ onGoHome }) {
 
       return next;
     });
-  }, [isScrollUnlocked, sendLog]);
+  }, [sendLog]);
 
   // Touch Swipe Handler for Mobile
   const touchStartRef = useRef(0);
@@ -254,7 +253,6 @@ export default function LastLetterPage({ onGoHome }) {
     touchStartRef.current = e.touches[0].clientY;
   };
   const handleTouchMove = useCallback((e) => {
-    if (!isScrollUnlocked) return;
     const currentY = e.touches[0].clientY;
     const diff = touchStartRef.current - currentY;
     touchStartRef.current = currentY;
@@ -264,7 +262,7 @@ export default function LastLetterPage({ onGoHome }) {
       const next = Math.max(0, Math.min(1, prev + step));
       return next;
     });
-  }, [isScrollUnlocked]);
+  }, []);
 
   useEffect(() => {
     const onWheel = (e) => handleScrollWheel(e);
@@ -617,107 +615,6 @@ export default function LastLetterPage({ onGoHome }) {
             >
               Neyse
             </h1>
-
-            {/* White Key & Keyhole Drag-to-Unlock Widget */}
-            <div
-              style={{
-                marginTop: 32,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 12,
-                pointerEvents: 'auto'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 48, position: 'relative' }}>
-                {/* White Keyhole (Kilit Deliği) */}
-                <div
-                  ref={keyholeRef}
-                  onClick={handleKeyDoubleClick}
-                  style={{
-                    width: 58,
-                    height: 58,
-                    borderRadius: '50%',
-                    border: keyStage === 'unlocked' ? '2px solid #ffffff' : keyStage === 'keyIn' ? '2px solid #6ee7b7' : '2px dashed rgba(255, 255, 255, 0.7)',
-                    background: keyStage === 'unlocked' ? 'rgba(255, 255, 255, 0.3)' : keyStage === 'keyIn' ? 'rgba(110, 231, 183, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-                    backdropFilter: 'blur(8px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#ffffff',
-                    boxShadow: keyStage === 'unlocked' ? '0 0 35px rgba(255, 255, 255, 0.95)' : keyStage === 'keyIn' ? '0 0 25px rgba(110, 231, 183, 0.7)' : '0 0 15px rgba(255, 255, 255, 0.25)',
-                    transition: 'all 0.4s ease',
-                    cursor: 'pointer'
-                  }}
-                  title="Kilit Deliği"
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="10" r="3" fill="#ffffff" />
-                    <path d="M12 13v5" strokeWidth="2.5" />
-                  </svg>
-                </div>
-
-                {/* Direction Arrow */}
-                {keyStage === 'initial' && (
-                  <div style={{ color: 'rgba(255, 255, 255, 0.65)', fontSize: '1.2rem', animation: 'pulseKeyArrow 1.5s infinite ease-in-out' }}>
-                    ←
-                  </div>
-                )}
-
-                {/* White Key (Anahtar) */}
-                <div
-                  onMouseDown={handleKeyMouseDown}
-                  onTouchStart={handleKeyMouseDown}
-                  onDoubleClick={handleKeyDoubleClick}
-                  onClick={handleKeyDoubleClick}
-                  style={{
-                    width: 54,
-                    height: 54,
-                    borderRadius: '50%',
-                    background: keyStage === 'keyIn' ? 'rgba(110, 231, 183, 0.3)' : 'rgba(255, 255, 255, 0.18)',
-                    border: keyStage === 'keyIn' ? '1.8px solid #6ee7b7' : '1.5px solid #ffffff',
-                    backdropFilter: 'blur(10px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#ffffff',
-                    cursor: keyStage === 'unlocked' ? 'default' : 'pointer',
-                    transform: keyStage === 'keyIn' || keyStage === 'unlocked'
-                      ? `translate(-102px, 0px) ${keyStage === 'unlocked' ? 'rotate(90deg) scale(1.15)' : 'scale(1.08)'}`
-                      : `translate(${keyOffset.x}px, ${keyOffset.y}px) ${isKeyDragging ? 'scale(1.15)' : 'scale(1)'}`,
-                    transition: isKeyDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, background 0.3s ease',
-                    boxShadow: keyStage === 'unlocked' ? '0 0 35px rgba(255, 255, 255, 0.95)' : keyStage === 'keyIn' ? '0 0 25px rgba(110, 231, 183, 0.8)' : isKeyDragging ? '0 0 30px rgba(255, 255, 255, 0.95)' : '0 4px 20px rgba(255, 255, 255, 0.35)',
-                    userSelect: 'none',
-                    touchAction: 'none'
-                  }}
-                  title={keyStage === 'keyIn' ? 'Çift tıklayarak kilidi açın' : 'Anahtarı kilide sürükleyin'}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4.1a1 1 0 0 0-1.4 0l-2.1 2.1a1 1 0 0 0 0 1.4Z" fill="#ffffff" />
-                    <path d="m15.5 7.5-3 3" />
-                    <path d="m11 12-7 7a2 2 0 0 0 0 2.83l.17.17a2 2 0 0 0 2.83 0l7-7" fill="none" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Status / Instruction Text */}
-              <div style={{ color: keyStage === 'unlocked' ? '#6ee7b7' : keyStage === 'keyIn' ? '#fde047' : 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem', fontFamily: "'Cardo', serif", fontStyle: 'italic', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                {keyStage === 'unlocked' ? (
-                  <>
-                    <span style={{ color: '#6ee7b7', fontWeight: 'bold' }}>✓ Kilit Açıldı</span> — Mektubu okumak için aşağı kaydırın <ChevronDown size={14} style={{ animation: 'bounceY 1.2s infinite' }} />
-                  </>
-                ) : keyStage === 'keyIn' ? (
-                  <>
-                    ✨ <span style={{ color: '#fde047', fontWeight: 'bold' }}>Adım 2:</span> Kilidi açmak için anahtara çift tıklayın
-                  </>
-                ) : (
-                  <>
-                    🔑 <span style={{ fontWeight: 'bold' }}>Adım 1:</span> Anahtarı kilit deliğine sürükleyin
-                  </>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* 3D Paper Scroll Folding Container */}
