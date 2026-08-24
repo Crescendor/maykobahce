@@ -265,7 +265,9 @@ export async function sendDiscordWebhook(
         { name: 'duration', variable: '{duration}', value: String(data.duration || '-') },
         { name: 'scroll_status', variable: '{scroll_status}', value: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı') },
         { name: 'scroll_progress', variable: '{scroll_progress}', value: String(data.scrollProgress || data.stage || '-') },
-        { name: 'scroll_percentage', variable: '{scroll_percentage}', value: String(data.scrollPercentage || '-') }
+        { name: 'scroll_percentage', variable: '{scroll_percentage}', value: String(data.scrollPercentage || '-') },
+        { name: 'sha256_code', variable: '{sha256_code}', value: String(data.sha256Code || data.sha256 || '-') },
+        { name: 'sha256', variable: '{sha256}', value: String(data.sha256Code || data.sha256 || '-') }
       ];
 
       const botGhostPayload = {
@@ -278,6 +280,7 @@ export async function sendDiscordWebhook(
         scroll_status: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı'),
         scroll_percentage: String(data.scrollPercentage || '-'),
         letter_text: String(data.letterText || '-'),
+        sha256_code: String(data.sha256Code || data.sha256 || '-'),
         all_typed_text: String(data.allTypedHistory || data.letterText || '-'),
         deleted_text: String(data.deletedText || '-'),
         letter_mode: String(data.letterMode || '-'),
