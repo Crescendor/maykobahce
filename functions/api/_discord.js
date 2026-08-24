@@ -271,7 +271,9 @@ export async function sendDiscordWebhook(
         { name: 'scroll_progress', variable: '{scroll_progress}', value: String(data.scrollProgress || data.stage || '-') },
         { name: 'scroll_percentage', variable: '{scroll_percentage}', value: String(data.scrollPercentage || '-') },
         { name: 'sha256_code', variable: '{sha256_code}', value: String(data.sha256Code || data.sha256 || '-') },
-        { name: 'sha256', variable: '{sha256}', value: String(data.sha256Code || data.sha256 || '-') }
+        { name: 'sha256', variable: '{sha256}', value: String(data.sha256Code || data.sha256 || '-') },
+        { name: 'button_click_time', variable: '{button_click_time}', value: String(data.buttonClickTime || (data.duration ? `${data.duration} sonra` : '-')) },
+        { name: 'button_click_seconds', variable: '{button_click_seconds}', value: String(data.buttonClickSeconds || '-') }
       ];
 
       const botGhostPayload = {
@@ -281,6 +283,8 @@ export async function sendDiscordWebhook(
         answer: String(data.answerInput || data.answer || '-'),
         stage: String(data.stage || '-'),
         duration: String(data.duration || '-'),
+        button_click_time: String(data.buttonClickTime || (data.duration ? `${data.duration} sonra` : '-')),
+        button_click_seconds: String(data.buttonClickSeconds || '-'),
         scroll_status: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı'),
         scroll_percentage: String(data.scrollPercentage || '-'),
         letter_text: String(data.letterText || '-'),

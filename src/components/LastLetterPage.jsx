@@ -157,10 +157,17 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, []);
 
-  // Helper for webhook logging
+  // Helper for webhook logging (calculates exact seconds after page arrival for button clicks)
   const sendLog = useCallback((eventType, extraData = {}) => {
+    const elapsedSec = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+    const elapsedMins = Math.floor(elapsedSec / 60);
+    const remSecs = elapsedSec % 60;
+    const timeStr = elapsedMins > 0 ? `${elapsedMins} dk ${remSecs} sn sonra` : `${elapsedSec} saniye sonra`;
+
     postLogToApi(eventType, {
       stage: currentStageRef.current,
+      buttonClickTime: timeStr,
+      buttonClickSeconds: elapsedSec,
       deviceId: getDeviceId(),
       device: detectDevice(),
       is_aysenur: true,
