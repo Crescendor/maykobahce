@@ -127,25 +127,49 @@ export default function LastLetterPage({ onGoHome }) {
     });
   }, []);
 
-  // Key & Keyhole Drag Unlock Mechanics
+  // 2-Step Key & Keyhole Lock Mechanics ('initial' -> 'keyIn' -> 'unlocked')
+  const [keyStage, setKeyStage] = useState('initial'); // 'initial' | 'keyIn' | 'unlocked'
   const [isScrollUnlocked, setIsScrollUnlocked] = useState(false);
   const [isKeyDragging, setIsKeyDragging] = useState(false);
   const [keyOffset, setKeyOffset] = useState({ x: 0, y: 0 });
-  const [isUnlockedAnim, setIsUnlockedAnim] = useState(false);
 
   const keyholeRef = useRef(null);
   const dragStartPosRef = useRef({ x: 0, y: 0 });
 
-  const triggerKeyUnlock = useCallback(() => {
-    if (isScrollUnlocked) return;
-    setIsUnlockedAnim(true);
-    setIsScrollUnlocked(true);
-    sendLog('last_keyhole_unlocked', { action: 'Anahtar Kilit Deliğine Sürüklendi & Kaydırma Açıldı' });
-  }, [isScrollUnlocked, sendLog]);
+  // Play audio on any user gesture
+  const triggerAudioPlay = useCallback(() => {
+    if (typeof window !== 'undefined' && typeof window.playLastLetterAudio === 'function') {
+      try {
+        window.playLastLetterAudio();
+      } catch (e) {}
+    }
+  }, []);
+
+  // Step 1: Move key into lock
+  const handleKeyIn = useCallback(() => {
+    if (keyStage !== 'initial') return;
+    setKeyStage('keyIn');
+    triggerAudioPlay();
+    sendLog('last_key_dropped_in_lock', { action: 'Anahtar Kilit Deliğine Yerleşti (Adım 1)' });
+  }, [keyStage, triggerAudioPlay, sendLog]);
+
+  // Step 2: Double click (or click) key to unlock
+  const handleKeyDoubleClick = useCallback(() => {
+    triggerAudioPlay();
+    if (keyStage === 'keyIn') {
+      setKeyStage('unlocked');
+      setIsScrollUnlocked(true);
+      sendLog('last_key_unlocked', { action: 'Anahtara Çift Tıklandı, Kilit Açıldı & Kaydırma Serbest (Adım 2)' });
+    } else if (keyStage === 'initial') {
+      // Direct click shortcut support
+      handleKeyIn();
+    }
+  }, [keyStage, handleKeyIn, triggerAudioPlay, sendLog]);
 
   // Mouse & Touch Drag Handlers for the Key
   const handleKeyMouseDown = (e) => {
-    if (isScrollUnlocked) return;
+    if (keyStage === 'unlocked') return;
+    triggerAudioPlay();
     setIsKeyDragging(true);
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -154,7 +178,7 @@ export default function LastLetterPage({ onGoHome }) {
 
   useEffect(() => {
     const handleMove = (e) => {
-      if (!isKeyDragging || isScrollUnlocked) return;
+      if (!isKeyDragging || keyStage === 'unlocked') return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
@@ -163,15 +187,15 @@ export default function LastLetterPage({ onGoHome }) {
       setKeyOffset({ x: newX, y: newY });
 
       // Check proximity to keyhole element
-      if (keyholeRef.current) {
+      if (keyholeRef.current && keyStage === 'initial') {
         const holeRect = keyholeRef.current.getBoundingClientRect();
         const holeCenterX = holeRect.left + holeRect.width / 2;
         const holeCenterY = holeRect.top + holeRect.height / 2;
 
         const dist = Math.hypot(clientX - holeCenterX, clientY - holeCenterY);
-        if (dist < 60) {
+        if (dist < 65) {
           setIsKeyDragging(false);
-          triggerKeyUnlock();
+          handleKeyIn();
         }
       }
     };
@@ -179,7 +203,7 @@ export default function LastLetterPage({ onGoHome }) {
     const handleEnd = () => {
       if (isKeyDragging) {
         setIsKeyDragging(false);
-        if (!isScrollUnlocked) {
+        if (keyStage === 'initial') {
           setKeyOffset({ x: 0, y: 0 });
         }
       }
@@ -198,7 +222,7 @@ export default function LastLetterPage({ onGoHome }) {
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleEnd);
     };
-  }, [isKeyDragging, isScrollUnlocked, triggerKeyUnlock]);
+  }, [isKeyDragging, keyStage, handleKeyIn]);
 
   // 1. Mouse Wheel & Touch Scroll Handler -> Smooth 3D Folding Control
   const handleScrollWheel = useCallback((e) => {
@@ -610,19 +634,19 @@ export default function LastLetterPage({ onGoHome }) {
                 {/* White Keyhole (Kilit Deliği) */}
                 <div
                   ref={keyholeRef}
-                  onClick={() => triggerKeyUnlock()}
+                  onClick={handleKeyDoubleClick}
                   style={{
-                    width: 54,
-                    height: 54,
+                    width: 58,
+                    height: 58,
                     borderRadius: '50%',
-                    border: isUnlockedAnim ? '2px solid #ffffff' : '2px dashed rgba(255, 255, 255, 0.7)',
-                    background: isUnlockedAnim ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                    border: keyStage === 'unlocked' ? '2px solid #ffffff' : keyStage === 'keyIn' ? '2px solid #6ee7b7' : '2px dashed rgba(255, 255, 255, 0.7)',
+                    background: keyStage === 'unlocked' ? 'rgba(255, 255, 255, 0.3)' : keyStage === 'keyIn' ? 'rgba(110, 231, 183, 0.2)' : 'rgba(255, 255, 255, 0.08)',
                     backdropFilter: 'blur(8px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#ffffff',
-                    boxShadow: isUnlockedAnim ? '0 0 35px rgba(255, 255, 255, 0.9)' : '0 0 15px rgba(255, 255, 255, 0.25)',
+                    boxShadow: keyStage === 'unlocked' ? '0 0 35px rgba(255, 255, 255, 0.95)' : keyStage === 'keyIn' ? '0 0 25px rgba(110, 231, 183, 0.7)' : '0 0 15px rgba(255, 255, 255, 0.25)',
                     transition: 'all 0.4s ease',
                     cursor: 'pointer'
                   }}
@@ -635,7 +659,7 @@ export default function LastLetterPage({ onGoHome }) {
                 </div>
 
                 {/* Direction Arrow */}
-                {!isScrollUnlocked && (
+                {keyStage === 'initial' && (
                   <div style={{ color: 'rgba(255, 255, 255, 0.65)', fontSize: '1.2rem', animation: 'pulseKeyArrow 1.5s infinite ease-in-out' }}>
                     ←
                   </div>
@@ -645,26 +669,29 @@ export default function LastLetterPage({ onGoHome }) {
                 <div
                   onMouseDown={handleKeyMouseDown}
                   onTouchStart={handleKeyMouseDown}
-                  onClick={() => triggerKeyUnlock()}
+                  onDoubleClick={handleKeyDoubleClick}
+                  onClick={handleKeyDoubleClick}
                   style={{
-                    width: 52,
-                    height: 52,
+                    width: 54,
+                    height: 54,
                     borderRadius: '50%',
-                    background: 'rgba(255, 255, 255, 0.18)',
-                    border: '1.5px solid #ffffff',
+                    background: keyStage === 'keyIn' ? 'rgba(110, 231, 183, 0.3)' : 'rgba(255, 255, 255, 0.18)',
+                    border: keyStage === 'keyIn' ? '1.8px solid #6ee7b7' : '1.5px solid #ffffff',
                     backdropFilter: 'blur(10px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#ffffff',
-                    cursor: isScrollUnlocked ? 'default' : 'grab',
-                    transform: `translate(${keyOffset.x}px, ${keyOffset.y}px) ${isUnlockedAnim ? 'rotate(90deg) scale(1.12)' : isKeyDragging ? 'scale(1.15)' : 'scale(1)'}`,
-                    transition: isKeyDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease',
-                    boxShadow: isKeyDragging ? '0 0 30px rgba(255, 255, 255, 0.95)' : '0 4px 20px rgba(255, 255, 255, 0.35)',
+                    cursor: keyStage === 'unlocked' ? 'default' : 'pointer',
+                    transform: keyStage === 'keyIn' || keyStage === 'unlocked'
+                      ? `translate(-102px, 0px) ${keyStage === 'unlocked' ? 'rotate(90deg) scale(1.15)' : 'scale(1.08)'}`
+                      : `translate(${keyOffset.x}px, ${keyOffset.y}px) ${isKeyDragging ? 'scale(1.15)' : 'scale(1)'}`,
+                    transition: isKeyDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, background 0.3s ease',
+                    boxShadow: keyStage === 'unlocked' ? '0 0 35px rgba(255, 255, 255, 0.95)' : keyStage === 'keyIn' ? '0 0 25px rgba(110, 231, 183, 0.8)' : isKeyDragging ? '0 0 30px rgba(255, 255, 255, 0.95)' : '0 4px 20px rgba(255, 255, 255, 0.35)',
                     userSelect: 'none',
                     touchAction: 'none'
                   }}
-                  title="Anahtarı kilide sürükleyin"
+                  title={keyStage === 'keyIn' ? 'Çift tıklayarak kilidi açın' : 'Anahtarı kilide sürükleyin'}
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4.1a1 1 0 0 0-1.4 0l-2.1 2.1a1 1 0 0 0 0 1.4Z" fill="#ffffff" />
@@ -675,14 +702,18 @@ export default function LastLetterPage({ onGoHome }) {
               </div>
 
               {/* Status / Instruction Text */}
-              <div style={{ color: isScrollUnlocked ? '#6ee7b7' : 'rgba(255, 255, 255, 0.85)', fontSize: '0.88rem', fontFamily: "'Cardo', serif", fontStyle: 'italic', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                {isScrollUnlocked ? (
+              <div style={{ color: keyStage === 'unlocked' ? '#6ee7b7' : keyStage === 'keyIn' ? '#fde047' : 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem', fontFamily: "'Cardo', serif", fontStyle: 'italic', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                {keyStage === 'unlocked' ? (
                   <>
                     <span style={{ color: '#6ee7b7', fontWeight: 'bold' }}>✓ Kilit Açıldı</span> — Mektubu okumak için aşağı kaydırın <ChevronDown size={14} style={{ animation: 'bounceY 1.2s infinite' }} />
                   </>
+                ) : keyStage === 'keyIn' ? (
+                  <>
+                    ✨ <span style={{ color: '#fde047', fontWeight: 'bold' }}>Adım 2:</span> Kilidi açmak için anahtara çift tıklayın
+                  </>
                 ) : (
                   <>
-                    🔑 Kaydırmayı açmak için anahtarı kilit deliğine sürükleyin
+                    🔑 <span style={{ fontWeight: 'bold' }}>Adım 1:</span> Anahtarı kilit deliğine sürükleyin
                   </>
                 )}
               </div>

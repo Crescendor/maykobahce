@@ -121,7 +121,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       onYouTubeIframeAPIReady();
     }
 
-    // Universal Autoplay Unlock (Mouse Move, Pointer, Touch, Scroll, Key, Hover)
+    // Universal Autoplay Unlock (Mouse Move, Pointer, Touch, Scroll, Key, Hover, Click)
     const unlockAutoplay = () => {
       if (playerRef.current && typeof playerRef.current.playVideo === 'function' && !isPhase1EndedRef.current) {
         try {
@@ -133,7 +133,9 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
       }
     };
 
-    const events = ['mousemove', 'pointermove', 'mouseover', 'touchstart', 'touchend', 'scroll', 'wheel', 'keydown', 'click'];
+    window.playLastLetterAudio = unlockAutoplay;
+
+    const events = ['mousemove', 'pointermove', 'mouseover', 'touchstart', 'touchend', 'scroll', 'wheel', 'keydown', 'click', 'dblclick'];
     events.forEach(evt => window.addEventListener(evt, unlockAutoplay, { passive: true }));
 
     // Autoplay Retry Loop (Triggers every 200ms on entry until playback succeeds)
@@ -149,6 +151,7 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
 
     return () => {
       isCancelled = true;
+      delete window.playLastLetterAudio;
       clearInterval(retryInterval);
       if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
       if (timeCheckIntervalRef.current) clearInterval(timeCheckIntervalRef.current);
