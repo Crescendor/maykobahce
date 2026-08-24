@@ -689,7 +689,11 @@ export default function LastLetterPage({ onGoHome }) {
             </div>
           </div>
         </div>
-      ) : (
+      ) : (() => {
+        const paperOpacity = foldProgress <= 0.45 ? 0 : Math.min(1, (foldProgress - 0.45) * 2.8);
+        const buttonOpacity = foldProgress <= 0.55 ? 0 : Math.min(1, (foldProgress - 0.55) * 2.8);
+
+        return (
         /* Main Interactive Screen */
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           
@@ -702,8 +706,8 @@ export default function LastLetterPage({ onGoHome }) {
               right: 0,
               transform: 'translateY(-50%)',
               textAlign: 'center',
-              opacity: Math.max(0, 1 - foldProgress * 2.5),
-              transition: 'opacity 0.3s ease',
+              opacity: foldProgress < 0.45 ? 1 : Math.max(0, 1 - (foldProgress - 0.45) * 3.5),
+              transition: 'opacity 0.2s ease',
               pointerEvents: 'none',
               zIndex: 10,
               display: 'flex',
@@ -712,7 +716,7 @@ export default function LastLetterPage({ onGoHome }) {
               justifyContent: 'center'
             }}
           >
-            {/* Sub-heading Subtitle (Appears as scroll starts, fades out as scroll continues before letter unfolds) */}
+            {/* Sub-heading Subtitle (Appears as scroll starts, stays visible, fades out much later before paper unfolds) */}
             <div
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
@@ -722,12 +726,12 @@ export default function LastLetterPage({ onGoHome }) {
                 color: '#e2e8f0',
                 letterSpacing: '0.04em',
                 marginBottom: 10,
-                opacity: foldProgress <= 0.02
+                opacity: foldProgress <= 0.01
                   ? 0
-                  : foldProgress > 0.02 && foldProgress < 0.32
-                  ? Math.min(1, (foldProgress - 0.02) * 8)
-                  : Math.max(0, 1 - (foldProgress - 0.32) * 6),
-                transform: foldProgress > 0.02 ? 'translateY(0)' : 'translateY(-10px)',
+                  : foldProgress <= 0.45
+                  ? Math.min(1, foldProgress * 15)
+                  : Math.max(0, 1 - (foldProgress - 0.45) * 3.5),
+                transform: foldProgress > 0.01 ? 'translateY(0)' : 'translateY(-10px)',
                 transition: 'opacity 0.25s ease, transform 0.3s ease'
               }}
             >
@@ -1191,7 +1195,8 @@ export default function LastLetterPage({ onGoHome }) {
             </div>
           )}
         </div>
-      )}
+        );
+      })()}
 
       {/* Embedded Keyframe Animations for 30-Second Iconic #0D0E12 Paper Hole Burn */}
       <style>{`
