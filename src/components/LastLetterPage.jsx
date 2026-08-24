@@ -307,27 +307,25 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [isKeyDragging, keyStage, handleKeyIn]);
 
-  // 1. Mouse Wheel & Touch Scroll Handler -> Smooth Cinematic Sentences & 3D Folding Control
+  const targetFoldRef = useRef(0);
+
+  // 1. Mouse Wheel & Touch Scroll Handler -> Smooth Liquid Lerp Control
   const handleScrollWheel = useCallback((e) => {
     const delta = e.deltaY || e.detail || 0;
-    setFoldProgress((prev) => {
-      const step = delta > 0 ? 0.03 : -0.03;
-      const next = Math.max(0, Math.min(1, prev + step));
+    const step = delta > 0 ? 0.05 : -0.05;
+    targetFoldRef.current = Math.max(0, Math.min(1, targetFoldRef.current + step));
 
-      if (next > 0.05 && !hasLoggedScrollRef.current) {
-        hasLoggedScrollRef.current = true;
-        currentStageRef.current = 'Kaydırmalı Cümleler İlerliyor';
-        sendLog('last_scroll_started', { action: 'Sayfa Kaydırılarak Cümleler Okunmaya Başlandı' });
-      }
+    if (targetFoldRef.current > 0.05 && !hasLoggedScrollRef.current) {
+      hasLoggedScrollRef.current = true;
+      currentStageRef.current = 'Kaydırmalı Cümleler İlerliyor';
+      sendLog('last_scroll_started', { action: 'Sayfa Kaydırılarak Cümleler Okunmaya Başlandı' });
+    }
 
-      if (next >= 0.90 && !hasLoggedLetterOpenRef.current) {
-        hasLoggedLetterOpenRef.current = true;
-        currentStageRef.current = 'Mektup Tam Açıldı';
-        sendLog('last_letter_fully_unfolded', { action: '3D Mektup Tamamen Katından Çıkarıldı ve Okunuyor' });
-      }
-
-      return next;
-    });
+    if (targetFoldRef.current >= 0.90 && !hasLoggedLetterOpenRef.current) {
+      hasLoggedLetterOpenRef.current = true;
+      currentStageRef.current = 'Mektup Tam Açıldı';
+      sendLog('last_letter_fully_unfolded', { action: '3D Mektup Tamamen Katından Çıkarıldı ve Okunuyor' });
+    }
   }, [sendLog]);
 
   // Touch Swipe Handler for Mobile
@@ -340,11 +338,23 @@ export default function LastLetterPage({ onGoHome }) {
     const diff = touchStartRef.current - currentY;
     touchStartRef.current = currentY;
 
-    setFoldProgress((prev) => {
-      const step = diff > 0 ? 0.025 : -0.025;
-      const next = Math.max(0, Math.min(1, prev + step));
-      return next;
-    });
+    const step = diff > 0 ? 0.04 : -0.04;
+    targetFoldRef.current = Math.max(0, Math.min(1, targetFoldRef.current + step));
+  }, []);
+
+  // Liquid Smooth Lerp Animation Loop for Wheel & Touch
+  useEffect(() => {
+    let animId;
+    const updateLerp = () => {
+      setFoldProgress((prev) => {
+        const diff = targetFoldRef.current - prev;
+        if (Math.abs(diff) < 0.0005) return targetFoldRef.current;
+        return prev + diff * 0.12; // Liquid smooth lerp factor
+      });
+      animId = requestAnimationFrame(updateLerp);
+    };
+    animId = requestAnimationFrame(updateLerp);
+    return () => cancelAnimationFrame(animId);
   }, []);
 
   useEffect(() => {
@@ -699,15 +709,14 @@ export default function LastLetterPage({ onGoHome }) {
           </div>
         </div>
       ) : (() => {
-        // Sequential Subtitle Scroll Phrases (All Pure White Sub-headings)
+        // Sequential Subtitle Scroll Phrases (All Consistent Pure White Sub-headings)
         const SCROLL_PHRASES = [
-          { min: 0.00, max: 0.12, text: "Sen Konuyu biliyorsun" },
-          { min: 0.12, max: 0.24, text: "Geldiysen" },
-          { min: 0.24, max: 0.36, text: "Özlemişsindir" },
-          { min: 0.36, max: 0.48, text: "Özlediysen" },
-          { min: 0.48, max: 0.60, text: "Sayacı durdur." },
-          { min: 0.60, max: 0.72, text: "Öyle ya da böyle." },
-          { min: 0.72, max: 0.83, text: "Tüm verilerin otomatik olarak silinmesine.." }
+          { min: 0.00, max: 0.14, text: "Sen Konuyu biliyorsun" },
+          { min: 0.14, max: 0.28, text: "Geldiysen" },
+          { min: 0.28, max: 0.42, text: "Özlemişsindir" },
+          { min: 0.42, max: 0.56, text: "Özlediysen" },
+          { min: 0.56, max: 0.70, text: "Sayacı durdur." },
+          { min: 0.70, max: 0.82, text: "Öyle ya da böyle." }
         ];
 
         const getPhraseOpacity = (min, max, p, idx) => {
@@ -724,12 +733,12 @@ export default function LastLetterPage({ onGoHome }) {
           return 1;
         };
 
-        // Live Countdown Timer appears directly in center at foldProgress >= 0.83!
-        const timerOpacity = foldProgress < 0.83
+        // Live Countdown Timer appears directly in center with "Tüm verilerin otomatik olarak silinmesine.." subtitle at foldProgress >= 0.82!
+        const timerOpacity = foldProgress < 0.82
           ? 0
-          : foldProgress <= 0.91
-          ? (foldProgress - 0.83) / 0.08
-          : Math.max(0, 1 - (foldProgress - 0.91) * 12);
+          : foldProgress <= 0.90
+          ? (foldProgress - 0.82) / 0.08
+          : Math.max(0, 1 - (foldProgress - 0.90) * 12);
 
         // 3D Paper Letter & Buttons unfold at foldProgress >= 0.88
         const paperOpacity = foldProgress <= 0.88 ? 0 : Math.min(1, (foldProgress - 0.88) * 8.3);
