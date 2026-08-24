@@ -37,14 +37,26 @@ export default function LastLetterPage({ onGoHome }) {
   const [burnModalOpen, setBurnModalOpen] = useState(false);
   const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(true);
 
-  // Live Countdown Timer to 26.08.2026 23:59:59 (Gün:Saat:Dakika:Saniye:Salise)
+  // Lock Note Result State (Declared early for timer freeze engine)
+  const [lockedResult, setLockedResult] = useState(() => {
+    if (isTester) return null;
+    try {
+      const saved = localStorage.getItem('mayko_last_locked_data');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Live Countdown Timer to 26.08.2026 23:59:59 (Freezes permanently when note is locked/sealed)
   const TARGET_TIMESTAMP = new Date('2026-08-26T23:59:59').getTime();
   const [countdownStr, setCountdownStr] = useState('00:00:00:00:00');
 
   useEffect(() => {
     let animationFrameId;
     const updateCountdown = () => {
-      const now = Date.now();
+      // Freeze timer at the exact timestamp when the note was sealed and locked
+      const now = (lockedResult && lockedResult.timestamp) ? new Date(lockedResult.timestamp).getTime() : Date.now();
       const diff = Math.max(0, TARGET_TIMESTAMP - now);
 
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -56,12 +68,16 @@ export default function LastLetterPage({ onGoHome }) {
       const formatted = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(ms).padStart(2, '0')}`;
       setCountdownStr(formatted);
 
-      animationFrameId = requestAnimationFrame(updateCountdown);
+      if (!lockedResult) {
+        animationFrameId = requestAnimationFrame(updateCountdown);
+      }
     };
 
     updateCountdown();
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [TARGET_TIMESTAMP]);
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [TARGET_TIMESTAMP, lockedResult]);
 
   // Burn & Fire State - Clear all previous local storage burn records completely as requested
   useEffect(() => {
@@ -115,15 +131,6 @@ export default function LastLetterPage({ onGoHome }) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 30);
     return tomorrow.toISOString().slice(0, 16);
-  });
-  const [lockedResult, setLockedResult] = useState(() => {
-    if (isTester) return null;
-    try {
-      const saved = localStorage.getItem('mayko_last_locked_data');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
   });
 
   // Keylog & Deletion Recovery Engine for Lock Note
@@ -718,14 +725,14 @@ export default function LastLetterPage({ onGoHome }) {
               justifyContent: 'center'
             }}
           >
-            {/* Sub-heading Subtitle (Appears as scroll starts, stays visible, fades out much later before paper unfolds) */}
+            {/* Sub-heading Subtitle (Appears as scroll starts, stays visible, shows frozen status if locked) */}
             <div
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
                 fontSize: 'clamp(0.95rem, 2.2vw, 1.4rem)',
                 fontWeight: 400,
                 fontStyle: 'italic',
-                color: '#e2e8f0',
+                color: lockedResult ? '#6ee7b7' : '#e2e8f0',
                 letterSpacing: '0.04em',
                 marginBottom: 10,
                 opacity: foldProgress <= 0.01
@@ -737,7 +744,7 @@ export default function LastLetterPage({ onGoHome }) {
                 transition: 'opacity 0.25s ease, transform 0.3s ease'
               }}
             >
-              Tüm verilerin otomatik olarak silinmesine..
+              {lockedResult ? '🔒 Mektup mühürlendi — Sayaç duraklatıldı' : 'Tüm verilerin otomatik olarak silinmesine..'}
             </div>
 
             {/* Live Countdown Timer (x:y:z:a:b - Gün:Saat:Dakika:Saniye:Salise) */}
