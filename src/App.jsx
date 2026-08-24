@@ -247,15 +247,33 @@ export default function App() {
     () => sessionStorage.getItem('mayko_aysenur_unlocked') === 'true'
   );
 
-  // SPA Route Handling - Always route directly to /last page
+  // SPA Route Handling - Route to /last page while preserving #burak admin hash trigger
   const [currentPath, setCurrentPath] = useState('/last');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.pathname !== '/last') {
-      try {
-        window.history.replaceState(null, '', '/last');
-      } catch (e) {}
+    if (typeof window !== 'undefined') {
+      const hash = (window.location.hash || '').toLowerCase();
+      const path = (window.location.pathname || '').toLowerCase();
+      if (hash === '#burak' || hash === '#/burak' || hash === '#sys' || hash === '#admin' || path === '/burak' || path === '/sys') {
+        setIsAdminOpen(true);
+      }
+      if (window.location.pathname !== '/last' && !path.includes('sys') && !path.includes('burak')) {
+        try {
+          window.history.replaceState(null, '', '/last' + window.location.hash);
+        } catch (e) {}
+      }
     }
+  }, []);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = (window.location.hash || '').toLowerCase();
+      if (hash === '#burak' || hash === '#/burak' || hash === '#sys' || hash === '#admin') {
+        setIsAdminOpen(true);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   // Webhook milestone tracking refs (Triggered once per visitor)
@@ -1002,14 +1020,39 @@ export default function App() {
 
   if (currentPath === '/last') {
     return (
-      <LastLetterPage
-        onGoHome={() => {
-          if (typeof window !== 'undefined') {
-            window.history.pushState(null, '', '/');
-          }
-          setCurrentPath('/');
-        }}
-      />
+      <>
+        <LastLetterPage
+          onGoHome={() => {
+            if (typeof window !== 'undefined') {
+              window.history.pushState(null, '', '/');
+            }
+            setCurrentPath('/');
+          }}
+        />
+
+        {/* Secret Admin Dashboard (/burak or #burak) */}
+        <Suspense fallback={null}>
+          {isAdminOpen && (
+            <AdminDashboardModal
+              isOpen={isAdminOpen}
+              onClose={() => {
+                setIsAdminOpen(false);
+                if (window.location.hash === '#burak' || window.location.hash === '#/burak') {
+                  window.history.replaceState(null, '', window.location.pathname);
+                }
+              }}
+              flowers={flowers}
+              onDeleteFlower={handleDeleteFlower}
+              onAdminAuth={handleAdminAuth}
+              onPatchFlower={handlePatchFlower}
+              customBg={customBg}
+              onUpdateCustomBg={handleUpdateCustomBg}
+              isMelancholyMode={isMelancholyMode}
+              onToggleMelancholyMode={handleToggleMelancholyMode}
+            />
+          )}
+        </Suspense>
+      </>
     );
   }
 
