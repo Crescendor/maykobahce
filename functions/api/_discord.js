@@ -127,6 +127,10 @@ export async function sendDiscordWebhook(
       title = '🔒✉️ /last Mektup Mühürlendi, Not Ekledi ve Kriptolandı!';
       color = 3462041; // Emerald Green
       description = `Ziyaretçi mektuba ek notunu bıraktı, kilitleme tarihini seçti ve SHA-256 ile mühürledi.\n📅 **Açılacağı Tarih:** ${data.targetDate || '-'}\n🔑 **SHA-256 Kodu:** \`${data.sha256Code || '-'}\``;
+    } else if (eventType === 'last_letter_zoom_toggled') {
+      title = data.isZoomed ? '🔍 /last Mektup Tıklanarak Büyütüldü (Odaklandı)' : '🔍 /last Mektup Tıklanarak Küçültüldü (Uzaklaştırıldı)';
+      color = 3801080; // Sky Blue
+      description = data.isZoomed ? 'Ziyaretçi mektuba tıklayarak ekranda BÜYÜTTÜ ve daha yakından okuyor.' : 'Ziyaretçi mektuba tekrar tıklayarak mektubu normal boyutuna KÜÇÜLTTÜ.';
     } else if (eventType === 'last_reset_clicked') {
       title = '🔄 /last Test Cihazı Sayfayı Söndürdü / Sıfırladı';
       color = 3801080;

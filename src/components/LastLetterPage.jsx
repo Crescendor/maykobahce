@@ -753,7 +753,14 @@ export default function LastLetterPage({ onGoHome }) {
               <div
                 onClick={() => {
                   if (paperOpacity > 0.2) {
-                    setIsLetterZoomed(prev => !prev);
+                    setIsLetterZoomed((prev) => {
+                      const nextZoom = !prev;
+                      sendLog('last_letter_zoom_toggled', {
+                        isZoomed: nextZoom,
+                        action: nextZoom ? '🔍 Mektuba Tıklandı & Büyütüldü (Odaklandı)' : '🔍 Mektuba Tekrar Tıklandı & Küçültüldü (Normal Boyut)'
+                      });
+                      return nextZoom;
+                    });
                   }
                 }}
                 style={{
