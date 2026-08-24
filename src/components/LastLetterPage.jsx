@@ -35,6 +35,8 @@ export default function LastLetterPage({ onGoHome }) {
   const [foldProgress, setFoldProgress] = useState(0);
   const [isLetterZoomed, setIsLetterZoomed] = useState(false);
   const [burnModalOpen, setBurnModalOpen] = useState(false);
+  const [isAudioPhase1Completed, setIsAudioPhase1Completed] = useState(true);
+
   // Live Countdown Timer to 26.08.2026 23:59:59 (Gün:Saat:Dakika:Saniye:Salise)
   const TARGET_TIMESTAMP = new Date('2026-08-26T23:59:59').getTime();
   const [countdownStr, setCountdownStr] = useState('00:00:00:00:00');
