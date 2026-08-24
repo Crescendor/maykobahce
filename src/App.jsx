@@ -249,34 +249,15 @@ export default function App() {
     () => sessionStorage.getItem('mayko_aysenur_unlocked') === 'true'
   );
 
-  // SPA Route Handling (/last route)
-  const [currentPath, setCurrentPath] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const path = window.location.pathname.toLowerCase();
-      const hash = window.location.hash.toLowerCase();
-      if (path === '/last' || path === '/last/' || hash.includes('/last') || hash.includes('#last')) {
-        return '/last';
-      }
-    }
-    return '/';
-  });
+  // SPA Route Handling - Always route directly to /last page
+  const [currentPath, setCurrentPath] = useState('/last');
 
   useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname.toLowerCase();
-      const hash = window.location.hash.toLowerCase();
-      if (path === '/last' || path === '/last/' || hash.includes('/last') || hash.includes('#last')) {
-        setCurrentPath('/last');
-      } else {
-        setCurrentPath('/');
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    window.addEventListener('hashchange', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      window.removeEventListener('hashchange', handlePopState);
-    };
+    if (typeof window !== 'undefined' && window.location.pathname !== '/last') {
+      try {
+        window.history.replaceState(null, '', '/last');
+      } catch (e) {}
+    }
   }, []);
 
   // Webhook milestone tracking refs (Triggered once per visitor)
