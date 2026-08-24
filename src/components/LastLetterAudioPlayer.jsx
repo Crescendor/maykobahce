@@ -91,40 +91,24 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
     const onYouTubeIframeAPIReady = () => {
       if (isCancelled || playerRef.current) return;
 
-      playerRef.current = new window.YT.Player('youtube-last-letter-frame', {
-        height: '1',
-        width: '1',
-        videoId: videoId,
-        host: 'https://www.youtube-nocookie.com',
-        playerVars: {
-          autoplay: 1,
-          loop: 0,
-          playlist: videoId,
-          controls: 0,
-          showinfo: 0,
-          rel: 0,
-          modestbranding: 1,
-          playsinline: 1,
-          disablekb: 1,
-          fs: 0,
-          enablejsapi: 1,
-          start: 125 // 2:05
-        },
-        events: {
-          onReady: (event) => {
-            startAudioEngine(event.target);
-          },
-          onStateChange: (event) => {
-            if (event.data === window.YT.PlayerState.PLAYING) {
-              try {
-                if (typeof event.target.unMute === 'function') event.target.unMute();
-                event.target.setVolume(25);
-              } catch (e) {}
-              setHasStarted(true);
+      try {
+        playerRef.current = new window.YT.Player('youtube-last-letter-frame', {
+          events: {
+            onReady: (event) => {
+              startAudioEngine(event.target);
+            },
+            onStateChange: (event) => {
+              if (event.data === window.YT.PlayerState.PLAYING) {
+                try {
+                  if (typeof event.target.unMute === 'function') event.target.unMute();
+                  event.target.setVolume(25);
+                } catch (e) {}
+                setHasStarted(true);
+              }
             }
           }
-        }
-      });
+        });
+      } catch (e) {}
     };
 
     if (!window.YT || !window.YT.Player) {
@@ -263,7 +247,13 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
           pointerEvents: 'none'
         }}
       >
-        <div id="youtube-last-letter-frame" />
+        <iframe
+          id="youtube-last-letter-frame"
+          src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=1&controls=0&showinfo=0&rel=0&playsinline=1&start=125&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : 'https://maykobahce.art')}`}
+          allow="autoplay; encrypted-media"
+          title="Last Letter Audio"
+          style={{ width: 1, height: 1, border: 'none' }}
+        />
       </div>
 
       {/* Persistent Bottom-Right Sound Bar */}

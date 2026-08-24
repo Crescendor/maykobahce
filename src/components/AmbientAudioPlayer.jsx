@@ -33,47 +33,31 @@ export default function AmbientAudioPlayer() {
     const onYouTubeIframeAPIReady = () => {
       if (isCancelled || playerRef.current) return;
 
-      playerRef.current = new window.YT.Player('youtube-ambient-audio-frame', {
-        height: '1',
-        width: '1',
-        videoId: videoId,
-        host: 'https://www.youtube-nocookie.com',
-        playerVars: {
-          autoplay: 1,
-          loop: 1,
-          playlist: videoId,
-          controls: 0,
-          showinfo: 0,
-          rel: 0,
-          modestbranding: 1,
-          playsinline: 1,
-          disablekb: 1,
-          fs: 0,
-          enablejsapi: 1
-        },
-        events: {
-          onReady: (event) => {
-            try {
-              event.target.setVolume(volume);
-              event.target.playVideo();
-              isPlayingRef.current = true;
-              setHasStarted(true);
-            } catch (e) {}
-          },
-          onStateChange: (event) => {
-            // If ended, loop back immediately
-            if (event.data === window.YT.PlayerState.ENDED) {
+      try {
+        playerRef.current = new window.YT.Player('youtube-ambient-audio-frame', {
+          events: {
+            onReady: (event) => {
               try {
+                event.target.setVolume(volume);
                 event.target.playVideo();
+                isPlayingRef.current = true;
+                setHasStarted(true);
               } catch (e) {}
-            }
-            if (event.data === window.YT.PlayerState.PLAYING) {
-              isPlayingRef.current = true;
-              setHasStarted(true);
+            },
+            onStateChange: (event) => {
+              if (event.data === window.YT.PlayerState.ENDED) {
+                try {
+                  event.target.playVideo();
+                } catch (e) {}
+              }
+              if (event.data === window.YT.PlayerState.PLAYING) {
+                isPlayingRef.current = true;
+                setHasStarted(true);
+              }
             }
           }
-        }
-      });
+        });
+      } catch (e) {}
     };
 
     if (!window.YT || !window.YT.Player) {
@@ -152,7 +136,13 @@ export default function AmbientAudioPlayer() {
           zIndex: -1
         }}
       >
-        <div id="youtube-ambient-audio-frame" />
+        <iframe
+          id="youtube-ambient-audio-frame"
+          src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&playsinline=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : 'https://maykobahce.art')}`}
+          allow="autoplay; encrypted-media"
+          title="Ambient Audio"
+          style={{ width: 1, height: 1, border: 'none' }}
+        />
       </div>
 
       {/* Persistent Ultra-Minimal Bottom-Right Audio Control */}
