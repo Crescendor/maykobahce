@@ -63,6 +63,25 @@ export default function LastLetterPage({ onGoHome }) {
     return () => cancelAnimationFrame(animationFrameId);
   }, [TARGET_TIMESTAMP]);
 
+  // Typewriter Subtitle & Scroll Lock Engine ("Tüm verilerin otomatik olarak silinmesine..")
+  const FULL_SUBTITLE_TEXT = "Tüm verilerin otomatik olarak silinmesine..";
+  const [typedSubtitleText, setTypedSubtitleText] = useState("");
+  const [isSubtitleComplete, setIsSubtitleComplete] = useState(false);
+
+  useEffect(() => {
+    let index = 0;
+    const timer = setInterval(() => {
+      index++;
+      setTypedSubtitleText(FULL_SUBTITLE_TEXT.slice(0, index));
+      if (index >= FULL_SUBTITLE_TEXT.length) {
+        clearInterval(timer);
+        setIsSubtitleComplete(true);
+      }
+    }, 45);
+
+    return () => clearInterval(timer);
+  }, []);
+
   // Burn & Fire State - Clear all previous local storage burn records completely as requested
   useEffect(() => {
     try {
@@ -298,8 +317,9 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [isKeyDragging, keyStage, handleKeyIn]);
 
-  // 1. Mouse Wheel & Touch Scroll Handler -> Smooth 3D Folding Control
+  // 1. Mouse Wheel & Touch Scroll Handler -> Smooth 3D Folding Control (Locked until subtitle completes)
   const handleScrollWheel = useCallback((e) => {
+    if (!isSubtitleComplete) return;
     const delta = e.deltaY || e.detail || 0;
     setFoldProgress((prev) => {
       const step = delta > 0 ? 0.08 : -0.08;
@@ -319,14 +339,15 @@ export default function LastLetterPage({ onGoHome }) {
 
       return next;
     });
-  }, [sendLog]);
+  }, [isSubtitleComplete, sendLog]);
 
-  // Touch Swipe Handler for Mobile
+  // Touch Swipe Handler for Mobile (Locked until subtitle completes)
   const touchStartRef = useRef(0);
   const handleTouchStart = (e) => {
     touchStartRef.current = e.touches[0].clientY;
   };
   const handleTouchMove = useCallback((e) => {
+    if (!isSubtitleComplete) return;
     const currentY = e.touches[0].clientY;
     const diff = touchStartRef.current - currentY;
     touchStartRef.current = currentY;
@@ -336,7 +357,7 @@ export default function LastLetterPage({ onGoHome }) {
       const next = Math.max(0, Math.min(1, prev + step));
       return next;
     });
-  }, []);
+  }, [isSubtitleComplete]);
 
   useEffect(() => {
     const onWheel = (e) => handleScrollWheel(e);
@@ -712,22 +733,27 @@ export default function LastLetterPage({ onGoHome }) {
               justifyContent: 'center'
             }}
           >
-            {/* Sub-heading Subtitle (Appears right above when scroll starts) */}
+            {/* Sub-heading Subtitle (Types character-by-character, unlocks scroll when completed) */}
             <div
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
                 fontSize: 'clamp(0.95rem, 2.2vw, 1.4rem)',
                 fontWeight: 400,
                 fontStyle: 'italic',
-                color: 'rgba(228, 231, 236, 0.85)',
+                color: isSubtitleComplete ? '#e2e8f0' : 'rgba(228, 231, 236, 0.85)',
                 letterSpacing: '0.04em',
                 marginBottom: 10,
-                opacity: foldProgress > 0.01 ? 1 : 0,
-                transform: foldProgress > 0.01 ? 'translateY(0)' : 'translateY(-12px)',
-                transition: 'opacity 0.4s ease, transform 0.4s ease'
+                minHeight: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4
               }}
             >
-              Tüm verilerin otomatik olarak silinmesine..
+              <span>{typedSubtitleText}</span>
+              {!isSubtitleComplete && (
+                <span style={{ animation: 'blink 0.8s infinite', color: '#6ee7b7', fontWeight: 'bold' }}>|</span>
+              )}
             </div>
 
             {/* Live Countdown Timer (x:y:z:a:b - Gün:Saat:Dakika:Saniye:Salise) */}
