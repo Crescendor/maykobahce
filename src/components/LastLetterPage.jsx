@@ -502,7 +502,8 @@ export default function LastLetterPage({ onGoHome }) {
             alignItems: 'center',
             justifyContent: 'center',
             padding: 24,
-            textAlign: 'center'
+            textAlign: 'center',
+            animation: 'fadeInSlow 2s ease-in-out forwards'
           }}
         >
           {/* Countdown Clock Header */}
@@ -1120,28 +1121,31 @@ export default function LastLetterPage({ onGoHome }) {
             border: 20px solid #ffeb3b;
             box-shadow: inset 0 0 25px 8px #ffeb3b, inset 0 0 45px 15px #ff3d00, 0 0 35px 12px #ff9800, 0 0 75px 30px rgba(255, 61, 0, 0.85), 0 0 130px 50px rgba(255, 30, 0, 0.6);
           }
-          70% {
-            height: 2400px;
-            width: 2400px;
-            top: calc(50% - 1200px);
-            right: calc(50% - 1200px);
-            border: 22px solid #ff9800;
-            box-shadow: inset 0 0 30px 10px #ffeb3b, inset 0 0 50px 18px #ff3d00, 0 0 45px 15px #ff9800, 0 0 90px 35px rgba(255, 61, 0, 0.9), 0 0 150px 60px rgba(255, 30, 0, 0.75);
-          }
-          85% {
+          75% {
+            height: 3200px;
+            width: 3200px;
+            top: calc(50% - 1600px);
+            right: calc(50% - 1600px);
+            border: 20px solid #ff9800;
             opacity: 1;
-            border: 24px solid #e65100;
-            box-shadow: inset 0 0 20px 6px #ff9800, inset 0 0 35px 10px #bf360c, 0 0 30px 10px #e65100, 0 0 60px 20px rgba(191, 54, 12, 0.8);
           }
           95% {
+            height: 4800px;
+            width: 4800px;
+            top: calc(50% - 2400px);
+            right: calc(50% - 2400px);
+            border: 0px solid transparent;
+            box-shadow: none;
             opacity: 1;
-            height: 3500px;
-            width: 3500px;
-            top: calc(50% - 1750px);
-            right: calc(50% - 1750px);
           }
           100% {
-            opacity: 0;
+            height: 5000px;
+            width: 5000px;
+            top: calc(50% - 2500px);
+            right: calc(50% - 2500px);
+            border: 0px solid transparent;
+            box-shadow: none;
+            opacity: 1;
           }
         }
 
