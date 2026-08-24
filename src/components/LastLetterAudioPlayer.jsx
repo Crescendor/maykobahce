@@ -80,14 +80,11 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
 
     const startAudioEngine = (eventTarget) => {
       try {
+        if (typeof eventTarget.unMute === 'function') eventTarget.unMute();
+        eventTarget.setVolume(25);
         eventTarget.seekTo(125, true); // 2:05
         eventTarget.playVideo();
-        // Check if video is playing unmuted
-        try {
-          if (eventTarget.isMuted && !eventTarget.isMuted()) {
-            setHasStarted(true);
-          }
-        } catch (e) {}
+        setHasStarted(true);
       } catch (e) {}
     };
 
@@ -100,7 +97,6 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
         videoId: videoId,
         playerVars: {
           autoplay: 1,
-          mute: 1,
           loop: 0,
           playlist: videoId,
           controls: 0,
@@ -119,6 +115,10 @@ export default function LastLetterAudioPlayer({ isBurningActive, isLocked, onPha
           },
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
+              try {
+                if (typeof event.target.unMute === 'function') event.target.unMute();
+                event.target.setVolume(25);
+              } catch (e) {}
               setHasStarted(true);
             }
           }
