@@ -712,7 +712,7 @@ export default function LastLetterPage({ onGoHome }) {
               justifyContent: 'center'
             }}
           >
-            {/* Sub-heading Subtitle (Fades in directly above countdown timer when scrolling starts) */}
+            {/* Sub-heading Subtitle (Appears as scroll starts, fades out as scroll continues before letter unfolds) */}
             <div
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
@@ -722,9 +722,13 @@ export default function LastLetterPage({ onGoHome }) {
                 color: '#e2e8f0',
                 letterSpacing: '0.04em',
                 marginBottom: 10,
-                opacity: foldProgress > 0.005 ? 1 : 0,
-                transform: foldProgress > 0.005 ? 'translateY(0)' : 'translateY(-10px)',
-                transition: 'opacity 0.4s ease, transform 0.4s ease'
+                opacity: foldProgress <= 0.02
+                  ? 0
+                  : foldProgress > 0.02 && foldProgress < 0.32
+                  ? Math.min(1, (foldProgress - 0.02) * 8)
+                  : Math.max(0, 1 - (foldProgress - 0.32) * 6),
+                transform: foldProgress > 0.02 ? 'translateY(0)' : 'translateY(-10px)',
+                transition: 'opacity 0.25s ease, transform 0.3s ease'
               }}
             >
               Tüm verilerin otomatik olarak silinmesine..
