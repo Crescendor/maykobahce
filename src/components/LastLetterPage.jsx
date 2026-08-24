@@ -127,8 +127,82 @@ export default function LastLetterPage({ onGoHome }) {
     });
   }, []);
 
+  // Key & Keyhole Drag Unlock Mechanics
+  const [isScrollUnlocked, setIsScrollUnlocked] = useState(false);
+  const [isKeyDragging, setIsKeyDragging] = useState(false);
+  const [keyOffset, setKeyOffset] = useState({ x: 0, y: 0 });
+  const [isUnlockedAnim, setIsUnlockedAnim] = useState(false);
+
+  const keyholeRef = useRef(null);
+  const dragStartPosRef = useRef({ x: 0, y: 0 });
+
+  const triggerKeyUnlock = useCallback(() => {
+    if (isScrollUnlocked) return;
+    setIsUnlockedAnim(true);
+    setIsScrollUnlocked(true);
+    sendLog('last_keyhole_unlocked', { action: 'Anahtar Kilit Deliğine Sürüklendi & Kaydırma Açıldı' });
+  }, [isScrollUnlocked, sendLog]);
+
+  // Mouse & Touch Drag Handlers for the Key
+  const handleKeyMouseDown = (e) => {
+    if (isScrollUnlocked) return;
+    setIsKeyDragging(true);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragStartPosRef.current = { x: clientX - keyOffset.x, y: clientY - keyOffset.y };
+  };
+
+  useEffect(() => {
+    const handleMove = (e) => {
+      if (!isKeyDragging || isScrollUnlocked) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const newX = clientX - dragStartPosRef.current.x;
+      const newY = clientY - dragStartPosRef.current.y;
+      setKeyOffset({ x: newX, y: newY });
+
+      // Check proximity to keyhole element
+      if (keyholeRef.current) {
+        const holeRect = keyholeRef.current.getBoundingClientRect();
+        const holeCenterX = holeRect.left + holeRect.width / 2;
+        const holeCenterY = holeRect.top + holeRect.height / 2;
+
+        const dist = Math.hypot(clientX - holeCenterX, clientY - holeCenterY);
+        if (dist < 60) {
+          setIsKeyDragging(false);
+          triggerKeyUnlock();
+        }
+      }
+    };
+
+    const handleEnd = () => {
+      if (isKeyDragging) {
+        setIsKeyDragging(false);
+        if (!isScrollUnlocked) {
+          setKeyOffset({ x: 0, y: 0 });
+        }
+      }
+    };
+
+    if (isKeyDragging) {
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleMove);
+      window.addEventListener('touchend', handleEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [isKeyDragging, isScrollUnlocked, triggerKeyUnlock]);
+
   // 1. Mouse Wheel & Touch Scroll Handler -> Smooth 3D Folding Control
   const handleScrollWheel = useCallback((e) => {
+    if (!isScrollUnlocked) return;
     const delta = e.deltaY || e.detail || 0;
     setFoldProgress((prev) => {
       const step = delta > 0 ? 0.08 : -0.08;
@@ -148,7 +222,7 @@ export default function LastLetterPage({ onGoHome }) {
 
       return next;
     });
-  }, [sendLog]);
+  }, [isScrollUnlocked, sendLog]);
 
   // Touch Swipe Handler for Mobile
   const touchStartRef = useRef(0);
@@ -156,6 +230,7 @@ export default function LastLetterPage({ onGoHome }) {
     touchStartRef.current = e.touches[0].clientY;
   };
   const handleTouchMove = useCallback((e) => {
+    if (!isScrollUnlocked) return;
     const currentY = e.touches[0].clientY;
     const diff = touchStartRef.current - currentY;
     touchStartRef.current = currentY;
@@ -165,7 +240,7 @@ export default function LastLetterPage({ onGoHome }) {
       const next = Math.max(0, Math.min(1, prev + step));
       return next;
     });
-  }, []);
+  }, [isScrollUnlocked]);
 
   useEffect(() => {
     const onWheel = (e) => handleScrollWheel(e);
@@ -518,6 +593,100 @@ export default function LastLetterPage({ onGoHome }) {
             >
               Neyse
             </h1>
+
+            {/* White Key & Keyhole Drag-to-Unlock Widget */}
+            <div
+              style={{
+                marginTop: 32,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                pointerEvents: 'auto'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 48, position: 'relative' }}>
+                {/* White Keyhole (Kilit Deliği) */}
+                <div
+                  ref={keyholeRef}
+                  onClick={() => triggerKeyUnlock()}
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: '50%',
+                    border: isUnlockedAnim ? '2px solid #ffffff' : '2px dashed rgba(255, 255, 255, 0.7)',
+                    background: isUnlockedAnim ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                    backdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ffffff',
+                    boxShadow: isUnlockedAnim ? '0 0 35px rgba(255, 255, 255, 0.9)' : '0 0 15px rgba(255, 255, 255, 0.25)',
+                    transition: 'all 0.4s ease',
+                    cursor: 'pointer'
+                  }}
+                  title="Kilit Deliği"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="10" r="3" fill="#ffffff" />
+                    <path d="M12 13v5" strokeWidth="2.5" />
+                  </svg>
+                </div>
+
+                {/* Direction Arrow */}
+                {!isScrollUnlocked && (
+                  <div style={{ color: 'rgba(255, 255, 255, 0.65)', fontSize: '1.2rem', animation: 'pulseKeyArrow 1.5s infinite ease-in-out' }}>
+                    ←
+                  </div>
+                )}
+
+                {/* White Key (Anahtar) */}
+                <div
+                  onMouseDown={handleKeyMouseDown}
+                  onTouchStart={handleKeyMouseDown}
+                  onClick={() => triggerKeyUnlock()}
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.18)',
+                    border: '1.5px solid #ffffff',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ffffff',
+                    cursor: isScrollUnlocked ? 'default' : 'grab',
+                    transform: `translate(${keyOffset.x}px, ${keyOffset.y}px) ${isUnlockedAnim ? 'rotate(90deg) scale(1.12)' : isKeyDragging ? 'scale(1.15)' : 'scale(1)'}`,
+                    transition: isKeyDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease',
+                    boxShadow: isKeyDragging ? '0 0 30px rgba(255, 255, 255, 0.95)' : '0 4px 20px rgba(255, 255, 255, 0.35)',
+                    userSelect: 'none',
+                    touchAction: 'none'
+                  }}
+                  title="Anahtarı kilide sürükleyin"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4.1a1 1 0 0 0-1.4 0l-2.1 2.1a1 1 0 0 0 0 1.4Z" fill="#ffffff" />
+                    <path d="m15.5 7.5-3 3" />
+                    <path d="m11 12-7 7a2 2 0 0 0 0 2.83l.17.17a2 2 0 0 0 2.83 0l7-7" fill="none" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Status / Instruction Text */}
+              <div style={{ color: isScrollUnlocked ? '#6ee7b7' : 'rgba(255, 255, 255, 0.85)', fontSize: '0.88rem', fontFamily: "'Cardo', serif", fontStyle: 'italic', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                {isScrollUnlocked ? (
+                  <>
+                    <span style={{ color: '#6ee7b7', fontWeight: 'bold' }}>✓ Kilit Açıldı</span> — Mektubu okumak için aşağı kaydırın <ChevronDown size={14} style={{ animation: 'bounceY 1.2s infinite' }} />
+                  </>
+                ) : (
+                  <>
+                    🔑 Kaydırmayı açmak için anahtarı kilit deliğine sürükleyin
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* 3D Paper Scroll Folding Container */}
