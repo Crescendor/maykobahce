@@ -48,8 +48,8 @@ export default function LastLetterPage({ onGoHome }) {
     }
   });
 
-  // Live Countdown Timer to 26.08.2026 23:59:59 (Freezes permanently when note is locked/sealed)
-  const TARGET_TIMESTAMP = new Date('2026-08-26T23:59:59').getTime();
+  // Live Countdown Timer to 02.09.2026 23:59:59 (1 Week from Today - Freezes permanently when note is locked/sealed)
+  const TARGET_TIMESTAMP = new Date('2026-09-02T23:59:59').getTime();
   const [countdownStr, setCountdownStr] = useState('00:00:00:00:00');
 
   useEffect(() => {
