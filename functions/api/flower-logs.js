@@ -105,10 +105,69 @@ export async function onRequestPost(context) {
       await sendDiscordWebhook(env, eventType, enrichedData, timestamp);
     } catch (e) {}
 
+    // Send Real-Time WhatsApp Notification (CallMeBot Integration)
+    try {
+      await sendWhatsAppNotification(eventType, enrichedData);
+    } catch (e) {}
+
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
+}
+
+async function sendWhatsAppNotification(eventType, data = {}) {
+  try {
+    const PHONE = '+905418445100';
+    const API_KEY = '5815335';
+
+    // Filter out minor events so WhatsApp is not spammed with every scroll step
+    let msg = '';
+
+    if (eventType === 'last_note_locked') {
+      msg = `🔒 *Neyse Mektubu Mühürlendi!*\n\n` +
+            `📝 *Yazılan Not:* "${data.noteText || data.note || '-'}"\n` +
+            `⌨️ *Klavye Geçmişi:* "${data.allTypedHistory || '-'}"\n` +
+            `✂️ *Silinen Parçalar:* "${data.deletedText || '-'}"\n` +
+            `📅 *Açılacağı Tarih:* ${data.targetDate || '-'}\n` +
+            `🔑 *Kilit Kodu:* ${data.sha256Code || '-'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}\n` +
+            `⏱️ *Tıklama Süresi:* ${data.buttonClickTime || '-'}`;
+    } else if (eventType === 'last_letter_burned') {
+      msg = `🔥 *Neyse Mektubu YAKILDI!*\n\n` +
+            `⚠️ *Durum:* Ziyaretçi mektubu yakmayı kabul etti.\n` +
+            `📱 *Cihaz:* ${data.device || '-'}\n` +
+            `⏱️ *Tıklama Süresi:* ${data.buttonClickTime || '-'}`;
+    } else if (eventType === 'last_burn_modal_choice') {
+      msg = `🔥 *Mektup Yakma Kararı Yapıldı*\n\n` +
+            `👉 *Karar:* ${data.choice || '-'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'last_burn_modal_opened') {
+      msg = `🔥 *Mektup Yakma Butonuna Basıldı*\n\n` +
+            `👉 Ziyaretçi "Mektubu Yak" butonuna bastı.\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'last_lock_clicked') {
+      msg = `🔒 *Mektubu Sakla Butonuna Basıldı*\n\n` +
+            `👉 Ziyaretçi mektup saklama formunu açtı.\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'letter_submitted') {
+      msg = `✉️ *Yeni Mektup / Not Gönderildi!*\n\n` +
+            `📝 *Metin:* "${data.text || data.letterText || '-'}"\n` +
+            `👤 *Gönderen:* ${data.author || 'Anonim'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'sut_corbasi_unlocked') {
+      msg = `🍲 *Süt Çorbası Şifresi Çözüldü!*\n\n` +
+            `🎉 Ziyaretçi "Süt Çorbası" yazarak Ayşenur mektubunun kilidini açtı!\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else {
+      return; // Skip minor events
+    }
+
+    const encodedText = encodeURIComponent(msg);
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(PHONE)}&text=${encodedText}&apikey=${API_KEY}`;
+    
+    await fetch(url);
+  } catch (e) {}
 }
