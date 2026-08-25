@@ -709,22 +709,24 @@ export default function LastLetterPage({ onGoHome }) {
           </div>
         </div>
       ) : (() => {
-        // Sequential Subtitle Scroll Phrases (All Consistent Pure White Sub-headings)
+        // Sequential Subtitle Scroll Phrases (8 Phrases in Exact Order)
         const SCROLL_PHRASES = [
-          { min: 0.00, max: 0.14, text: "Sen Konuyu biliyorsun" },
-          { min: 0.14, max: 0.28, text: "Geldiysen" },
-          { min: 0.28, max: 0.42, text: "Özlemişsindir" },
-          { min: 0.42, max: 0.56, text: "Özlediysen" },
-          { min: 0.56, max: 0.70, text: "Sayacı durdur." },
-          { min: 0.70, max: 0.82, text: "Öyle ya da böyle." }
+          { min: 0.00, max: 0.11, text: "Sen konuyu biliyorsun.." },
+          { min: 0.11, max: 0.22, text: "Geldiysen," },
+          { min: 0.22, max: 0.33, text: "Merak etmişsindir.." },
+          { min: 0.33, max: 0.44, text: "Merak ettiysen," },
+          { min: 0.44, max: 0.55, text: "Aklının bir yerinde hala hayatta kalan bir şeyler vardır.." },
+          { min: 0.55, max: 0.65, text: "Bir şeyler hayatta ise," },
+          { min: 0.65, max: 0.75, text: "Sayacı durdurur musun?" },
+          { min: 0.75, max: 0.84, text: "Öyle ya da böyle.." }
         ];
 
         const getPhraseOpacity = (min, max, p, idx) => {
           if (p < min || p >= max) return 0;
-          // First phrase ("Sen Konuyu biliyorsun") is 100% visible immediately on page load (p = 0)
+          // First phrase ("Sen konuyu biliyorsun..") is 100% visible immediately on page load (p = 0)
           if (idx === 0) {
-            if (p <= 0.08) return 1;
-            return Math.max(0, (max - p) / (max - 0.08));
+            if (p <= 0.07) return 1;
+            return Math.max(0, (max - p) / (max - 0.07));
           }
           const len = max - min;
           const rel = (p - min) / len;
@@ -733,12 +735,12 @@ export default function LastLetterPage({ onGoHome }) {
           return 1;
         };
 
-        // Live Countdown Timer appears directly in center with "Tüm verilerin otomatik olarak silinmesine.." subtitle at foldProgress >= 0.82!
-        const timerOpacity = foldProgress < 0.82
+        // Live Countdown Timer appears directly in center with "Bize dair elimde kalan tüm verilerin otomatik olarak silinmesine.." subtitle at foldProgress >= 0.84!
+        const timerOpacity = foldProgress < 0.84
           ? 0
-          : foldProgress <= 0.90
-          ? (foldProgress - 0.82) / 0.08
-          : Math.max(0, 1 - (foldProgress - 0.90) * 12);
+          : foldProgress <= 0.91
+          ? (foldProgress - 0.84) / 0.07
+          : Math.max(0, 1 - (foldProgress - 0.91) * 12);
 
         // 3D Paper Letter & Buttons unfold at foldProgress >= 0.88
         const paperOpacity = foldProgress <= 0.88 ? 0 : Math.min(1, (foldProgress - 0.88) * 8.3);
@@ -789,7 +791,7 @@ export default function LastLetterPage({ onGoHome }) {
             );
           })}
 
-          {/* Live Countdown Timer (Appears directly in center position at foldProgress >= 0.83, zero position shift) */}
+          {/* Live Countdown Timer (Appears directly in center position at foldProgress >= 0.84, zero position shift) */}
           <div
             style={{
               position: 'absolute',
@@ -808,7 +810,7 @@ export default function LastLetterPage({ onGoHome }) {
               justifyContent: 'center'
             }}
           >
-            {/* Subtitle directly above Countdown Timer (Same exact sub-heading styling) */}
+            {/* Subtitle directly above Countdown Timer (Exact requested wording) */}
             <div
               style={{
                 fontFamily: "'Cardo', Georgia, serif",
@@ -820,7 +822,7 @@ export default function LastLetterPage({ onGoHome }) {
                 marginBottom: 14
               }}
             >
-              {lockedResult ? '🔒 Mektup mühürlendi — Sayaç duraklatıldı' : 'Tüm verilerin otomatik olarak silinmesine..'}
+              {lockedResult ? '🔒 Mektup mühürlendi — Sayaç duraklatıldı' : 'Bize dair elimde kalan tüm verilerin otomatik olarak silinmesine..'}
             </div>
 
             {/* Live Countdown Timer (x:y:z:a:b - Pure White, Centered) */}
