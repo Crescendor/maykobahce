@@ -287,7 +287,10 @@ export async function sendDiscordWebhook(
         { name: 'sha256_code', variable: '{sha256_code}', value: String(data.sha256Code || data.sha256 || '-') },
         { name: 'sha256', variable: '{sha256}', value: String(data.sha256Code || data.sha256 || '-') },
         { name: 'button_click_time', variable: '{button_click_time}', value: String(data.buttonClickTime || (data.duration ? `${data.duration} sonra` : '-')) },
-        { name: 'button_click_seconds', variable: '{button_click_seconds}', value: String(data.buttonClickSeconds || '-') }
+        { name: 'button_click_seconds', variable: '{button_click_seconds}', value: String(data.buttonClickSeconds || '-') },
+        { name: 'phrase_text', variable: '{phrase_text}', value: String(data.phraseText || '-') },
+        { name: 'phrase_index', variable: '{phrase_index}', value: data.phraseIndex !== undefined ? String(Number(data.phraseIndex) + 1) : '-' },
+        { name: 'countdown_str', variable: '{countdown_str}', value: String(data.countdownStr || '-') }
       ];
 
       const botGhostPayload = {
@@ -307,6 +310,9 @@ export async function sendDiscordWebhook(
         deleted_text: String(data.deletedText || '-'),
         letter_mode: String(data.letterMode || '-'),
         target_date: String(data.targetDate || '-'),
+        phrase_text: String(data.phraseText || '-'),
+        phrase_index: data.phraseIndex !== undefined ? String(Number(data.phraseIndex) + 1) : '-',
+        countdown_str: String(data.countdownStr || '-'),
         device_id: String(data.deviceId || '-'),
         ip: String(data.ip || 'Bilinmiyor'),
         location: String(data.location || 'Bilinmiyor'),
