@@ -321,19 +321,19 @@ export default function LastLetterPage({ onGoHome }) {
       sendLog('last_scroll_started', { action: 'Sayfa Kaydırılarak Cümleler Okunmaya Başlandı' });
     }
 
-    if (targetFoldRef.current >= 0.90 && !hasLoggedLetterOpenRef.current) {
+    if ((foldProgress >= 0.87 || targetFoldRef.current >= 0.87) && !hasLoggedLetterOpenRef.current) {
       hasLoggedLetterOpenRef.current = true;
-      currentStageRef.current = '3D Mektup Kağıdı ve Aksiyon Butonları Ekranı';
+      currentStageRef.current = 'Mektup ve Aksiyon Butonları Ekranı';
       const lastPhraseSecs = ((Date.now() - phraseStartTimeRef.current) / 1000).toFixed(1);
       sendLog('last_letter_fully_unfolded', {
         phraseIndex: 8,
-        phraseText: '3D Mektup Kağıdı ve Aksiyon Butonları (Mektubu Sakla / Mektubu Yak)',
+        phraseText: 'Son Mektup Kağıdı ve Aksiyon Butonları (Mektubu Sakla / Mektubu Yak)',
         phraseDuration: `${lastPhraseSecs} saniye`,
-        scrollStatus: '3D Mektup Kağıdı & Aksiyon Butonları Ekranı',
-        action: '3D Mektup Tamamen Katından Çıkarıldı ve Okunuyor (Butonlar Aktif)'
+        scrollStatus: 'Mektup ve Butonlar Ekranına Gelindi',
+        action: 'Ziyaretçi Mektup ve Aksiyon Butonlarının Olduğu Ekrana Geldi (Mektup Okunuyor / Butonlar Aktif)'
       });
     }
-  }, [sendLog]);
+  }, [foldProgress, sendLog]);
 
   // Touch Swipe Handler for Mobile
   const touchStartRef = useRef(0);
