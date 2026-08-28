@@ -56,10 +56,24 @@ export async function sendDiscordWebhook(
     let description = '';
     const fields = [];
 
-    if (eventType === 'first_scroll_started') {
-      title = '📜 Ziyaretçi Sayfayı Kaydırmaya Başladı!';
+    if (eventType === 'last_phrase_reached') {
+      title = `📜 Ziyaretçi Cümleye Ulaştı: "${data.phraseText || '-'}"`;
       color = 3801080; // Sky Blue #3a86ff
-      description = 'Ziyaretçi siteye girdikten sonra ilk fare/parmak kaydırmasını yaptı.';
+      description = `Ziyaretçi /last sayfasını kaydırırken şu cümleyi ekranda görüntüledi:\n\n**"${data.phraseText || '-'}"**`;
+      if (data.phraseIndex !== undefined) {
+        fields.push({ name: '🔢 Cümle Sırası', value: `${Number(data.phraseIndex) + 1} / 8`, inline: true });
+      }
+    } else if (eventType === 'last_timer_reached') {
+      title = '⏳ Ziyaretçi Canlı Geri Sayım Sayacı Ekranına Ulaştı!';
+      color = 16750848; // Amber #fa8c16
+      description = 'Ziyaretçi kaydırmaya devam ederek canlı saliseli geri sayım sayacı ekranına ulaştı (Sayaç ekranda görünür durumda).\n\n**"Bize dair elimde kalan tüm verilerin otomatik olarak silinmesine.."**';
+      if (data.countdownStr) {
+        fields.push({ name: '⏳ Sayaç Değeri', value: String(data.countdownStr), inline: true });
+      }
+    } else if (eventType === 'last_scroll_started' || eventType === 'first_scroll_started') {
+      title = '📜 Ziyaretçi /last Sayfasını Kaydırmaya Başladı!';
+      color = 3801080; // Sky Blue #3a86ff
+      description = 'Ziyaretçi siteye girdikten sonra ilk fare/parmak kaydırmasını yaptı ve cümleler akmaya başladı.';
     } else if (eventType === 'section_reached') {
       title = '📖 Ziyaretçi Yeni Bir Paragrafa Ulaştı';
       color = 5338094; // Cyan #516beee

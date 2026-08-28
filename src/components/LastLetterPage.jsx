@@ -357,6 +357,47 @@ export default function LastLetterPage({ onGoHome }) {
     return () => cancelAnimationFrame(animId);
   }, []);
 
+  const loggedPhrasesRef = useRef(new Set());
+  const hasLoggedTimerRef = useRef(false);
+
+  // 8 Sequential Phrases tracking & Micron-level Timer reach tracking
+  useEffect(() => {
+    const SCROLL_PHRASES = [
+      { min: 0.00, max: 0.11, text: "Sen konuyu biliyorsun.." },
+      { min: 0.11, max: 0.22, text: "Geldiysen," },
+      { min: 0.22, max: 0.33, text: "Merak etmişsindir.." },
+      { min: 0.33, max: 0.44, text: "Merak ettiysen," },
+      { min: 0.44, max: 0.55, text: "Aklının bir yerinde hala hayatta kalan bir şeyler vardır.." },
+      { min: 0.55, max: 0.65, text: "Bir şeyler hayatta ise," },
+      { min: 0.65, max: 0.75, text: "Sayacı durdurur musun?" },
+      { min: 0.75, max: 0.84, text: "Öyle ya da böyle.." }
+    ];
+
+    SCROLL_PHRASES.forEach((phrase, idx) => {
+      if (foldProgress >= phrase.min && foldProgress < phrase.max) {
+        if (!loggedPhrasesRef.current.has(idx)) {
+          loggedPhrasesRef.current.add(idx);
+          currentStageRef.current = `Cümle ${idx + 1}: "${phrase.text}"`;
+          sendLog('last_phrase_reached', {
+            phraseIndex: idx,
+            phraseText: phrase.text,
+            action: `Ziyaretçi ${idx + 1}. cümleye ulaştı: "${phrase.text}"`
+          });
+        }
+      }
+    });
+
+    // Detect when Countdown Timer becomes visible on screen (even 1 micron visible at foldProgress >= 0.84!)
+    if (foldProgress >= 0.84 && !hasLoggedTimerRef.current) {
+      hasLoggedTimerRef.current = true;
+      currentStageRef.current = 'Canlı Geri Sayım Sayacı Ekranı';
+      sendLog('last_timer_reached', {
+        countdownStr: countdownStr,
+        action: 'Ziyaretçi Canlı Geri Sayım Sayacı Ekranına Ulaştı (Sayaç Ekranda Görünür)'
+      });
+    }
+  }, [foldProgress, countdownStr, sendLog]);
+
   useEffect(() => {
     const onWheel = (e) => handleScrollWheel(e);
     window.addEventListener('wheel', onWheel, { passive: true });
