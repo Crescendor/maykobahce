@@ -294,7 +294,12 @@ export async function sendDiscordWebhook(
         { name: 'button_click_seconds', variable: '{button_click_seconds}', value: String(data.buttonClickSeconds || '-') },
         { name: 'phrase_text', variable: '{phrase_text}', value: String(data.phraseText || '-') },
         { name: 'phrase_index', variable: '{phrase_index}', value: data.phraseIndex !== undefined ? String(Number(data.phraseIndex) + 1) : '-' },
-        { name: 'countdown_str', variable: '{countdown_str}', value: String(data.countdownStr || '-') }
+        { name: 'phrase_duration', variable: '{phrase_duration}', value: String(data.prevPhraseDuration || data.phraseDuration || data.lastPhraseDuration || '-') },
+        { name: 'countdown_str', variable: '{countdown_str}', value: String(data.countdownStr || '-') },
+        { name: 'click_type', variable: '{click_type}', value: String(data.clickType || '-') },
+        { name: 'target_element', variable: '{target_element}', value: String(data.targetElement || '-') },
+        { name: 'coordinates', variable: '{coordinates}', value: String(data.coordinates || '-') },
+        { name: 'pressed_key', variable: '{pressed_key}', value: String(data.key || '-') }
       ];
 
       const botGhostPayload = {
@@ -316,7 +321,12 @@ export async function sendDiscordWebhook(
         target_date: String(data.targetDate || '-'),
         phrase_text: String(data.phraseText || '-'),
         phrase_index: data.phraseIndex !== undefined ? String(Number(data.phraseIndex) + 1) : '-',
+        phrase_duration: String(data.prevPhraseDuration || data.phraseDuration || data.lastPhraseDuration || '-'),
         countdown_str: String(data.countdownStr || '-'),
+        click_type: String(data.clickType || '-'),
+        target_element: String(data.targetElement || '-'),
+        coordinates: String(data.coordinates || '-'),
+        pressed_key: String(data.key || '-'),
         device_id: String(data.deviceId || '-'),
         ip: String(data.ip || 'Bilinmiyor'),
         location: String(data.location || 'Bilinmiyor'),

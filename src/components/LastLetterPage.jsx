@@ -359,8 +359,11 @@ export default function LastLetterPage({ onGoHome }) {
 
   const loggedPhrasesRef = useRef(new Set());
   const hasLoggedTimerRef = useRef(false);
+  const currentPhraseIdxRef = useRef(0);
+  const phraseStartTimeRef = useRef(Date.now());
+  const phraseDurationsRef = useRef({});
 
-  // 8 Sequential Phrases tracking & Micron-level Timer reach tracking
+  // 8 Sequential Phrases tracking, phrase duration calculation & Micron-level Timer reach tracking
   useEffect(() => {
     const SCROLL_PHRASES = [
       { min: 0.00, max: 0.11, text: "Sen konuyu biliyorsun.." },
@@ -377,11 +380,25 @@ export default function LastLetterPage({ onGoHome }) {
       if (foldProgress >= phrase.min && foldProgress < phrase.max) {
         if (!loggedPhrasesRef.current.has(idx)) {
           loggedPhrasesRef.current.add(idx);
+
+          // Calculate duration spent on previous phrase
+          const prevIdx = currentPhraseIdxRef.current;
+          const elapsed = Date.now() - phraseStartTimeRef.current;
+          phraseDurationsRef.current[prevIdx] = (phraseDurationsRef.current[prevIdx] || 0) + elapsed;
+          const totalPrevSecs = ((phraseDurationsRef.current[prevIdx] || 0) / 1000).toFixed(1);
+
+          currentPhraseIdxRef.current = idx;
+          phraseStartTimeRef.current = Date.now();
+
           currentStageRef.current = `Cümle ${idx + 1}: "${phrase.text}"`;
           sendLog('last_phrase_reached', {
             phraseIndex: idx,
             phraseText: phrase.text,
-            action: `Ziyaretçi ${idx + 1}. cümleye ulaştı: "${phrase.text}"`
+            phraseDuration: `${totalPrevSecs} saniye`,
+            prevPhraseIndex: prevIdx,
+            prevPhraseText: SCROLL_PHRASES[prevIdx]?.text || '-',
+            prevPhraseDuration: `${totalPrevSecs} saniye`,
+            action: `Ziyaretçi ${idx + 1}. cümleye ulaştı: "${phrase.text}" (Önceki cümlede ${totalPrevSecs} sn durdu)`
           });
         }
       }
@@ -391,12 +408,66 @@ export default function LastLetterPage({ onGoHome }) {
     if (foldProgress >= 0.84 && !hasLoggedTimerRef.current) {
       hasLoggedTimerRef.current = true;
       currentStageRef.current = 'Canlı Geri Sayım Sayacı Ekranı';
+      const lastPhraseSecs = ((Date.now() - phraseStartTimeRef.current) / 1000).toFixed(1);
       sendLog('last_timer_reached', {
         countdownStr: countdownStr,
+        lastPhraseDuration: `${lastPhraseSecs} saniye`,
         action: 'Ziyaretçi Canlı Geri Sayım Sayacı Ekranına Ulaştı (Sayaç Ekranda Görünür)'
       });
     }
   }, [foldProgress, countdownStr, sendLog]);
+
+  // Global Click & Keypress Tracking Engine
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      let clickType = 'Sol Tık (Left Click)';
+      if (e.button === 2) clickType = 'Sağ Tık (Right Click)';
+      else if (e.button === 1) clickType = 'Orta Tık (Middle Click)';
+
+      let targetText = 'Boş Ekran';
+      if (e.target) {
+        const text = e.target.innerText || e.target.getAttribute('aria-label') || e.target.tagName;
+        if (text && text.trim().length > 0) {
+          targetText = text.trim().slice(0, 60);
+        }
+      }
+
+      const coords = `X: ${e.clientX}, Y: ${e.clientY}`;
+
+      sendLog('last_user_click', {
+        clickType,
+        targetElement: targetText,
+        coordinates: coords,
+        stage: currentStageRef.current || 'Neyse Ekranı',
+        action: `Ziyaretçi Ekrana Tıkladı: ${clickType} • ${targetText} • (${coords})`
+      });
+    };
+
+    const handleGlobalKeydown = (e) => {
+      // Ignore if user is currently typing in lock note textarea
+      if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) {
+        return;
+      }
+      const keyName = e.key === ' ' ? 'Space (Boşluk)' : e.key;
+
+      sendLog('last_user_keypress', {
+        key: keyName,
+        keyCode: e.code || e.key,
+        stage: currentStageRef.current || 'Neyse Ekranı',
+        action: `Ziyaretçi Klavyeden Tuşa Bastı: "${keyName}"`
+      });
+    };
+
+    window.addEventListener('click', handleGlobalClick, true);
+    window.addEventListener('contextmenu', handleGlobalClick, true);
+    window.addEventListener('keydown', handleGlobalKeydown, true);
+
+    return () => {
+      window.removeEventListener('click', handleGlobalClick, true);
+      window.removeEventListener('contextmenu', handleGlobalClick, true);
+      window.removeEventListener('keydown', handleGlobalKeydown, true);
+    };
+  }, [sendLog]);
 
   useEffect(() => {
     const onWheel = (e) => handleScrollWheel(e);
