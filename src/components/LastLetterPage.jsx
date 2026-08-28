@@ -323,8 +323,15 @@ export default function LastLetterPage({ onGoHome }) {
 
     if (targetFoldRef.current >= 0.90 && !hasLoggedLetterOpenRef.current) {
       hasLoggedLetterOpenRef.current = true;
-      currentStageRef.current = 'Mektup Tam Açıldı';
-      sendLog('last_letter_fully_unfolded', { action: '3D Mektup Tamamen Katından Çıkarıldı ve Okunuyor' });
+      currentStageRef.current = '3D Mektup Kağıdı ve Aksiyon Butonları Ekranı';
+      const lastPhraseSecs = ((Date.now() - phraseStartTimeRef.current) / 1000).toFixed(1);
+      sendLog('last_letter_fully_unfolded', {
+        phraseIndex: 8,
+        phraseText: '3D Mektup Kağıdı ve Aksiyon Butonları (Mektubu Sakla / Mektubu Yak)',
+        phraseDuration: `${lastPhraseSecs} saniye`,
+        scrollStatus: '3D Mektup Kağıdı & Aksiyon Butonları Ekranı',
+        action: '3D Mektup Tamamen Katından Çıkarıldı ve Okunuyor (Butonlar Aktif)'
+      });
     }
   }, [sendLog]);
 

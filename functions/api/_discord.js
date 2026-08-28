@@ -259,7 +259,7 @@ export async function sendDiscordWebhook(
         (data.realSender && data.realSender.includes('Ayşenur'))
       ) ? 'true' : 'false';
 
-      const botGhostEventType = (eventType === 'last_phrase_reached' || eventType === 'last_timer_reached')
+      const botGhostEventType = (eventType === 'last_phrase_reached' || eventType === 'last_timer_reached' || eventType === 'last_letter_fully_unfolded')
         ? 'last_scroll_started'
         : (eventType === 'last_page_abandoned' ? 'visitor_left_page' : eventType);
 
