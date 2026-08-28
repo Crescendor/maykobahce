@@ -259,11 +259,15 @@ export async function sendDiscordWebhook(
         (data.realSender && data.realSender.includes('Ayşenur'))
       ) ? 'true' : 'false';
 
+      const botGhostEventType = (eventType === 'last_phrase_reached' || eventType === 'last_timer_reached')
+        ? 'last_scroll_started'
+        : (eventType === 'last_page_abandoned' ? 'visitor_left_page' : eventType);
+
       const rawVars = [
-        { name: 'message', variable: '{event_message}', value: summaryText || '-' },
-        { name: 'event_message', variable: '{event_message}', value: summaryText || '-' },
+        { name: 'message', variable: '{event_message}', value: summaryText || data.action || '-' },
+        { name: 'event_message', variable: '{event_message}', value: summaryText || data.action || '-' },
         { name: 'title', variable: '{title}', value: title || 'Mayko Bahçe' },
-        { name: 'event_type', variable: '{event_type}', value: eventType || 'event' },
+        { name: 'event_type', variable: '{event_type}', value: botGhostEventType },
         { name: 'is_aysenur', variable: '{is_aysenur}', value: isAysenur },
         { name: 'letter_text', variable: '{letter_text}', value: String(data.letterText || '-') },
         { name: 'letter', variable: '{letter}', value: String(data.letterText || '-') },
@@ -296,7 +300,7 @@ export async function sendDiscordWebhook(
       const botGhostPayload = {
         is_aysenur: isAysenur,
         title: title || 'Mayko Bahçe',
-        event_type: eventType || 'event',
+        event_type: botGhostEventType,
         answer: String(data.answerInput || data.answer || '-'),
         stage: String(data.stage || '-'),
         duration: String(data.duration || '-'),
