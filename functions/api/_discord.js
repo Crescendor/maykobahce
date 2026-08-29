@@ -45,9 +45,26 @@ export async function sendDiscordWebhook(
       return { success: false, error: 'Geçersiz veya boş Webhook URL. Lütfen Webhook URL alanını doldurun.' };
     }
 
-    // Ignore excluded / developer device IDs (Zero notifications for dev_m2troqnl9_mswunr9c)
-    const IGNORED_DEVICE_IDS = ['dev_m2troqnl9_mswunr9c'];
-    if (data && data.deviceId && IGNORED_DEVICE_IDS.includes(String(data.deviceId).trim())) {
+    // Ignore excluded / developer device IDs and automated bot locations (Moses Lake, Omaha, Boardman, Quincy, Ashburn, etc.)
+    const IGNORED_DEVICE_IDS = ['dev_m2troqnl9_mswunr9c', 'dev_guest'];
+    const devId = String((data && data.deviceId) || '').trim().toLowerCase();
+    const locationStr = String((data && data.location) || '').toLowerCase();
+    const userAgentStr = String((data && data.device) || '').toLowerCase();
+
+    // Block dev_guest or developer device IDs
+    if (devId && (devId.includes('dev_guest') || IGNORED_DEVICE_IDS.includes(devId))) {
+      return { success: true, ignored: true };
+    }
+
+    // Block datacenter bot locations (Moses Lake, Omaha, Boardman, Quincy, Ashburn, Des Moines, San Jose, Mountain View)
+    const BOT_LOCATIONS = ['moses lake', 'omaha', 'boardman', 'quincy', 'ashburn', 'des moines', 'council bluffs', 'san jose', 'mountain view'];
+    if (BOT_LOCATIONS.some(loc => locationStr.includes(loc))) {
+      return { success: true, ignored: true };
+    }
+
+    // Block bot / crawler user-agent strings
+    const BOT_USER_AGENTS = ['bot', 'crawler', 'spider', 'googlebot', 'bingbot', 'yandexbot', 'headless', 'python', 'curl', 'wget'];
+    if (BOT_USER_AGENTS.some(bot => userAgentStr.includes(bot))) {
       return { success: true, ignored: true };
     }
 

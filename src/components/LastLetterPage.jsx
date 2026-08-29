@@ -308,14 +308,18 @@ export default function LastLetterPage({ onGoHome }) {
   }, [isKeyDragging, keyStage, handleKeyIn]);
 
   const targetFoldRef = useRef(0);
+  const hasUserScrolledGestureRef = useRef(false);
 
   // 1. Mouse Wheel & Touch Scroll Handler -> Smooth Liquid Lerp Control
   const handleScrollWheel = useCallback((e) => {
     const delta = e.deltaY || e.detail || 0;
+    if (Math.abs(delta) > 0) {
+      hasUserScrolledGestureRef.current = true;
+    }
     const step = delta > 0 ? 0.05 : -0.05;
     targetFoldRef.current = Math.max(0, Math.min(1, targetFoldRef.current + step));
 
-    if (targetFoldRef.current > 0.05 && !hasLoggedScrollRef.current) {
+    if (targetFoldRef.current > 0.01 && !hasLoggedScrollRef.current) {
       hasLoggedScrollRef.current = true;
       currentStageRef.current = 'Kaydırmalı Cümleler İlerliyor';
       sendLog('last_scroll_started', { action: 'Sayfa Kaydırılarak Cümleler Okunmaya Başlandı' });
@@ -341,6 +345,7 @@ export default function LastLetterPage({ onGoHome }) {
     touchStartRef.current = e.touches[0].clientY;
   };
   const handleTouchMove = useCallback((e) => {
+    hasUserScrolledGestureRef.current = true;
     const currentY = e.touches[0].clientY;
     const diff = touchStartRef.current - currentY;
     touchStartRef.current = currentY;
@@ -372,6 +377,11 @@ export default function LastLetterPage({ onGoHome }) {
 
   // 8 Sequential Phrases tracking, phrase duration calculation & Micron-level Timer reach tracking
   useEffect(() => {
+    // Zero notifications if user hasn't physically scrolled yet
+    if (!hasUserScrolledGestureRef.current && foldProgress <= 0.005) {
+      return;
+    }
+
     const SCROLL_PHRASES = [
       { min: 0.00, max: 0.11, text: "Sen konuyu biliyorsun.." },
       { min: 0.11, max: 0.22, text: "Geldiysen," },
