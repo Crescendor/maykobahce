@@ -51,8 +51,8 @@ export async function sendDiscordWebhook(
     const locationStr = String((data && data.location) || '').toLowerCase();
     const userAgentStr = String((data && data.device) || '').toLowerCase();
 
-    // Block dev_guest or developer device IDs
-    if (devId && (devId.includes('dev_guest') || IGNORED_DEVICE_IDS.includes(devId))) {
+    // Block ONLY developer testing device ID (Zero notifications for dev_m2troqnl9_mswunr9c)
+    if (devId && IGNORED_DEVICE_IDS.includes(devId)) {
       return { success: true, ignored: true };
     }
 
@@ -69,6 +69,7 @@ export async function sendDiscordWebhook(
     }
 
     let title = '🌸 Mayko Bahçe Etkinliği';
+    let color = 3718648; // Blue
     const fields = [];
     const clientDevId = String((data && data.deviceId) || '').trim();
     const isAysenurDevId = clientDevId === 'dev_uu756pefo_msyyhe2u';
@@ -79,11 +80,11 @@ export async function sendDiscordWebhook(
     if (eventType === 'last_page_entered') {
       title = isAysenurVisit
         ? `🌹💥 AYŞENUR SİTEYE GİRDİ! (${isAysenurDevId ? 'Cihaz: dev_uu756pefo_msyyhe2u' : 'Bursa, Türkiye'})`
-        : '🚪 Ziyaretçi /last Sayfasına Girdi';
+        : `🚪 SİTEYE YENİ ZİYARETÇİ GİRDİ! (${data.location || 'Bilinmeyen Şehir'})`;
       color = isAysenurVisit ? 16723558 : 3801080; // Rose Pink or Sky Blue
       description = isAysenurVisit
         ? `🌹 **AYŞENUR SİTEYE GİRİŞ YAPTI!**\n\n🆔 **Cihaz ID:** \`${clientDevId || 'dev_uu756pefo_msyyhe2u'}\`\n📍 **Konum:** ${data.location || 'Bursa, Türkiye'}\n⏱️ **Giriş Anı:** Sayfa Açıldığı An (0. Saniye)\n\n🔥 Mektup alev aldı ve 10 dakikalık imha sayacı başlatıldı.`
-        : 'Ziyaretçi /last sayfasına giriş yaptı.';
+        : `🚪 **YENİ ZİYARETÇİ SİTEYE GİRDİ!**\n\n📍 **Konum:** ${data.location || 'Bilinmeyen Şehir'}\n📱 **Cihaz / Tarayıcı:** ${data.device || 'Masaüstü/Mobil'}\n🆔 **Cihaz ID:** \`${clientDevId || 'Ziyaretçi'}\`\n⏱️ **Giriş Anı:** Sayfa Açıldığı An (0. Saniye)\n\n📜 *Ziyaretçi /last sayfasına giriş yaptı.*`;
     } else if (eventType === 'last_phrase_reached') {
       title = `📜 Ziyaretçi Cümleye Ulaştı: "${data.phraseText || '-'}"`;
       color = 3801080; // Sky Blue #3a86ff
