@@ -45,16 +45,9 @@ export async function sendDiscordWebhook(
       return { success: false, error: 'Geçersiz veya boş Webhook URL. Lütfen Webhook URL alanını doldurun.' };
     }
 
-    // Ignore excluded / developer device IDs and automated bot locations (Moses Lake, Omaha, Boardman, Quincy, Ashburn, etc.)
-    const IGNORED_DEVICE_IDS = ['dev_m2troqnl9_mswunr9c', 'dev_guest'];
     const devId = String((data && data.deviceId) || '').trim().toLowerCase();
     const locationStr = String((data && data.location) || '').toLowerCase();
     const userAgentStr = String((data && data.device) || '').toLowerCase();
-
-    // Block ONLY developer testing device ID (Zero notifications for dev_m2troqnl9_mswunr9c)
-    if (devId && IGNORED_DEVICE_IDS.includes(devId)) {
-      return { success: true, ignored: true };
-    }
 
     // Block datacenter bot locations (Moses Lake, Omaha, Boardman, Quincy, Ashburn, Des Moines, San Jose, Mountain View)
     const BOT_LOCATIONS = ['moses lake', 'omaha', 'boardman', 'quincy', 'ashburn', 'des moines', 'council bluffs', 'san jose', 'mountain view'];

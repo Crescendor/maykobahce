@@ -82,15 +82,7 @@ export async function onRequestPost(context) {
       userAgent: data.userAgent || userAgent
     };
 
-    // Ignore excluded / developer device IDs (Zero notifications for dev_m2troqnl9_mswunr9c)
-    const IGNORED_DEVICE_IDS = ['dev_m2troqnl9_mswunr9c'];
-    const clientDevId = String(data.deviceId || enrichedData.deviceId || '').trim();
-    if (clientDevId && IGNORED_DEVICE_IDS.includes(clientDevId)) {
-      return new Response(JSON.stringify({ success: true, ignored: true }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
-    }
-
+    // Save log event to Cloudflare D1 database
     if (env.DB) {
       await ensureLogSchema(env.DB);
       await env.DB.prepare(

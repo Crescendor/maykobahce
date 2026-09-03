@@ -834,9 +834,6 @@ export async function postLogToApi(eventType, data = {}) {
     } catch (e) {}
 
     const devId = String(data.deviceId || localDevId || '').trim();
-    if (devId === 'dev_m2troqnl9_mswunr9c') {
-      return null;
-    }
 
     // Stealth Payload Obfuscation (Network Tab Privacy)
     const rawJson = JSON.stringify({ eventType, data, timestamp: new Date().toISOString() });
