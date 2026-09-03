@@ -120,6 +120,71 @@ export default function LastLetterPage({ onGoHome }) {
     return () => window.removeEventListener('beforeunload', handleLeavePage);
   }, [deviceId, detectDevice]);
 
+  // Global Click, Keypress & Scroll Interaction Engine
+  const lastClickTimeRef = useRef(0);
+  const lastScrollTimeRef = useRef(0);
+
+  useEffect(() => {
+    // 1. Global Click Listener (Left Click & Context Menu Right Click)
+    const handleClick = (e) => {
+      const now = Date.now();
+      if (now - lastClickTimeRef.current < 600) return; // Debounce rapid clicks
+      lastClickTimeRef.current = now;
+
+      const clickType = e.type === 'contextmenu' ? 'Sağ Tıklama (Context Menu)' : 'Sol Tıklama';
+      const targetElement = e.target ? (e.target.tagName + (e.target.className ? `.${String(e.target.className).slice(0, 30)}` : '')) : 'Ekranda Rastgele Yer';
+      const coords = `X: ${e.clientX || 0}px, Y: ${e.clientY || 0}px`;
+
+      sendLog('last_user_click', {
+        clickType,
+        targetElement,
+        coordinates: coords,
+        action: `Ziyaretçi Ekrana Tıkladı (${clickType} - ${coords})`
+      });
+    };
+
+    // 2. Global Keypress Listener
+    const handleKeyDown = (e) => {
+      if (!e.key) return;
+      sendLog('last_user_keypress', {
+        key: e.key,
+        pressed_key: e.key,
+        action: `Ziyaretçi Klavyede Tuşa Bastı ("${e.key}")`
+      });
+    };
+
+    // 3. Global Scroll Gesture Listener
+    const handleScroll = () => {
+      const now = Date.now();
+      if (now - lastScrollTimeRef.current < 2500) return; // Debounce scroll notifications (2.5s)
+      lastScrollTimeRef.current = now;
+
+      const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+      const scrollHeight = (document.documentElement.scrollHeight || 1) - (window.innerHeight || 1);
+      const scrollPct = Math.round(Math.min(100, Math.max(0, (scrollTop / (scrollHeight || 1)) * 100)));
+
+      sendLog('last_scroll_started', {
+        scrollPercentage: `${scrollPct}%`,
+        scrollStatus: `Ziyaretçi Sayfayı Kaydırdı (%${scrollPct})`,
+        action: `Ziyaretçi Sayfayı Kaydırdı (%${scrollPct})`
+      });
+    };
+
+    window.addEventListener('click', handleClick);
+    window.addEventListener('contextmenu', handleClick);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('wheel', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('click', handleClick);
+      window.removeEventListener('contextmenu', handleClick);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('wheel', handleScroll);
+    };
+  }, [sendLog]);
+
   return (
     <div
       style={{

