@@ -1,8 +1,11 @@
-export async function getDiscordWebhookConfig(env) {
-  let webhookUrl = env.DISCORD_WEBHOOK_URL || null;
-  let apiKey = env.BOTGHOST_API_KEY || null;
+const DEFAULT_BOTGHOST_WEBHOOK_URL = 'https://api.botghost.com/webhook/1537216840496058388/qd01kweb03sx5coj8ct3m';
+const DEFAULT_BOTGHOST_API_KEY = 'd8257fc27d80e699332b5a7fb773d';
 
-  if (env.MAYKO_KV) {
+export async function getDiscordWebhookConfig(env) {
+  let webhookUrl = (env && env.DISCORD_WEBHOOK_URL) || null;
+  let apiKey = (env && env.BOTGHOST_API_KEY) || null;
+
+  if (env && env.MAYKO_KV) {
     try {
       const cached = await env.MAYKO_KV.get('site_settings_cache', 'json');
       if (cached) {
@@ -11,7 +14,7 @@ export async function getDiscordWebhookConfig(env) {
       }
     } catch (e) {}
   }
-  if (env.DB && !webhookUrl) {
+  if (env && env.DB && !webhookUrl) {
     try {
       const { results } = await env.DB.prepare(
         'SELECT data FROM meadow_objects WHERE id = ?'
@@ -25,6 +28,11 @@ export async function getDiscordWebhookConfig(env) {
       }
     } catch (e) {}
   }
+
+  // Use user's exact BotGhost Webhook URL and API Key as default fallback
+  if (!webhookUrl) webhookUrl = DEFAULT_BOTGHOST_WEBHOOK_URL;
+  if (!apiKey) apiKey = DEFAULT_BOTGHOST_API_KEY;
+
   return { webhookUrl, apiKey };
 }
 
