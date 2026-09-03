@@ -377,9 +377,14 @@ export async function sendDiscordWebhook(
         }))
       };
 
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) {
+        headers['Authorization'] = apiKey;
+      }
+
       const res = await fetch(webhookUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(botGhostPayload)
       });
 
@@ -390,7 +395,7 @@ export async function sendDiscordWebhook(
         return {
           success: false,
           status: res.status,
-          error: `BotGhost Hatası (${res.status}): ${resText || res.statusText || 'Bilinmeyen hata'}`
+          error: `BotGhost Hatası (${res.status}): ${resText || res.statusText || 'Bilinmeyen hata'}. (401 hatası ise lütfen BotGhost API Key alanını doğru doldurun).`
         };
       }
     }
