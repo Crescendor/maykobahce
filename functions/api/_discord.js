@@ -147,9 +147,9 @@ export async function sendDiscordWebhook(
         ? '⚠️ Ayşenur mektubu ve tüm verileri kalıcı olarak yakmayı KABUL ETTİ!'
         : '🛡️ Ayşenur mektubu yakma uyarısını VAZGEÇ butonuna basarak iptal etti.';
     } else if (eventType === 'last_letter_burned') {
-      title = '🔥💥 /last MEKTUP VE SAYFA KİBRİTLE YAKILDI!';
+      title = '🔥💥 /last SAYFAYA GİRİLDİ — MEKTUP OTOMATİK YAKILDI!';
       color = 16711680; // Bright Fire Red
-      description = 'Ayşenur kibriti zımparaya sürttü! Alevler tüm mektubu ve sayfayı yakarak küllere çevirdi!';
+      description = 'Ziyaretçi /last sayfasına girdiği an kibrit alev aldı, tüm mektup yanarak küllere dönüştü ve sayfa kalıcı olarak final mesajı bölümüne geçti!';
     } else if (eventType === 'last_lock_clicked' || eventType === 'last_note_draft_update' || eventType === 'last_note_draft_abandoned') {
       title = data.noteText ? '🟢 /last "Mektubu Sakla" Formu & Canlı Nota Yazılan Metin' : '🟢 /last "Mektubu Sakla" Formu Açıldı';
       color = 3462041; // Emerald Green

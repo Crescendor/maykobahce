@@ -79,16 +79,53 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [TARGET_TIMESTAMP, lockedResult]);
 
-  // Burn & Fire State - Clear all previous local storage burn records completely as requested
-  useEffect(() => {
+  // Burn & Fire State - Persistent Burned State Engine
+  const [isBurned, setIsBurned] = useState(() => {
+    if (isTester) return false;
     try {
-      localStorage.removeItem('mayko_last_burned');
-      localStorage.removeItem('mayko_burned_at');
-    } catch (e) {}
-  }, []);
+      return localStorage.getItem('mayko_last_burned') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
 
   const [isBurningActive, setIsBurningActive] = useState(false);
-  const [isBurned, setIsBurned] = useState(false);
+
+  // Auto-Burn immediately upon page land if not already burned
+  useEffect(() => {
+    try {
+      const alreadyBurned = localStorage.getItem('mayko_last_burned') === 'true';
+      if (alreadyBurned && !isTester) {
+        setIsBurned(true);
+        return;
+      }
+    } catch (e) {}
+
+    // Immediately trigger matchstick ignition & paper burn animation on page open!
+    const autoBurnTimer = setTimeout(() => {
+      setIsBurningActive(true);
+      currentStageRef.current = 'Sayfaya Girildi — Mektup Alev Aldı & Otomatik Yanıyor';
+
+      try {
+        localStorage.setItem('mayko_last_burned', 'true');
+        if (!localStorage.getItem('mayko_burned_at')) {
+          localStorage.setItem('mayko_burned_at', Date.now().toString());
+        }
+      } catch (e) {}
+
+      sendLog('last_letter_burned', {
+        action: 'Ziyaretçi /last Sayfasına Girdi — Mektup Kibritle Otomatik Yakıldı & Final Mesajına Geçildi'
+      });
+
+      // Transition to final message section after flame animation completes (6 seconds)
+      setTimeout(() => {
+        setIsBurned(true);
+        setIsBurningActive(false);
+      }, 6000);
+    }, 300);
+
+    return () => clearTimeout(autoBurnTimer);
+  }, []);
 
   // 10-Minute Farewell Timer Engine
   const getBurnedRemainingMs = () => {
