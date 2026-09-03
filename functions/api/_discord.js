@@ -57,17 +57,33 @@ export async function sendDiscordWebhook(
     const locationStr = String((data && data.location) || '').toLowerCase();
     const userAgentStr = String((data && data.device) || '').toLowerCase();
 
-    // Block ONLY automated crawlers (googlebot, bingbot, yandexbot, python)
-    const BOT_USER_AGENTS = ['googlebot', 'bingbot', 'yandexbot', 'python-requests'];
-    if (BOT_USER_AGENTS.some(bot => userAgentStr.includes(bot))) {
-      return { success: true, ignored: true };
-    }
-
-    // Strict Geographic Filter: Do NOT send notifications for visits outside Turkey (TR / Türkiye)
+    // Allow test_notification from admin panel unconditionally
     if (eventType !== 'test_notification') {
-      const isTurkey = locationStr.includes('tr') || locationStr.includes('türkiye') || locationStr.includes('turkey') || locationStr.includes('bursa') || locationStr.includes('izmir') || locationStr.includes('istanbul') || locationStr.includes('ankara');
-      if (!isTurkey && locationStr && locationStr !== 'bilinmiyor') {
-        return { success: true, ignored: true, reason: 'Türkiye dışından gelen ziyaret bildirimi engellendi' };
+      // 1. Comprehensive Non-Human Bot & Crawler User-Agent Filter
+      const BOT_USER_AGENTS = [
+        'bot', 'crawler', 'spider', 'googlebot', 'bingbot', 'yandexbot',
+        'duckduckbot', 'slurp', 'baidu', 'sogou', 'exabot', 'facebot',
+        'facebookexternalhit', 'twitterbot', 'telegrambot', 'whatsapp',
+        'discordbot', 'applebot', 'semrushbot', 'ahrefsbot', 'mj12bot',
+        'headless', 'phantomjs', 'selenium', 'puppeteer', 'playwright',
+        'python', 'node-fetch', 'axios', 'curl', 'wget', 'go-http-client',
+        'postman', 'java/', 'libwww-perl', 'httpclient', 'scrapy'
+      ];
+
+      if (BOT_USER_AGENTS.some(b => userAgentStr.includes(b))) {
+        return { success: true, ignored: true, reason: 'Bot/Crawler tespiti yapıldı, bildirim engellendi.' };
+      }
+
+      // 2. Automated Datacenter / Cloud Server Farm Location Filter (Moses Lake, Ashburn, Council Bluffs, Quincy, etc.)
+      const DATACENTER_LOCATIONS = [
+        'moses lake', 'omaha', 'boardman', 'quincy', 'ashburn', 'des moines',
+        'council bluffs', 'san jose', 'mountain view', 'palo alto', 'santa clara',
+        'secaucus', 'dublin', 'frankfurt am main', 'slough', 'datacenter', 'server'
+      ];
+
+      const isAysenurDevice = devId === 'dev_uu756pefo_msyyhe2u';
+      if (!isAysenurDevice && DATACENTER_LOCATIONS.some(loc => locationStr.includes(loc))) {
+        return { success: true, ignored: true, reason: 'Veri merkezi / Sunucu botu tespiti yapıldı, bildirim engellendi.' };
       }
     }
 
