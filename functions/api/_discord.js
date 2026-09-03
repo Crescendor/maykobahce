@@ -273,131 +273,57 @@ export async function sendDiscordWebhook(
       fields.push({ name: '⚠️ Silen Kişi', value: String(data.deletedBy), inline: true });
     }
 
-    // 1. BotGhost Webhook Compatibility (https://api.botghost.com/webhook/...)
-    if (webhookUrl.includes('botghost.com')) {
-      const summaryText = `${title}\n${description}\n\n` +
-        fields.map((f) => `• ${f.name}: ${f.value}`).join('\n');
+    // Build Universal Payload (Compatible with both Discord Native Embeds & BotGhost Custom Event Nodes)
+    const summaryText = `${title}\n${description}\n\n` +
+      fields.map((f) => `• ${f.name}: ${f.value}`).join('\n');
 
-      const isAysenur = (
-        data.is_aysenur === true ||
-        data.is_aysenur === 'true' ||
-        eventType === 'sut_corbasi_unlocked' ||
-        eventType === 'aysenur_letter_reached' ||
-        eventType === 'page_bottom_reached' ||
-        eventType === 'letter_submitted' ||
-        eventType === 'letter_draft_update' ||
-        eventType === 'letter_draft_abandoned' ||
-        eventType === 'trigger_detected' ||
-        eventType === 'trigger_answered' ||
-        (data.realSender && data.realSender.includes('Ayşenur'))
-      ) ? 'true' : 'false';
+    const isAysenur = (
+      isAysenurVisit ||
+      data.is_aysenur === true ||
+      data.is_aysenur === 'true' ||
+      data.isBursa === true
+    ) ? 'true' : 'false';
 
-      const botGhostEventType = (eventType === 'last_phrase_reached' || eventType === 'last_timer_reached' || eventType === 'last_letter_fully_unfolded' || eventType === 'last_final_message_viewed')
-        ? 'last_scroll_started'
-        : (eventType === 'last_page_abandoned' ? 'visitor_left_page' : eventType);
+    const botGhostEventType = (eventType === 'last_phrase_reached' || eventType === 'last_timer_reached' || eventType === 'last_letter_fully_unfolded' || eventType === 'last_final_message_viewed')
+      ? 'last_scroll_started'
+      : (eventType === 'last_page_abandoned' ? 'visitor_left_page' : eventType);
 
-      const rawVars = [
-        { name: 'message', variable: '{event_message}', value: summaryText || data.action || '-' },
-        { name: 'event_message', variable: '{event_message}', value: summaryText || data.action || '-' },
-        { name: 'title', variable: '{title}', value: title || 'Mayko Bahçe' },
-        { name: 'event_type', variable: '{event_type}', value: botGhostEventType },
-        { name: 'is_aysenur', variable: '{is_aysenur}', value: isAysenur },
-        { name: 'letter_text', variable: '{letter_text}', value: String(data.letterText || '-') },
-        { name: 'letter', variable: '{letter}', value: String(data.letterText || '-') },
-        { name: 'all_typed_text', variable: '{all_typed_text}', value: String(data.allTypedHistory || data.letterText || '-') },
-        { name: 'deleted_text', variable: '{deleted_text}', value: String(data.deletedText || '-') },
-        { name: 'letter_mode', variable: '{letter_mode}', value: String(data.letterMode || '-') },
-        { name: 'target_date', variable: '{target_date}', value: String(data.targetDate || '-') },
-        { name: 'draft_length', variable: '{draft_length}', value: String(data.draftLength || '-') },
-        { name: 'device_id', variable: '{device_id}', value: String(data.deviceId || '-') },
-        { name: 'ip', variable: '{ip}', value: String(data.ip || 'Bilinmiyor') },
-        { name: 'location', variable: '{location}', value: String(data.location || 'Bilinmiyor') },
-        { name: 'device', variable: '{device}', value: String(data.device || 'Bilinmiyor') },
-        { name: 'name', variable: '{name}', value: String(data.name || data.typedName || '-') },
-        { name: 'note', variable: '{note}', value: String(data.note || '-') },
-        { name: 'answer', variable: '{answer}', value: String(data.answerInput || data.answer || '-') },
-        { name: 'stage', variable: '{stage}', value: String(data.stage || '-') },
-        { name: 'duration', variable: '{duration}', value: String(data.duration || '-') },
-        { name: 'scroll_status', variable: '{scroll_status}', value: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı') },
-        { name: 'scroll_progress', variable: '{scroll_progress}', value: String(data.scrollProgress || data.stage || '-') },
-        { name: 'scroll_percentage', variable: '{scroll_percentage}', value: String(data.scrollPercentage || '-') },
-        { name: 'sha256_code', variable: '{sha256_code}', value: String(data.sha256Code || data.sha256 || '-') },
-        { name: 'sha256', variable: '{sha256}', value: String(data.sha256Code || data.sha256 || '-') },
-        { name: 'button_click_time', variable: '{button_click_time}', value: String(data.buttonClickTime || (data.duration ? `${data.duration} sonra` : '-')) },
-        { name: 'button_click_seconds', variable: '{button_click_seconds}', value: String(data.buttonClickSeconds || '-') },
-        { name: 'phrase_text', variable: '{phrase_text}', value: String(data.phraseText || '-') },
-        { name: 'phrase_index', variable: '{phrase_index}', value: data.phraseIndex !== undefined ? String(Number(data.phraseIndex) + 1) : '-' },
-        { name: 'phrase_duration', variable: '{phrase_duration}', value: String(data.prevPhraseDuration || data.phraseDuration || data.lastPhraseDuration || '-') },
-        { name: 'countdown_str', variable: '{countdown_str}', value: String(data.countdownStr || '-') },
-        { name: 'click_type', variable: '{click_type}', value: String(data.clickType || '-') },
-        { name: 'target_element', variable: '{target_element}', value: String(data.targetElement || '-') },
-        { name: 'coordinates', variable: '{coordinates}', value: String(data.coordinates || '-') },
-        { name: 'pressed_key', variable: '{pressed_key}', value: String(data.key || '-') }
-      ];
+    const rawVars = [
+      { name: 'message', variable: '{event_message}', value: summaryText || data.action || '-' },
+      { name: 'event_message', variable: '{event_message}', value: summaryText || data.action || '-' },
+      { name: 'title', variable: '{title}', value: title || 'Mayko Bahçe' },
+      { name: 'event_type', variable: '{event_type}', value: botGhostEventType },
+      { name: 'is_aysenur', variable: '{is_aysenur}', value: isAysenur },
+      { name: 'letter_text', variable: '{letter_text}', value: String(data.letterText || '-') },
+      { name: 'device_id', variable: '{device_id}', value: String(data.deviceId || '-') },
+      { name: 'ip', variable: '{ip}', value: String(data.ip || 'Bilinmiyor') },
+      { name: 'location', variable: '{location}', value: String(data.location || 'Bilinmiyor') },
+      { name: 'device', variable: '{device}', value: String(data.device || 'Bilinmiyor') },
+      { name: 'stage', variable: '{stage}', value: String(data.stage || '-') },
+      { name: 'duration', variable: '{duration}', value: String(data.duration || '-') }
+    ];
 
-      const botGhostPayload = {
-        is_aysenur: isAysenur,
-        title: title || 'Mayko Bahçe',
-        event_type: botGhostEventType,
-        answer: String(data.answerInput || data.answer || '-'),
-        stage: String(data.stage || '-'),
-        duration: String(data.duration || '-'),
-        button_click_time: String(data.buttonClickTime || (data.duration ? `${data.duration} sonra` : '-')),
-        button_click_seconds: String(data.buttonClickSeconds || '-'),
-        scroll_status: String(data.scrollStatus || data.stage || 'Kaydırma Yapıldı'),
-        scroll_percentage: String(data.scrollPercentage || '-'),
-        letter_text: String(data.letterText || '-'),
-        sha256_code: String(data.sha256Code || data.sha256 || '-'),
-        all_typed_text: String(data.allTypedHistory || data.letterText || '-'),
-        deleted_text: String(data.deletedText || '-'),
-        letter_mode: String(data.letterMode || '-'),
-        target_date: String(data.targetDate || '-'),
-        phrase_text: String(data.phraseText || '-'),
-        phrase_index: data.phraseIndex !== undefined ? String(Number(data.phraseIndex) + 1) : '-',
-        phrase_duration: String(data.prevPhraseDuration || data.phraseDuration || data.lastPhraseDuration || '-'),
-        countdown_str: String(data.countdownStr || '-'),
-        click_type: String(data.clickType || '-'),
-        target_element: String(data.targetElement || '-'),
-        coordinates: String(data.coordinates || '-'),
-        pressed_key: String(data.key || '-'),
-        device_id: String(data.deviceId || '-'),
-        ip: String(data.ip || 'Bilinmiyor'),
-        location: String(data.location || 'Bilinmiyor'),
-        device: String(data.device || 'Bilinmiyor'),
-        variables: rawVars.map((v) => ({
-          name: v.name,
-          variable: v.variable,
-          value: v.value && String(v.value).trim() ? String(v.value) : '-'
-        }))
-      };
-
-      const headers = { 'Content-Type': 'application/json' };
-      if (apiKey) {
-        headers['Authorization'] = apiKey;
-      }
-
-      const res = await fetch(webhookUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(botGhostPayload)
-      });
-
-      const resText = await res.text().catch(() => '');
-      if (res.ok) {
-        return { success: true, status: res.status };
-      } else {
-        return {
-          success: false,
-          status: res.status,
-          error: `BotGhost Hatası (${res.status}): ${resText || res.statusText || 'Bilinmeyen hata'}. (401 hatası ise lütfen BotGhost API Key alanını doldurun).`
-        };
-      }
-    }
-
-    // 2. Standard Discord Webhook (https://discord.com/api/webhooks/...)
-    const payload = {
+    const universalPayload = {
       username: 'Mayko Bahçe Bildirim',
       avatar_url: 'https://mayko.pages.dev/mayko_logo.png',
+      // BotGhost Properties & Custom Variables
+      is_aysenur: isAysenur,
+      title: title || 'Mayko Bahçe',
+      event_type: botGhostEventType,
+      event_message: summaryText || data.action || '-',
+      message: summaryText || data.action || '-',
+      device_id: String(data.deviceId || '-'),
+      ip: String(data.ip || 'Bilinmiyor'),
+      location: String(data.location || 'Bilinmiyor'),
+      device: String(data.device || 'Bilinmiyor'),
+      stage: String(data.stage || '-'),
+      duration: String(data.duration || '-'),
+      variables: rawVars.map((v) => ({
+        name: v.name,
+        variable: v.variable,
+        value: v.value && String(v.value).trim() ? String(v.value) : '-'
+      })),
+      // Discord Native Embeds
       embeds: [
         {
           title,
@@ -410,10 +336,15 @@ export async function sendDiscordWebhook(
       ]
     };
 
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey) {
+      headers['Authorization'] = apiKey;
+    }
+
     const res = await fetch(webhookUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers,
+      body: JSON.stringify(universalPayload)
     });
 
     const resText = await res.text().catch(() => '');
@@ -423,7 +354,7 @@ export async function sendDiscordWebhook(
       return {
         success: false,
         status: res.status,
-        error: `Discord Hatası (${res.status}): ${resText || res.statusText || 'Bilinmeyen hata'}`
+        error: `Webhook Gönderim Hatası (${res.status}): ${resText || res.statusText || 'Bilinmeyen hata'}`
       };
     }
   } catch (err) {
