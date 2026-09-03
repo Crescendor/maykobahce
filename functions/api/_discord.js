@@ -64,6 +64,7 @@ export async function sendDiscordWebhook(
     }
 
     let title = '🌸 Mayko Bahçe Etkinliği';
+    let description = 'Mayko Bahçe Canlı Bildirim Etkinliği';
     let color = 3718648; // Blue
     const fields = [];
     const clientDevId = String((data && data.deviceId) || '').trim();
