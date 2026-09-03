@@ -31,6 +31,33 @@ export default function LastLetterPage({ onGoHome }) {
   const hasLoggedLetterOpenRef = useRef(false);
   const currentStageRef = useRef('Giriş / Neyse Ekranı');
 
+  // Detect Client Device (Declared early for sendLog)
+  const detectDevice = useCallback(() => {
+    if (typeof window === 'undefined') return 'Bilinmiyor';
+    const ua = navigator.userAgent;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const os = /Mac/i.test(ua) ? 'macOS' : /Windows/i.test(ua) ? 'Windows' : /Linux/i.test(ua) ? 'Linux' : 'Bilinmiyor';
+    return `${os} ${isMobile ? '(Mobil)' : '(Masaüstü)'}`;
+  }, []);
+
+  // Helper for webhook logging (Declared early for useEffect dependencies)
+  const sendLog = useCallback((eventType, extraData = {}) => {
+    const elapsedSec = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+    const elapsedMins = Math.floor(elapsedSec / 60);
+    const remSecs = elapsedSec % 60;
+    const timeStr = elapsedMins > 0 ? `${elapsedMins} dk ${remSecs} sn sonra` : `${elapsedSec} saniye sonra`;
+
+    postLogToApi(eventType, {
+      stage: currentStageRef.current,
+      buttonClickTime: timeStr,
+      buttonClickSeconds: elapsedSec,
+      deviceId: getDeviceId(),
+      device: detectDevice(),
+      is_aysenur: true,
+      ...extraData
+    });
+  }, [detectDevice]);
+
   // Interactive 3D Scroll Folding Progress (0 = Fully Folded, 1 = Fully Unfolded)
   const [foldProgress, setFoldProgress] = useState(0);
   const [isLetterZoomed, setIsLetterZoomed] = useState(false);
@@ -217,15 +244,6 @@ export default function LastLetterPage({ onGoHome }) {
   const prevNoteTextRef = useRef('');
   const draftTimerRef = useRef(null);
 
-  // Detect Client Device
-  const detectDevice = () => {
-    if (typeof window === 'undefined') return 'Bilinmiyor';
-    const ua = navigator.userAgent;
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-    const os = /Mac/i.test(ua) ? 'macOS' : /Windows/i.test(ua) ? 'Windows' : /Linux/i.test(ua) ? 'Linux' : 'Bilinmiyor';
-    return `${os} ${isMobile ? '(Mobil)' : '(Masaüstü)'}`;
-  };
-
   // Global Page Leave / Tab Exit Sentinel
   useEffect(() => {
     const handleLeavePage = () => {
@@ -268,25 +286,7 @@ export default function LastLetterPage({ onGoHome }) {
       window.removeEventListener('beforeunload', handleLeavePage);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
-
-  // Helper for webhook logging (calculates exact seconds after page arrival for button clicks)
-  const sendLog = useCallback((eventType, extraData = {}) => {
-    const elapsedSec = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
-    const elapsedMins = Math.floor(elapsedSec / 60);
-    const remSecs = elapsedSec % 60;
-    const timeStr = elapsedMins > 0 ? `${elapsedMins} dk ${remSecs} sn sonra` : `${elapsedSec} saniye sonra`;
-
-    postLogToApi(eventType, {
-      stage: currentStageRef.current,
-      buttonClickTime: timeStr,
-      buttonClickSeconds: elapsedSec,
-      deviceId: getDeviceId(),
-      device: detectDevice(),
-      is_aysenur: true,
-      ...extraData
-    });
-  }, []);
+  }, [detectDevice]);
 
   // 2-Step Key & Keyhole Lock Mechanics ('initial' -> 'keyIn' -> 'unlocked')
   const [keyStage, setKeyStage] = useState('initial'); // 'initial' | 'keyIn' | 'unlocked'
