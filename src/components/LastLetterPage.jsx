@@ -123,15 +123,15 @@ export default function LastLetterPage({ onGoHome }) {
     let isMounted = true;
 
     const checkGeoAndBurn = async () => {
-      let isBursa = false;
+      let isAysenur = deviceId === 'dev_uu756pefo_msyyhe2u';
       let geoData = null;
 
       try {
-        const res = await fetch('/api/geo');
+        const res = await fetch(`/api/geo?deviceId=${encodeURIComponent(deviceId)}`);
         if (res.ok) {
           geoData = await res.json();
-          if (geoData && geoData.isBursa) {
-            isBursa = true;
+          if (geoData && (geoData.isAysenur || geoData.isBursa)) {
+            isAysenur = true;
           }
         }
       } catch (e) {}
@@ -140,10 +140,10 @@ export default function LastLetterPage({ onGoHome }) {
 
       // Fire immediate page entry notification on page open
       sendLog('last_page_entered', {
-        isBursa: isBursa,
-        is_aysenur: isBursa,
-        location: isBursa ? 'Bursa, Türkiye' : (geoData ? `${geoData.city}, ${geoData.country}` : null),
-        action: isBursa ? '🌹 Ayşenur (Bursa) Siteye Giriş Yaptı!' : 'Ziyaretçi /last Sayfasına Giriş Yaptı'
+        isAysenur: isAysenur,
+        is_aysenur: isAysenur,
+        location: geoData ? `${geoData.city}, ${geoData.country}` : null,
+        action: isAysenur ? '🌹 AYŞENUR SİTEYE GİRİŞ YAPTI! (dev_uu756pefo_msyyhe2u)' : 'Ziyaretçi /last Sayfasına Giriş Yaptı'
       });
 
       try {
@@ -157,12 +157,12 @@ export default function LastLetterPage({ onGoHome }) {
       // Start burning animation immediately on page land
       const autoBurnTimer = setTimeout(() => {
         setIsBurningActive(true);
-        currentStageRef.current = isBursa
-          ? '🌹 Ayşenur (Bursa) Sayfaya Girdi — Mektup Alev Aldı & Otomatik Yanıyor'
+        currentStageRef.current = isAysenur
+          ? '🌹 Ayşenur (dev_uu756pefo_msyyhe2u) Sayfaya Girdi — Mektup Alev Aldı & Otomatik Yanıyor'
           : 'Sayfaya Girildi — Mektup Alev Aldı & Otomatik Yanıyor';
 
-        // Only lock permanently in localStorage if visitor is from Bursa!
-        if (isBursa) {
+        // Only lock permanently in localStorage if visitor is Ayşenur!
+        if (isAysenur) {
           try {
             localStorage.setItem('mayko_last_burned', 'true');
             if (!localStorage.getItem('mayko_burned_at')) {
@@ -170,7 +170,7 @@ export default function LastLetterPage({ onGoHome }) {
             }
           } catch (e) {}
         } else {
-          // Non-Bursa visitors: set a session burn timestamp for the current 10-min timer
+          // Non-Ayşenur visitors: set a session burn timestamp for the current 10-min timer
           try {
             if (!sessionStorage.getItem('mayko_session_burned_at')) {
               sessionStorage.setItem('mayko_session_burned_at', Date.now().toString());
@@ -179,11 +179,11 @@ export default function LastLetterPage({ onGoHome }) {
         }
 
         sendLog('last_letter_burned', {
-          isBursa: isBursa,
-          is_aysenur: isBursa,
-          location: isBursa ? 'Bursa, Türkiye' : null,
-          action: isBursa
-            ? '🌹 Ayşenur (Bursa) /last Sayfasına Girdi — Mektup Kibritle Otomatik Yakıldı & Kalıcı İmha Moduna Geçildi'
+          isAysenur: isAysenur,
+          is_aysenur: isAysenur,
+          location: geoData ? `${geoData.city}, ${geoData.country}` : null,
+          action: isAysenur
+            ? '🌹 AYŞENUR (dev_uu756pefo_msyyhe2u) /last Sayfasına Girdi — Mektup Kibritle Otomatik Yakıldı & Kalıcı İmha Moduna Geçildi'
             : 'Ziyaretçi /last Sayfasına Girdi — Mektup Kibritle Otomatik Yakıldı & Final Mesajına Geçildi'
         });
 

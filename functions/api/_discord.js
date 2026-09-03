@@ -69,18 +69,20 @@ export async function sendDiscordWebhook(
     }
 
     let title = '🌸 Mayko Bahçe Etkinliği';
-    let color = 3718648; // Blue
-    let description = '';
     const fields = [];
+    const clientDevId = String((data && data.deviceId) || '').trim();
+    const isAysenurDevId = clientDevId === 'dev_uu756pefo_msyyhe2u';
+    const locationLower = String(data.location || '').toLowerCase();
+    const isBursaLoc = locationLower.includes('bursa') && !locationLower.includes('izmir');
+    const isAysenurVisit = isAysenurDevId || isBursaLoc || data.isAysenur === true || data.is_aysenur === true || data.isBursa === true;
 
     if (eventType === 'last_page_entered') {
-      const isBursaVisit = String(data.location || '').toLowerCase().includes('bursa') || data.isBursa === true || data.is_aysenur === true;
-      title = isBursaVisit
-        ? '🌹💥 AYŞENUR SİTEYE GİRDİ! (Bursa, Türkiye)'
+      title = isAysenurVisit
+        ? `🌹💥 AYŞENUR SİTEYE GİRDİ! (${isAysenurDevId ? 'Cihaz: dev_uu756pefo_msyyhe2u' : 'Bursa, Türkiye'})`
         : '🚪 Ziyaretçi /last Sayfasına Girdi';
-      color = isBursaVisit ? 16723558 : 3801080; // Rose Pink or Sky Blue
-      description = isBursaVisit
-        ? '🌹 **AYŞENUR SİTEYE GİRDİ!**\n\n📍 **Konum:** Bursa, Türkiye\n⏱️ **Giriş Anı:** Sayfa Açıldığı An (0. Saniye)\n\n📜 *Ayşenur Bursa konumundan /last sayfasına giriş yaptı!*'
+      color = isAysenurVisit ? 16723558 : 3801080; // Rose Pink or Sky Blue
+      description = isAysenurVisit
+        ? `🌹 **AYŞENUR SİTEYE GİRİŞ YAPTI!**\n\n🆔 **Cihaz ID:** \`${clientDevId || 'dev_uu756pefo_msyyhe2u'}\`\n📍 **Konum:** ${data.location || 'Bursa, Türkiye'}\n⏱️ **Giriş Anı:** Sayfa Açıldığı An (0. Saniye)\n\n🔥 Mektup alev aldı ve 10 dakikalık imha sayacı başlatıldı.`
         : 'Ziyaretçi /last sayfasına giriş yaptı.';
     } else if (eventType === 'last_phrase_reached') {
       title = `📜 Ziyaretçi Cümleye Ulaştı: "${data.phraseText || '-'}"`;
@@ -129,9 +131,8 @@ export async function sendDiscordWebhook(
       color = 16478608; // Rose #fb7185
       description = eventType === 'letter_draft_abandoned' ? 'Ziyaretçi mektup yazarken sayfayı kapattı veya ayrıldı. En son yazılan metin aşağıdadır:' : 'Ziyaretçi mektup kutusuna yazı yazıyor:';
     } else if (eventType === 'visitor_left_page' || eventType === 'last_page_abandoned') {
-      const isAys = data.is_aysenur === true || data.is_aysenur === 'true' || eventType === 'last_page_abandoned';
-      title = isAys ? '🚪🌹 Ayşenur Sayfadan Ayrıldı / Sekmeyi Kapattı' : '🚪 Ziyaretçi Sayfadan Ayrıldı';
-      color = isAys ? 14749257 : 9740472; // Crimson or Slate Gray
+      title = isAysenurVisit ? '🚪🌹 Ayşenur Sayfadan Ayrıldı / Sekmeyi Kapattı' : '🚪 Ziyaretçi Sayfadan Ayrıldı';
+      color = isAysenurVisit ? 14749257 : 9740472; // Crimson or Slate Gray
       description = `Ziyaretçi /last sayfasından veya siteden ayrıldı.\n⏱️ **Sitede Kaldığı Süre:** ${data.duration || 'Bilinmiyor'}\n📍 **Terk Ettiği Yer:** ${data.stage || 'Bilinmiyor'}`;
     } else if (eventType === 'last_first_scroll') {
       title = '📜 /last Sayfasında İlk Kaydırma Yapıldı (Çekmece Açıldı)';
@@ -156,22 +157,20 @@ export async function sendDiscordWebhook(
         ? '⚠️ Ayşenur mektubu ve tüm verileri kalıcı olarak yakmayı KABUL ETTİ!'
         : '🛡️ Ayşenur mektubu yakma uyarısını VAZGEÇ butonuna basarak iptal etti.';
     } else if (eventType === 'last_letter_burned') {
-      const isBursaVisit = String(data.location || '').toLowerCase().includes('bursa') || data.isBursa === true || data.is_aysenur === true;
-      title = isBursaVisit
-        ? '🔥💥 🌹 AYŞENUR SAYFAYA GİRDİ! MEKTUP VE SAYFA OTOMATİK YAKILDI!'
+      title = isAysenurVisit
+        ? `🔥💥 🌹 AYŞENUR SAYFAYA GİRDİ! MEKTUP VE SAYFA OTOMATİK YAKILDI! (${clientDevId})`
         : '🔥💥 /last SAYFAYA GİRİLDİ — MEKTUP OTOMATİK YAKILDI!';
       color = 16711680; // Bright Fire Red
-      description = isBursaVisit
-        ? '🌹 **Bu Ayşenur!** (Bursa, TR) /last sayfasına girdiği an kibrit alev aldı, mektup yanarak küllere dönüştü ve sayfa kalıcı olarak 10 dakikalık imha moduna geçti!'
+      description = isAysenurVisit
+        ? `🌹 **AYŞENUR BİRİNCİL CİHAZIYLA SİTEYE GİRİŞ YAPTI!**\n\n🆔 **Cihaz ID:** \`${clientDevId || 'dev_uu756pefo_msyyhe2u'}\`\n📍 **Konum:** ${data.location || 'Bursa, Türkiye'}\n\n🔥 Mektup alev aldı, sayfa 10 dakikalık imha moduna geçti! 10 dakika sonra site TÜM DÜNYA İÇİN ZİFİRİ KARANLIĞA GÖMÜLECEKTİR.`
         : 'Ziyaretçi /last sayfasına girdiği an kibrit alev aldı, mektup yanarak küllere dönüştü ve sayfa 10 dakikalık imha mesajı bölümüne geçti!';
     } else if (eventType === 'last_final_message_viewed') {
-      const isBursaVisit = String(data.location || '').toLowerCase().includes('bursa') || data.isBursa === true || data.is_aysenur === true;
-      title = isBursaVisit
-        ? '🌹🔥 AYŞENUR FİNAL MESAJI VE İMHA EKRANINI GÖRÜNTÜLÜYOR!'
+      title = isAysenurVisit
+        ? `🌹🔥 AYŞENUR FİNAL MESAJI VE İMHA EKRANINI GÖRÜNTÜLÜYOR! (${clientDevId})`
         : '🔥💥 Ziyaretçi Final Mesajı ve İmha Ekranını Görüntülüyor!';
-      color = isBursaVisit ? 16723558 : 16750848; // Rose Pink or Amber
-      description = isBursaVisit
-        ? '🌹 **Ayşenur (Bursa, TR)** mektubun yanmasının ardından final mesajı ve 10 dakikalık imha sayacı ekranına ulaştı.\n\n💬 *"Hayatımdan gelip geçtiğin için çok teşekkürler.. Sana dair her şeyim silinecek, ancak seni asla unutmayacağım. Elveda."*'
+      color = isAysenurVisit ? 16723558 : 16750848; // Rose Pink or Amber
+      description = isAysenurVisit
+        ? `🌹 **Ayşenur (\`${clientDevId || 'dev_uu756pefo_msyyhe2u'}\`)** mektubun yanmasının ardından final mesajı ve 10 dakikalık imha sayacı ekranına ulaştı.\n\n💬 *"Hayatımdan gelip geçtiğin için çok teşekkürler.. Sana dair her şeyim silinecek, ancak seni asla unutmayacağım. Elveda."*`
         : 'Ziyaretçi mektubun yanmasının ardından final mesajı ve 10 dakikalık geri sayım imha ekranına ulaştı.\n\n💬 *"Hayatımdan gelip geçtiğin için çok teşekkürler.. Sana dair her şeyim silinecek, ancak seni asla unutmayacağım. Elveda."*';
     } else if (eventType === 'last_lock_clicked' || eventType === 'last_note_draft_update' || eventType === 'last_note_draft_abandoned') {
       title = data.noteText ? '🟢 /last "Mektubu Sakla" Formu & Canlı Nota Yazılan Metin' : '🟢 /last "Mektubu Sakla" Formu Açıldı';
