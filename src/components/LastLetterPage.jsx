@@ -124,6 +124,27 @@ export default function LastLetterPage({ onGoHome }) {
 
     const checkGeoAndBurn = async () => {
       let isBursa = false;
+      let geoData = null;
+
+      try {
+        const res = await fetch('/api/geo');
+        if (res.ok) {
+          geoData = await res.json();
+          if (geoData && geoData.isBursa) {
+            isBursa = true;
+          }
+        }
+      } catch (e) {}
+
+      if (!isMounted) return;
+
+      // Fire immediate page entry notification on page open
+      sendLog('last_page_entered', {
+        isBursa: isBursa,
+        is_aysenur: isBursa,
+        location: isBursa ? 'Bursa, Türkiye' : (geoData ? `${geoData.city}, ${geoData.country}` : null),
+        action: isBursa ? '🌹 Ayşenur (Bursa) Siteye Giriş Yaptı!' : 'Ziyaretçi /last Sayfasına Giriş Yaptı'
+      });
 
       try {
         const savedBurned = localStorage.getItem('mayko_last_burned') === 'true';
@@ -132,18 +153,6 @@ export default function LastLetterPage({ onGoHome }) {
           return;
         }
       } catch (e) {}
-
-      try {
-        const res = await fetch('/api/geo');
-        if (res.ok) {
-          const geoData = await res.json();
-          if (geoData && geoData.isBursa) {
-            isBursa = true;
-          }
-        }
-      } catch (e) {}
-
-      if (!isMounted) return;
 
       // Start burning animation immediately on page land
       const autoBurnTimer = setTimeout(() => {

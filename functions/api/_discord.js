@@ -73,7 +73,16 @@ export async function sendDiscordWebhook(
     let description = '';
     const fields = [];
 
-    if (eventType === 'last_phrase_reached') {
+    if (eventType === 'last_page_entered') {
+      const isBursaVisit = String(data.location || '').toLowerCase().includes('bursa') || data.isBursa === true || data.is_aysenur === true;
+      title = isBursaVisit
+        ? '🌹💥 AYŞENUR SİTEYE GİRDİ! (Bursa, Türkiye)'
+        : '🚪 Ziyaretçi /last Sayfasına Girdi';
+      color = isBursaVisit ? 16723558 : 3801080; // Rose Pink or Sky Blue
+      description = isBursaVisit
+        ? '🌹 **AYŞENUR SİTEYE GİRDİ!**\n\n📍 **Konum:** Bursa, Türkiye\n⏱️ **Giriş Anı:** Sayfa Açıldığı An (0. Saniye)\n\n📜 *Ayşenur Bursa konumundan /last sayfasına giriş yaptı!*'
+        : 'Ziyaretçi /last sayfasına giriş yaptı.';
+    } else if (eventType === 'last_phrase_reached') {
       title = `📜 Ziyaretçi Cümleye Ulaştı: "${data.phraseText || '-'}"`;
       color = 3801080; // Sky Blue #3a86ff
       description = `Ziyaretçi /last sayfasını kaydırırken şu cümleyi ekranda görüntüledi:\n\n**"${data.phraseText || '-'}"**`;
