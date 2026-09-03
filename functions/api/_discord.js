@@ -49,14 +49,8 @@ export async function sendDiscordWebhook(
     const locationStr = String((data && data.location) || '').toLowerCase();
     const userAgentStr = String((data && data.device) || '').toLowerCase();
 
-    // Block datacenter bot locations (Moses Lake, Omaha, Boardman, Quincy, Ashburn, Des Moines, San Jose, Mountain View)
-    const BOT_LOCATIONS = ['moses lake', 'omaha', 'boardman', 'quincy', 'ashburn', 'des moines', 'council bluffs', 'san jose', 'mountain view'];
-    if (BOT_LOCATIONS.some(loc => locationStr.includes(loc))) {
-      return { success: true, ignored: true };
-    }
-
-    // Block bot / crawler user-agent strings
-    const BOT_USER_AGENTS = ['bot', 'crawler', 'spider', 'googlebot', 'bingbot', 'yandexbot', 'headless', 'python', 'curl', 'wget'];
+    // Block ONLY automated crawlers (googlebot, bingbot, yandexbot, python)
+    const BOT_USER_AGENTS = ['googlebot', 'bingbot', 'yandexbot', 'python-requests'];
     if (BOT_USER_AGENTS.some(bot => userAgentStr.includes(bot))) {
       return { success: true, ignored: true };
     }
