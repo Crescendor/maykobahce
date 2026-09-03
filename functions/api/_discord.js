@@ -164,6 +164,15 @@ export async function sendDiscordWebhook(
       description = isBursaVisit
         ? '🌹 **Bu Ayşenur!** (Bursa, TR) /last sayfasına girdiği an kibrit alev aldı, mektup yanarak küllere dönüştü ve sayfa kalıcı olarak 10 dakikalık imha moduna geçti!'
         : 'Ziyaretçi /last sayfasına girdiği an kibrit alev aldı, mektup yanarak küllere dönüştü ve sayfa 10 dakikalık imha mesajı bölümüne geçti!';
+    } else if (eventType === 'last_final_message_viewed') {
+      const isBursaVisit = String(data.location || '').toLowerCase().includes('bursa') || data.isBursa === true || data.is_aysenur === true;
+      title = isBursaVisit
+        ? '🌹🔥 AYŞENUR FİNAL MESAJI VE İMHA EKRANINI GÖRÜNTÜLÜYOR!'
+        : '🔥💥 Ziyaretçi Final Mesajı ve İmha Ekranını Görüntülüyor!';
+      color = isBursaVisit ? 16723558 : 16750848; // Rose Pink or Amber
+      description = isBursaVisit
+        ? '🌹 **Ayşenur (Bursa, TR)** mektubun yanmasının ardından final mesajı ve 10 dakikalık imha sayacı ekranına ulaştı.\n\n💬 *"Hayatımdan gelip geçtiğin için çok teşekkürler.. Sana dair her şeyim silinecek, ancak seni asla unutmayacağım. Elveda."*'
+        : 'Ziyaretçi mektubun yanmasının ardından final mesajı ve 10 dakikalık geri sayım imha ekranına ulaştı.\n\n💬 *"Hayatımdan gelip geçtiğin için çok teşekkürler.. Sana dair her şeyim silinecek, ancak seni asla unutmayacağım. Elveda."*';
     } else if (eventType === 'last_lock_clicked' || eventType === 'last_note_draft_update' || eventType === 'last_note_draft_abandoned') {
       title = data.noteText ? '🟢 /last "Mektubu Sakla" Formu & Canlı Nota Yazılan Metin' : '🟢 /last "Mektubu Sakla" Formu Açıldı';
       color = 3462041; // Emerald Green
@@ -290,7 +299,7 @@ export async function sendDiscordWebhook(
         (data.realSender && data.realSender.includes('Ayşenur'))
       ) ? 'true' : 'false';
 
-      const botGhostEventType = (eventType === 'last_phrase_reached' || eventType === 'last_timer_reached' || eventType === 'last_letter_fully_unfolded')
+      const botGhostEventType = (eventType === 'last_phrase_reached' || eventType === 'last_timer_reached' || eventType === 'last_letter_fully_unfolded' || eventType === 'last_final_message_viewed')
         ? 'last_scroll_started'
         : (eventType === 'last_page_abandoned' ? 'visitor_left_page' : eventType);
 

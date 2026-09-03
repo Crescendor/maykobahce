@@ -204,7 +204,7 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [sendLog, isTester]);
 
-  // 10-Minute Farewell Timer Engine
+  // 10-Minute Farewell Timer Engine & Final Message View Logger
   const getBurnedRemainingMs = () => {
     try {
       const stored = localStorage.getItem('mayko_burned_at') || sessionStorage.getItem('mayko_session_burned_at');
@@ -218,9 +218,19 @@ export default function LastLetterPage({ onGoHome }) {
   };
 
   const [remainingMs, setRemainingMs] = useState(getBurnedRemainingMs);
+  const hasLoggedFinalMessageRef = useRef(false);
 
   useEffect(() => {
     if (!isBurned) return;
+
+    if (!hasLoggedFinalMessageRef.current) {
+      hasLoggedFinalMessageRef.current = true;
+      currentStageRef.current = 'Final Mesajı ve İmha Ekranı';
+      sendLog('last_final_message_viewed', {
+        action: 'Ziyaretçi Final Mesajını ve 10 Dakikalık İmha Ekranını Görüntülüyor'
+      });
+    }
+
     const interval = setInterval(() => {
       const rem = getBurnedRemainingMs();
       setRemainingMs(rem);
@@ -229,7 +239,7 @@ export default function LastLetterPage({ onGoHome }) {
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [isBurned]);
+  }, [isBurned, sendLog]);
 
   const formatCountdown = (ms) => {
     const totalSec = Math.floor(ms / 1000);
