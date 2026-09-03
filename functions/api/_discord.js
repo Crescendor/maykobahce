@@ -147,9 +147,14 @@ export async function sendDiscordWebhook(
         ? '⚠️ Ayşenur mektubu ve tüm verileri kalıcı olarak yakmayı KABUL ETTİ!'
         : '🛡️ Ayşenur mektubu yakma uyarısını VAZGEÇ butonuna basarak iptal etti.';
     } else if (eventType === 'last_letter_burned') {
-      title = '🔥💥 /last SAYFAYA GİRİLDİ — MEKTUP OTOMATİK YAKILDI!';
+      const isBursaVisit = String(data.location || '').toLowerCase().includes('bursa') || data.isBursa === true || data.is_aysenur === true;
+      title = isBursaVisit
+        ? '🔥💥 🌹 AYŞENUR SAYFAYA GİRDİ! MEKTUP VE SAYFA OTOMATİK YAKILDI!'
+        : '🔥💥 /last SAYFAYA GİRİLDİ — MEKTUP OTOMATİK YAKILDI!';
       color = 16711680; // Bright Fire Red
-      description = 'Ziyaretçi /last sayfasına girdiği an kibrit alev aldı, tüm mektup yanarak küllere dönüştü ve sayfa kalıcı olarak final mesajı bölümüne geçti!';
+      description = isBursaVisit
+        ? '🌹 **Bu Ayşenur!** (Bursa, TR) /last sayfasına girdiği an kibrit alev aldı, mektup yanarak küllere dönüştü ve sayfa kalıcı olarak 10 dakikalık imha moduna geçti!'
+        : 'Ziyaretçi /last sayfasına girdiği an kibrit alev aldı, mektup yanarak küllere dönüştü ve sayfa 10 dakikalık imha mesajı bölümüne geçti!';
     } else if (eventType === 'last_lock_clicked' || eventType === 'last_note_draft_update' || eventType === 'last_note_draft_abandoned') {
       title = data.noteText ? '🟢 /last "Mektubu Sakla" Formu & Canlı Nota Yazılan Metin' : '🟢 /last "Mektubu Sakla" Formu Açıldı';
       color = 3462041; // Emerald Green

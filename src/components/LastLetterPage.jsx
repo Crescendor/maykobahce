@@ -91,46 +91,87 @@ export default function LastLetterPage({ onGoHome }) {
 
   const [isBurningActive, setIsBurningActive] = useState(false);
 
-  // Auto-Burn immediately upon page land if not already burned
+  // Geo-detection check & Auto-Burn Engine
   useEffect(() => {
-    try {
-      const alreadyBurned = localStorage.getItem('mayko_last_burned') === 'true';
-      if (alreadyBurned && !isTester) {
-        setIsBurned(true);
-        return;
-      }
-    } catch (e) {}
+    let isMounted = true;
 
-    // Immediately trigger matchstick ignition & paper burn animation on page open!
-    const autoBurnTimer = setTimeout(() => {
-      setIsBurningActive(true);
-      currentStageRef.current = 'Sayfaya Girildi — Mektup Alev Aldı & Otomatik Yanıyor';
+    const checkGeoAndBurn = async () => {
+      let isBursa = false;
 
       try {
-        localStorage.setItem('mayko_last_burned', 'true');
-        if (!localStorage.getItem('mayko_burned_at')) {
-          localStorage.setItem('mayko_burned_at', Date.now().toString());
+        const savedBurned = localStorage.getItem('mayko_last_burned') === 'true';
+        if (savedBurned && !isTester) {
+          setIsBurned(true);
+          return;
         }
       } catch (e) {}
 
-      sendLog('last_letter_burned', {
-        action: 'Ziyaretçi /last Sayfasına Girdi — Mektup Kibritle Otomatik Yakıldı & Final Mesajına Geçildi'
-      });
+      try {
+        const res = await fetch('/api/geo');
+        if (res.ok) {
+          const geoData = await res.json();
+          if (geoData && geoData.isBursa) {
+            isBursa = true;
+          }
+        }
+      } catch (e) {}
 
-      // Transition to final message section after flame animation completes (6 seconds)
-      setTimeout(() => {
-        setIsBurned(true);
-        setIsBurningActive(false);
-      }, 6000);
-    }, 300);
+      if (!isMounted) return;
 
-    return () => clearTimeout(autoBurnTimer);
-  }, []);
+      // Start burning animation immediately on page land
+      const autoBurnTimer = setTimeout(() => {
+        setIsBurningActive(true);
+        currentStageRef.current = isBursa
+          ? '🌹 Ayşenur (Bursa) Sayfaya Girdi — Mektup Alev Aldı & Otomatik Yanıyor'
+          : 'Sayfaya Girildi — Mektup Alev Aldı & Otomatik Yanıyor';
+
+        // Only lock permanently in localStorage if visitor is from Bursa!
+        if (isBursa) {
+          try {
+            localStorage.setItem('mayko_last_burned', 'true');
+            if (!localStorage.getItem('mayko_burned_at')) {
+              localStorage.setItem('mayko_burned_at', Date.now().toString());
+            }
+          } catch (e) {}
+        } else {
+          // Non-Bursa visitors: set a session burn timestamp for the current 10-min timer
+          try {
+            if (!sessionStorage.getItem('mayko_session_burned_at')) {
+              sessionStorage.setItem('mayko_session_burned_at', Date.now().toString());
+            }
+          } catch (e) {}
+        }
+
+        sendLog('last_letter_burned', {
+          isBursa: isBursa,
+          is_aysenur: isBursa,
+          location: isBursa ? 'Bursa, Türkiye' : null,
+          action: isBursa
+            ? '🌹 Ayşenur (Bursa) /last Sayfasına Girdi — Mektup Kibritle Otomatik Yakıldı & Kalıcı İmha Moduna Geçildi'
+            : 'Ziyaretçi /last Sayfasına Girdi — Mektup Kibritle Otomatik Yakıldı & Final Mesajına Geçildi'
+        });
+
+        // 16-Second circular flame burn animation so paper hole expands across the entire viewport
+        setTimeout(() => {
+          setIsBurned(true);
+          setIsBurningActive(false);
+        }, 16000);
+      }, 300);
+
+      return () => clearTimeout(autoBurnTimer);
+    };
+
+    checkGeoAndBurn();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sendLog, isTester]);
 
   // 10-Minute Farewell Timer Engine
   const getBurnedRemainingMs = () => {
     try {
-      const stored = localStorage.getItem('mayko_burned_at');
+      const stored = localStorage.getItem('mayko_burned_at') || sessionStorage.getItem('mayko_session_burned_at');
       if (!stored) return 600000;
       const burnedTime = parseInt(stored, 10);
       const elapsed = Date.now() - burnedTime;
@@ -767,6 +808,23 @@ export default function LastLetterPage({ onGoHome }) {
             animation: 'fadeInSlow 2s ease-in-out forwards'
           }}
         >
+          {/* Pitch Black Overlay when 10 Minutes Expire */}
+          {remainingMs <= 0 && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 200000,
+                backgroundColor: '#000000',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#000000',
+                cursor: 'default'
+              }}
+            />
+          )}
+
           {/* Countdown Clock Header */}
           <div
             style={{
@@ -786,7 +844,7 @@ export default function LastLetterPage({ onGoHome }) {
             }}
           >
             <Clock size={15} style={{ color: '#ef4444' }} />
-            <span>Karanlığa Gömülmeye: <strong style={{ color: '#fca5a5' }}>{formatCountdown(remainingMs)}</strong></span>
+            <span>Tüm verilerin ve bu sitenin karanlığa gömülmesine: <strong style={{ color: '#fca5a5' }}>{formatCountdown(remainingMs)}</strong></span>
           </div>
 
           {/* Farewell Lines */}
@@ -835,7 +893,7 @@ export default function LastLetterPage({ onGoHome }) {
             </h3>
           </div>
 
-          {/* System Deletion Summary Lines */}
+          {/* System Deletion Summary Lines (Sequential Line-by-Line Flame Deletion Reveal) */}
           <div
             style={{
               maxWidth: 620,
@@ -854,22 +912,22 @@ export default function LastLetterPage({ onGoHome }) {
               zIndex: 100001
             }}
           >
-            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
+            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold', animation: 'lineBurnReveal 0.8s ease-out forwards 0.3s' }}>
               ✓ Tüm galeri öğeleri silindi..
             </div>
-            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
+            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold', animation: 'lineBurnReveal 0.8s ease-out forwards 0.9s' }}>
               ✓ Tüm mesajlaşmalar silindi..
             </div>
-            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
+            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold', animation: 'lineBurnReveal 0.8s ease-out forwards 1.5s' }}>
               ✓ Görüşme kayıtları silindi..
             </div>
-            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
+            <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold', animation: 'lineBurnReveal 0.8s ease-out forwards 2.1s' }}>
               ✓ Numaralar silindi..
             </div>
-            <div style={{ color: '#f59e0b', marginBottom: 12, wordBreak: 'break-all', lineHeight: 1.6 }}>
+            <div style={{ color: '#f59e0b', marginBottom: 12, wordBreak: 'break-all', lineHeight: 1.6, animation: 'lineBurnReveal 0.8s ease-out forwards 2.7s' }}>
               ✓ b**********n@gmail.com ve l***********d@gmail.com adresinde tüm "Ayşenur" işaretli ürünler silindi..
             </div>
-            <div style={{ color: '#6ee7b7', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, fontStyle: 'italic' }}>
+            <div style={{ color: '#6ee7b7', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, fontStyle: 'italic', animation: 'lineBurnReveal 0.8s ease-out forwards 3.3s' }}>
               ⚡ Sitenin silinmesi için Cloudflare Worker üzerinden komut gönderildi.
             </div>
           </div>
@@ -1451,8 +1509,28 @@ export default function LastLetterPage({ onGoHome }) {
         );
       })()}
 
-      {/* Embedded Keyframe Animations for 30-Second Iconic #0D0E12 Paper Hole Burn */}
+      {/* Embedded Keyframe Animations for 30-Second Iconic #0D0E12 Paper Hole Burn & Sequential Line Burn Reveal */}
       <style>{`
+        @keyframes lineBurnReveal {
+          0% {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.96);
+            filter: blur(6px);
+            color: #ef4444;
+            text-shadow: 0 0 16px rgba(239, 68, 68, 0.9);
+          }
+          50% {
+            opacity: 0.8;
+            color: #f59e0b;
+            text-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0);
+          }
+        }
+
         @keyframes fadeInSlow {
           0% { opacity: 0; }
           100% { opacity: 1; }
