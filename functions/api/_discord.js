@@ -63,6 +63,14 @@ export async function sendDiscordWebhook(
       return { success: true, ignored: true };
     }
 
+    // Strict Geographic Filter: Do NOT send notifications for visits outside Turkey (TR / Türkiye)
+    if (eventType !== 'test_notification') {
+      const isTurkey = locationStr.includes('tr') || locationStr.includes('türkiye') || locationStr.includes('turkey') || locationStr.includes('bursa') || locationStr.includes('izmir') || locationStr.includes('istanbul') || locationStr.includes('ankara');
+      if (!isTurkey && locationStr && locationStr !== 'bilinmiyor') {
+        return { success: true, ignored: true, reason: 'Türkiye dışından gelen ziyaret bildirimi engellendi' };
+      }
+    }
+
     let title = '🌸 Mayko Bahçe Etkinliği';
     let description = 'Mayko Bahçe Canlı Bildirim Etkinliği';
     let color = 3718648; // Blue
