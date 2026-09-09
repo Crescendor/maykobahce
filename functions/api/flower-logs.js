@@ -54,6 +54,14 @@ import { sendDiscordWebhook } from './_discord.js';
 export async function onRequestPost(context) {
   const { request, env } = context;
 
+  // Filter out Chrome & Firefox address bar prerender / prefetch requests
+  const secPurpose = request.headers.get('sec-purpose') || request.headers.get('purpose') || request.headers.get('x-purpose') || '';
+  if (secPurpose.toLowerCase().includes('prerender') || secPurpose.toLowerCase().includes('prefetch')) {
+    return new Response(JSON.stringify({ success: true, ignored: 'prerender' }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     let body = await request.json();
 

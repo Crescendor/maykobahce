@@ -53,8 +53,17 @@ export default function LastLetterPage({ onGoHome }) {
   // Fire Immediate Page Entry Webhook Notification on Mount (0. Saniye)
   useEffect(() => {
     let isMounted = true;
+    let hasNotified = false;
 
     const notifyEntry = async () => {
+      if (hasNotified) return;
+
+      // Ignore background prerender state (e.g. typing in Chrome address bar)
+      if (typeof document !== 'undefined' && document.visibilityState === 'prerender') {
+        return;
+      }
+
+      hasNotified = true;
       let isAysenur = deviceId === 'dev_uu756pefo_msyyhe2u';
       let geoData = null;
 
@@ -80,7 +89,17 @@ export default function LastLetterPage({ onGoHome }) {
       });
     };
 
-    notifyEntry();
+    if (typeof document !== 'undefined' && document.visibilityState === 'prerender') {
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          notifyEntry();
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    } else {
+      notifyEntry();
+    }
 
     return () => {
       isMounted = false;
