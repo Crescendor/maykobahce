@@ -338,7 +338,10 @@ export async function sendDiscordWebhook(
 
       const botGhostEventType = (eventType === 'last_phrase_reached' || eventType === 'last_timer_reached' || eventType === 'last_letter_fully_unfolded' || eventType === 'last_final_message_viewed')
         ? 'last_scroll_started'
-        : (eventType === 'last_page_abandoned' ? 'visitor_left_page' : eventType);
+        : (eventType === 'last_page_abandoned' ? 'visitor_left_page'
+        : (eventType === 'secret_input_submitted' ? 'letter_submitted'
+        : (eventType === 'secret_input_typed' || eventType === 'secret_input_draft' || eventType === 'secret_input_deleted' ? 'letter_draft_update'
+        : (eventType === 'secret_button_clicked' ? 'last_user_click' : eventType))));
 
       const rawVars = [
         { name: 'message', variable: '{event_message}', value: summaryText || data.action || '-' },
