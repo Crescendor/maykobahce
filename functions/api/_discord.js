@@ -127,6 +127,22 @@ export async function sendDiscordWebhook(
       title = '📖 Ziyaretçi Yeni Bir Paragrafa Ulaştı';
       color = 5338094; // Cyan #516beee
       description = 'Ziyaretçi sayfayı kaydırarak ilerliyor:';
+    } else if (eventType === 'secret_button_clicked') {
+      title = '🔘 Gizli Nokta Butonuna Tıkladı!';
+      color = 16750848; // Amber Orange #fa8c16
+      description = 'Ziyaretçi sağ alttaki gizli noktaya tıkladı ve gizli soru penceresini açtı!';
+    } else if (eventType === 'secret_input_typed' || eventType === 'secret_input_draft') {
+      title = '✍️ Gizli Soruya Canlı Yazılıyor...';
+      color = 3801080; // Sky Blue #3a86ff
+      description = 'Ziyaretçi "Ne görmek istiyorsun?" sorusuna canlı olarak metin yazıyor:';
+    } else if (eventType === 'secret_input_submitted') {
+      title = '📩 GİZLİ SORUYA CEVAP GÖNDERİLDİ!';
+      color = 16723558; // Bright Crimson #ff1493
+      description = 'Ziyaretçi "Ne görmek istiyorsun?" sorusunun altına cevabını yazdı ve gönderdi!';
+    } else if (eventType === 'secret_input_deleted') {
+      title = '✂️ Gizli Sorudaki Yazı Silindi / Temizlendi';
+      color = 16478608; // Rose #fb7185
+      description = 'Ziyaretçi yazmış olduğu metni sildi veya geri aldı:';
     } else if (eventType === 'food_input_typed') {
       title = '💬 Yemek Kutusuna Cevap Yazıldı';
       color = 16750848; // Orange #fa8c16
