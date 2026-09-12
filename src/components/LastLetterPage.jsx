@@ -7,7 +7,8 @@ import { postLogToApi } from '../utils/gardenEngine';
  * - Arkaplan zifiri siyah (#000000). Hiçbir yazı yok.
  * - Sağ altta çok küçük, zayıfça fark edilebilen 6px yuvarlak gizli buton.
  * - Butona tıklanınca "Ne görmek istiyorsun? Söyle. Ciddiyim Ne görmek istiyorsun?" sorusu ve yazı alanı açılır.
- * - CANLI KELİME KELİME YAZIM AKIŞI (Word-by-word streaming):
+ * - ANINDA (0. Saniyede, tıklamasız) GİRİŞ BİLDİRİMİ:
+ *   - Sayfa açıldığı veya F5 ile yenilendiği AN hiçbir tıklama beklemeden, gecikmesiz (0ms) giriş bildirimi iletilir.
  *   - Ziyaretçi yazarken kelime sonlarında (boşluk/noktalama) veya 300ms duraksamada canlı kelime akışı iletilir.
  *   - Silme işlemlerinde anında silinen parçayı bildirir.
  *   - Sekmeden ayrılmada 3 tane mükerrer bildirim değil TEK VE TEMİZ 1 bildirim gider.
@@ -68,42 +69,27 @@ export default function LastLetterPage({ onGoHome }) {
     });
   }, [deviceId, detectDevice]);
 
-  // Fire Immediate Page Entry Webhook Notification on Mount (0. Saniye)
+  // Fire Immediate Page Entry Webhook Notification on Mount (0. Saniye - Synchronous & Instant)
+  const hasNotifiedEntryRef = useRef(false);
   useEffect(() => {
-    let isMounted = true;
-    let hasNotified = false;
-
-    const notifyEntry = async () => {
-      if (hasNotified) return;
+    const notifyEntry = () => {
+      if (hasNotifiedEntryRef.current) return;
 
       // Ignore background prerender state (e.g. typing in Chrome address bar)
       if (typeof document !== 'undefined' && document.visibilityState === 'prerender') {
         return;
       }
 
-      hasNotified = true;
-      let isAysenur = deviceId === 'dev_uu756pefo_msyyhe2u';
-      let geoData = null;
+      hasNotifiedEntryRef.current = true;
+      const isAysenur = deviceId === 'dev_uu756pefo_msyyhe2u';
 
-      try {
-        const res = await fetch(`/api/geo?deviceId=${encodeURIComponent(deviceId)}`);
-        if (res.ok) {
-          geoData = await res.json();
-          if (geoData && (geoData.isAysenur || geoData.isBursa)) {
-            isAysenur = true;
-          }
-        }
-      } catch (e) {}
-
-      if (!isMounted) return;
-
+      // Send IMMEDIATELY at 0th millisecond on mount or F5 refresh
       sendLog('last_page_entered', {
         isAysenur: isAysenur,
         is_aysenur: isAysenur,
-        location: geoData ? `${geoData.city}, ${geoData.country}` : null,
         action: isAysenur
           ? '🌹 AYŞENUR SİTEYE GİRİŞ YAPTI! (dev_uu756pefo_msyyhe2u)'
-          : 'Ziyaretçi Siyah Ekran Sayfasına Giriş Yaptı'
+          : '🚪 ZİYARETÇİ SİTEYE GİRİŞ YAPTI / SAYFAYI YENİLEDİ'
       });
     };
 
@@ -118,13 +104,9 @@ export default function LastLetterPage({ onGoHome }) {
     } else {
       notifyEntry();
     }
-
-    return () => {
-      isMounted = false;
-    };
   }, [sendLog, deviceId]);
 
-  // Single De-duplicated Tab Exit & Return Visibility Sentinel (Fixes the 3 duplicate exit notifications)
+  // Single De-duplicated Tab Exit & Return Visibility Sentinel (Fixes duplicate exit notifications)
   useEffect(() => {
     let isHiddenState = false;
 
@@ -338,23 +320,7 @@ export default function LastLetterPage({ onGoHome }) {
     }
   };
 
-  // Handle Unfocus / Blur from Text Area (Captures unsubmitted draft when clicking away)
-  const handleInputBlur = () => {
-    if (allTypedHistoryRef.current && allTypedHistoryRef.current.length > 0) {
-      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-      lastSentTextRef.current = inputText;
 
-      sendLog('secret_input_unfocused', {
-        letterText: inputText || '(Silindi / Boş)',
-        answer: inputText || '(Silindi / Boş)',
-        answerInput: inputText || '(Silindi / Boş)',
-        allTypedHistory: allTypedHistoryRef.current || inputText,
-        deletedText: deletedTextHistoryRef.current || null,
-        draftLength: inputText.length,
-        action: `✍️ Ziyaretçi Kutusundan Çıktı / Gönder'e Basmadı (Kutuda Kalan: "${inputText}")`
-      });
-    }
-  };
 
   // Handle Form Submission ("Gönder" button click or Ctrl+Enter / Enter)
   const handleSubmit = (e) => {
@@ -475,7 +441,6 @@ export default function LastLetterPage({ onGoHome }) {
             <textarea
               value={inputText}
               onChange={handleInputChange}
-              onBlur={handleInputBlur}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   handleSubmit(e);
