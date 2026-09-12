@@ -842,6 +842,7 @@ export async function postLogToApi(eventType, data = {}) {
     const res = await fetch('/api/flower-logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
       body: JSON.stringify({ _v })
     });
     if (res.ok) {

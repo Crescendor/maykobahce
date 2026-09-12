@@ -75,7 +75,7 @@ export default function LastLetterPage({ onGoHome }) {
     const notifyEntry = () => {
       if (hasNotifiedEntryRef.current) return;
 
-      // Ignore background prerender state (e.g. typing in Chrome address bar)
+      // Do not mark notified if tab is completely prerendering in background
       if (typeof document !== 'undefined' && document.visibilityState === 'prerender') {
         return;
       }
@@ -93,7 +93,7 @@ export default function LastLetterPage({ onGoHome }) {
       });
     };
 
-    if (typeof document !== 'undefined' && document.visibilityState === 'prerender') {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible') {
           notifyEntry();
@@ -101,6 +101,16 @@ export default function LastLetterPage({ onGoHome }) {
         }
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      // Fallback timer: Send anyway if user stays hidden > 2s
+      const fallbackTimer = setTimeout(() => {
+        notifyEntry();
+      }, 2000);
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        clearTimeout(fallbackTimer);
+      };
     } else {
       notifyEntry();
     }

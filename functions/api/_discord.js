@@ -419,11 +419,20 @@ export async function sendDiscordWebhook(
         headers['Authorization'] = apiKey;
       }
 
-      const res = await fetch(webhookUrl, {
+      let res = await fetch(webhookUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(botGhostPayload)
       });
+
+      // If BotGhost returns 401 (Invalid API Key header), retry once without Authorization header
+      if (res.status === 401 && apiKey) {
+        res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(botGhostPayload)
+        });
+      }
 
       const resText = await res.text().catch(() => '');
       if (res.ok) {
