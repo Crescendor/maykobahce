@@ -86,6 +86,7 @@ export async function onRequestPost(context) {
     const enrichedData = {
       ...data,
       ip: clientIp,
+      country: country,
       location: city && country ? `${city}, ${country}` : country || city || null,
       userAgent: data.userAgent || userAgent
     };

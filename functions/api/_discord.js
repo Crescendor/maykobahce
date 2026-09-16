@@ -55,11 +55,24 @@ export async function sendDiscordWebhook(
 
     const devId = String((data && data.deviceId) || '').trim().toLowerCase();
     const locationStr = String((data && data.location) || '').toLowerCase();
+    const countryStr = String((data && data.country) || '').toUpperCase().trim();
     const userAgentStr = String((data && data.device) || '').toLowerCase();
 
     // Allow test_notification from admin panel unconditionally
     if (eventType !== 'test_notification') {
-      // 1. Comprehensive Non-Human Bot & Crawler User-Agent Filter
+      // 1. Filter out ALL notifications originating from the USA (United States / US / USA / Amerika)
+      const isUSCountry = countryStr === 'US' || countryStr === 'USA';
+      const isUSLocation = locationStr.includes('united states') ||
+                            locationStr.includes('amerika') ||
+                            locationStr.endsWith(', us') ||
+                            locationStr.endsWith(', usa') ||
+                            /\b(us|usa)\b/.test(locationStr);
+
+      if (isUSCountry || isUSLocation) {
+        return { success: true, ignored: true, reason: 'Amerika (US) kaynaklı bildirim engellendi.' };
+      }
+
+      // 2. Comprehensive Non-Human Bot & Crawler User-Agent Filter
       const BOT_USER_AGENTS = [
         'googlebot', 'bingbot', 'yandexbot', 'duckduckbot', 'slurp', 'baidu',
         'facebookexternalhit', 'twitterbot', 'telegrambot', 'discordbot',
