@@ -929,7 +929,16 @@ export function detectClientDevice() {
   else if (/Safari/i.test(ua)) browser = 'Safari';
   else if (/Firefox/i.test(ua)) browser = 'Firefox';
 
-  const screenInfo = `${window.screen?.width || window.innerWidth}x${window.screen?.height || window.innerHeight}`;
-  return `${deviceName} • ${browser} • (${screenInfo})`;
+  const screenW = window.screen?.width || 0;
+  const screenH = window.screen?.height || 0;
+  const winW = window.innerWidth || 0;
+  const winH = window.innerHeight || 0;
+  const dpr = window.devicePixelRatio || 1;
+
+  const resStr = screenW && screenH ? ` • Ekran: ${screenW}x${screenH}` : '';
+  const winStr = winW && winH ? ` • Pencere: ${winW}x${winH}` : '';
+  const dprStr = dpr > 1 ? ` (DPR ${dpr}x)` : '';
+
+  return `${deviceName} • ${browser}${resStr}${winStr}${dprStr}`;
 }
 

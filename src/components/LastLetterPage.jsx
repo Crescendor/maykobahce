@@ -42,13 +42,24 @@ export default function LastLetterPage({ onGoHome }) {
   const lastClickTimeRef = useRef(0);
   const lastExitTimeRef = useRef(0);
 
-  // Detect Client Device
+  // Detect Client Device with Screen Dimensions & DPR
   const detectDevice = useCallback(() => {
     if (typeof window === 'undefined') return 'Bilinmiyor';
     const ua = navigator.userAgent;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     const os = /Mac/i.test(ua) ? 'macOS' : /Windows/i.test(ua) ? 'Windows' : /Linux/i.test(ua) ? 'Linux' : 'Bilinmiyor';
-    return `${os} ${isMobile ? '(Mobil)' : '(Masaüstü)'}`;
+
+    const screenW = window.screen?.width || 0;
+    const screenH = window.screen?.height || 0;
+    const winW = window.innerWidth || 0;
+    const winH = window.innerHeight || 0;
+    const dpr = window.devicePixelRatio || 1;
+
+    const screenStr = screenW && screenH ? ` • Ekran: ${screenW}x${screenH}` : '';
+    const winStr = winW && winH ? ` • Pencere: ${winW}x${winH}` : '';
+    const dprStr = dpr > 1 ? ` (DPR ${dpr}x)` : '';
+
+    return `${os} ${isMobile ? '(Mobil)' : '(Masaüstü)'}${screenStr}${winStr}${dprStr}`;
   }, []);
 
   // Helper for Webhook Logging
@@ -58,12 +69,20 @@ export default function LastLetterPage({ onGoHome }) {
     const remSecs = elapsedSec % 60;
     const timeStr = elapsedMins > 0 ? `${elapsedMins} dk ${remSecs} sn sonra` : `${elapsedSec} saniye sonra`;
 
+    const screenW = window.screen?.width || 0;
+    const screenH = window.screen?.height || 0;
+    const winW = window.innerWidth || 0;
+    const winH = window.innerHeight || 0;
+    const screenResStr = `${screenW}x${screenH} (Fiziksel Ekran) • ${winW}x${winH} (Pencere)`;
+
     postLogToApi(eventType, {
       stage: currentStageRef.current,
       buttonClickTime: timeStr,
       buttonClickSeconds: elapsedSec,
       deviceId: deviceId,
       device: detectDevice(),
+      screenRes: screenResStr,
+      viewport: `${winW}x${winH}`,
       is_aysenur: true,
       ...extraData
     });

